@@ -13,14 +13,12 @@ Feito e com testes:
 - Histórico simulado (800 lotéricas, 13 semanas) em `packages/core/simulacao/historico.ts`.
 - `apps/web` (Next.js 15): telas 1 a 5, API, busca, CSV/Excel, SSE ao vivo. `next build` passa; testes em `apps/web/test/web.test.ts`.
 
-Pendente nesta sessão:
-1. Conferir as telas no navegador (capturas) depois do universo de 800 lotéricas; corrigir o que aparecer.
-2. Atualizar `docs/fonte-caixa.md` com os achados da Fase 0 (envelope, campos, `index` = fila, `tipoConsulta`
-   0 cidade / 1 UF / 2 Brasil / 3 link da lotérica, rota exige login exceto `#/bolao-caixa/{código}`, pergunta de idade,
-   cookies anti-robô `__uzm*`, `parametros-simulacao/datahora-servidor`), respondendo as perguntas da tabela.
-3. Atualizar `CLAUDE.md` (fila observada, tarifa truncada, adaptador de navegador, web, consulta-base agrupando por `l.id`) e `README.md`.
-4. Docker: Dockerfile do worker precisa do Chromium para `FONTE=caixa-navegador` (imagem do Playwright 1.63.0) e serviço `web` no compose.
-5. Rodar `pnpm test` (com `DATABASE_URL_TESTE`) e `pnpm typecheck`, commit e push na branch `claude/peaceful-noether-hs112s`.
-6. Responder ao usuário em português: pronto / falta / o que precisa dele.
+Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
 
-Depois (fora desta sessão): fonte Postgres para a web (ler `aberturas`/`abertura_participacoes`), watchlist e alertas (dependem de contas, Fase 6).
+1. Decisão do dono do produto sobre a fonte real: conta DEDICADA da empresa, só links públicos das
+   lotéricas monitoradas, ou não coletar a lista geral (ver `docs/fonte-caixa.md`).
+2. Uma pessoa rodar `pnpm caixa:preparar-sessao` num computador com tela e testar
+   `FONTE=caixa-navegador pnpm poc:fonte`; observar uma abertura real às 21:45 (ritmo, fila dinâmica, esgotados).
+3. Estratégia de leitura na abertura com navegador (a meta de 5 s não cabe lendo todas as páginas).
+4. Fonte Postgres para a web (ler `aberturas`/`abertura_participacoes`), watchlist e alertas (dependem de contas, Fase 6).
+5. Testar as imagens Docker num ambiente com Docker (aqui não há daemon).

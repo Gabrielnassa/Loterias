@@ -16,3 +16,4 @@ docs/har/
 # Next.js
 .next/
 next-env.d.ts.bak
+*.tsbuildinfo

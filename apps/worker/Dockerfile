@@ -1,5 +1,7 @@
 # Build a partir da raiz do monorepo: docker compose build worker
-FROM node:22-slim
+# Imagem oficial do Playwright na MESMA versão do pacote (1.63.0): traz o Chromium e as
+# bibliotecas do sistema para FONTE=caixa-navegador. Para as outras fontes, node:22-slim basta.
+FROM mcr.microsoft.com/playwright:v1.63.0-noble
 WORKDIR /app
 RUN corepack enable
 
@@ -14,6 +16,6 @@ COPY packages/core packages/core
 COPY packages/db packages/db
 COPY apps/worker apps/worker
 
-ENV TZ=UTC NODE_ENV=production
-USER node
+ENV TZ=UTC NODE_ENV=production PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+USER pwuser
 CMD ["pnpm", "--filter", "@radar/worker", "start"]

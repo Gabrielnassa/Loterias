@@ -81,8 +81,11 @@ describe('casos de uso das telas', () => {
 describe('API', () => {
   it('GET /api/lotericas?q= busca por nome, cidade ou código', async () => {
     const r = await getBusca(req('/api/lotericas?q=trevo%20de%20ouro'));
-    const j = (await r.json()) as { lotericas: { codigoCaixa: string }[] };
-    expect(j.lotericas[0]!.codigoCaixa).toBe(minha);
+    const j = (await r.json()) as { lotericas: { codigoCaixa: string; nome: string }[] };
+    expect(j.lotericas.map((l) => l.codigoCaixa)).toContain(minha); // pode haver homônimas em outras cidades
+    expect(j.lotericas.every((l) => /trevo de ouro/i.test(l.nome))).toBe(true);
+    const comCidade = (await (await getBusca(req('/api/lotericas?q=trevo%20de%20ouro%20sao%20paulo'))).json()) as { lotericas: { codigoCaixa: string }[] };
+    expect(comCidade.lotericas[0]!.codigoCaixa).toBe(minha);
     const porCodigo = (await (await getBusca(req(`/api/lotericas?q=${minha}`))).json()) as { lotericas: { codigoCaixa: string }[] };
     expect(porCodigo.lotericas[0]!.codigoCaixa).toBe(minha);
   });

@@ -2,99 +2,125 @@
 
 ## Situação em 21/11/2026
 
-**A Fase 0 não foi concluída.** A partir do ambiente de desenvolvimento (container em nuvem), a
-política de rede recusou a conexão com todos os hosts da CAIXA que tentei (o proxy do ambiente
-respondeu `403` ao `CONNECT`; nenhuma requisição chegou à CAIXA):
-
-| Host | Resultado |
+| Data | O que aconteceu |
 | --- | --- |
-| `www.loteriasonline.caixa.gov.br` | bloqueado pela rede do ambiente |
-| `loteriasonline.caixa.gov.br` | bloqueado pela rede do ambiente |
-| `loterias.caixa.gov.br` | bloqueado pela rede do ambiente |
-| `servicebus2.caixa.gov.br` | bloqueado pela rede do ambiente |
+| 21/11, 00:30 | Rede do ambiente de desenvolvimento bloqueava a CAIXA. Criados contrato, cliente HTTP, fixtures sintéticas. |
+| 21/11, 01:20 | O Gabriel inspecionou o portal no navegador dele (logado) e passou os achados abaixo (no lugar do HAR). |
+| 21/11, 01:30 | Rede liberada. Daqui: o portal responde, o Chromium headless carrega sem desafio anti-robô e cai na pergunta "Você tem mais de 18 anos?". O código JavaScript do próprio portal foi lido (só leitura) para entender rotas e parâmetros. |
 
-Seguindo a instrução de não insistir, **nada sobre o formato real foi verificado**. Em vez disso:
+**Decisões de segurança (obrigatórias):**
 
-- contrato do adaptador da fonte (formato normalizado): `packages/core/fonte/tipos.ts`;
-- teste de contrato (zod) que detecta mudança de formato: `packages/core/fonte/contrato.ts`;
-- varredura paginada, deduplicação e leitura parcial: `packages/core/fonte/varredura.ts`;
-- cliente HTTP "educado" (intervalo mínimo, backoff com jitter, `Retry-After`, para em 401/403/captcha): `packages/core/fonte/cliente-http.ts`;
-- monitor de saúde (alerta após 3 falhas seguidas, mudança de formato ou bloqueio): `packages/core/fonte/saude.ts`;
-- adaptador da CAIXA em **esqueleto** (lança `FonteNaoMapeadaError`): `packages/core/fonte/adaptadores/caixa-http.ts`;
-- fixtures **sintéticas** no formato normalizado: `packages/core/fonte/fixtures/`;
-- prova de conceito que baixa 3 páginas: `FONTE=fixture pnpm poc:fonte` (já funciona com as fixtures; com `FONTE=caixa` funcionará quando o adaptador for implementado).
+- O parâmetro `q` das requisições é cifrado no navegador (node-forge). **Não reproduzir, contornar nem
+  decifrar.** A estratégia é o adaptador `caixa-navegador`: um navegador real (Playwright) abre a página
+  como um usuário comum, pagina pelo botão "Seguinte" e lê as respostas JSON que o próprio site pede.
+- A pergunta **"Você tem mais de 18 anos?"** e qualquer aceite de termos são respondidos **por uma
+  pessoa**, nunca pelo robô. O operador prepara a sessão uma vez com
+  `pnpm caixa:preparar-sessao` (abre uma janela; ele responde; a sessão é salva em `.sessao-caixa/`,
+  fora do git). Sem essa sessão o adaptador para com `ConfirmacaoHumanaNecessariaError`.
+- **Não automatizar com a conta pessoal de ninguém.** O adaptador nunca faz login.
+- Proteção anti-robô (os cookies `__uzma`, `__uzmb`, `__uzmc`, `__uzmd`, `__uzme` indicam um
+  gerenciador de bots): 401, 403, captcha ou desafio param a coleta na hora (`BloqueadoPelaFonteError`),
+  com alerta. Nada de "stealth", troca de user-agent ou resolução de captcha.
 
-## O que se sabe por conhecimento público (NÃO verificado daqui)
+## API observada
 
-- O Marketplace fica no portal Loterias Online (`www.loteriasonline.caixa.gov.br`, uma aplicação
-  web de página única) e no app Loterias CAIXA, desde 20/05/2024 (SPEC).
-- Projetos públicos usam `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}`
-  para **resultados** oficiais. Isso serve à Conferência (Fase 3), não à lista de bolões. Confirmar.
-- Não sei se a lista de bolões é pública ou se exige login (CPF). **Se exigir login, isso muda o
-  projeto** (credenciais, termos de uso, LGPD) e precisa ser decidido antes de seguir.
+- Base: `https://www.loteriasonline.caixa.gov.br/silce-servico-rest/rest/v1/{caminho em base64}/`
+- Caminhos (base64 decodificado):
 
-## Perguntas que a Fase 0 precisa responder
-
-| # | Pergunta | Por que importa |
+| Caminho | Método | Observação |
 | --- | --- | --- |
-| 1 | Quais chamadas devolvem a lista de bolões (URL, método, JSON/HTML/GraphQL)? | Implementar `FonteCaixaHttp.pagina` |
-| 2 | Precisa de login, cookie de sessão, token, captcha ou há proteção anti-robô (WAF)? | Se houver barreira, **não burlar**: parar e decidir |
-| 3 | Paginação: parâmetro, tamanho da página (30?), dá para pedir páginas maiores? Vem total de itens/páginas? | Custo de cada leitura |
-| 4 | A ordem devolvida é a da vitrine (fila, chegada)? Existe ordenação por "mais recentes"? | Colocação observada x calculada; estratégia dos 5 s |
-| 5 | Filtros disponíveis: modalidade, concurso, UF, cidade, lotérica, faixa de preço | Leitura por UF; ficha da lotérica |
-| 6 | Campos: id do bolão (é estável?), código/nome da lotérica, cidade, UF, bairro, modalidade, concurso, jogos, dezenas, cotas totais e disponíveis | Mapeamento para `BolaoFonte` |
-| 7 | O valor da cota vem **com ou sem** a tarifa de 35%? | `valorCotaBase` e todo o financeiro |
-| 8 | Existe data/hora de inserção do bolão ou fila/posição explícita na resposta? | Se existir, a precisão deixa de depender da frequência (`inseridoEmFonte`) |
-| 9 | Os números dos jogos vêm na lista ou numa chamada de detalhe? | `bolao_jogos`, Conferência |
-| 10 | Há chamada que lista concursos abertos (data do sorteio, fechamento das vendas, prêmio)? | `concursosAbertos`, `fecha_em`, T0 |
-| 11 | Há chamada barata de contagem por modalidade? | Modo normal a cada 60 s |
-| 12 | Limites: 429, `Retry-After`, CDN/cache, `ETag`/`If-None-Match` | Ritmo seguro; leituras condicionais baratas |
-| 13 | Na abertura (21:45): o concurso novo aparece antes de T0? Bolões esgotados somem ou ficam com 0? | Janela de abertura; inferência de "esgotou" |
-| 14 | Quando um bolão anterior da lotérica esgota, os seguintes mudam de fila? | Fila estática (implementada) x dinâmica |
-| 15 | Termos de uso e `robots.txt` | Validar com advogado antes de vender (SPEC, Riscos) |
+| `parametros/bolao-caixa` | GET | parâmetros do bolão |
+| `usuarios/recuperar-dados` | GET | usa a sessão do usuário logado |
+| `boloes/recuperar-boloes-disponiveis` | GET `?q=` | **a lista de bolões** (q cifrado) |
+| `boloes/recuperar-boloes-disponiveis-link` | GET `?q=` | lista pelo link público da lotérica (`#/bolao-caixa/{código}`) |
+| `boloes/detalhar-bolao` | GET | mesmos dados + `apostas` (os jogos), `lotericaFormatada`, `municipioCota` |
+| `parametros/configuraveis-web`, `parametros-simulacao/datahora-servidor` | GET | públicos; o 2º dá a hora do servidor (útil para medir desvio de relógio) |
 
-## Risco principal: custo da leitura a cada 5 segundos
+- Resposta em JSON aberto. Envelope:
+  `{versao, dataHoraServidor, payload: {totalRegistros, paginaAtual, ultimaPagina, valorMenorCota, contemResiduo, cotas: [...]}}`.
+  30 bolões por página. `dataHoraServidor` vem no horário de São Paulo **sem fuso** ("2026-11-21T01:18:30.949").
+- Campos de cada item de `cotas`: `index, codigoBolao, qtdCotaDigital, qtdCotaTotal, qtdCotaDisponivel,
+  loterica (código numérico), nomeFantasia, nomeRazaoSocial, numeroUF, uf{sigla,id,nome}, idMunicipio,
+  municipio{id{codigoUF,numero,digitoVerificador},uf,nome}, concurso, tipoConcurso, idModalidade,
+  modalidade ("MEGA_SENA"), dataSorteio ("22/11/2026"), horaSorteio, diaSorteio, vrPremioEstimado,
+  vrCotaSemTarifa, vrCotaComTarifa, valorTarifaServico, vrUltimaCotaSemTarifa, vrUltimaCotaComTarifa,
+  vrTarifaServicoUltimaCota, qtdApostas, qtdNumeros, qtdTrevos, qtdSimplesLoteca, qtdDuplosLoteca,
+  qtdTriplosLoteca, contemResiduo, lotericaFavorita`.
+- `codigoBolao` = base64 de `"ano;mês;número;lote;"` (ex.: `MjAyNjsxMTs2MzAyOTE2MDI7MTA3OTU7` =
+  `2026;11;630291602;10795;`). Usado como id estável.
+- Exemplo real: cota R$ 20,16 sem tarifa, R$ 27,21 com tarifa, tarifa R$ 7,05; 4 apostas de 9 números;
+  97/100 cotas disponíveis. Confere: 4 × C(9,6)=84 × R$ 6,00 = R$ 2.016 / 100 cotas = R$ 20,16. A tarifa
+  é **truncada** em centavos (35% × 20,16 = 7,056 → 7,05); o financeiro usa essa regra.
 
-Uma leitura "completa" percorre todas as páginas do concurso. Na primeira hora de uma abertura
-grande isso pode passar de 100 páginas (a SPEC cita a Mega-Sena 3.089 com a 1ª fila ocupando as
-págs. 1 a 70; a Mega da Virada tem ~3.300 páginas). Com o intervalo mínimo padrão de 250 ms entre
-requisições (~4 req/s), 70 páginas levam ~18 s, então **não cabem num slot de 5 s**: o agendador
-pula slots e os conta em `slotsPerdidos`. Ler tudo a cada 5 s seria também uso irresponsável da
-fonte. Estratégias para escolher depois de mapear a fonte:
+## Parâmetros da lista (lidos no JavaScript do portal, sem decifrar nada)
 
-1. **Ordenação "mais recentes"** (se existir): 1 ou 2 páginas por leitura bastam para achar os novos.
-2. **Leitura pelas bordas das filas**: bolão novo sempre entra no FIM da sua fila. O coletor já
-   sabe quantos bolões há em cada fila, então sabe em que página cada fila termina; basta ler essas
-   páginas (≈ número de filas, 5 a 10 na 1ª hora) e fazer a leitura completa com menos frequência.
-3. **Leitura por UF**, só para as UFs dos clientes.
-4. **Data de inserção na resposta** (pergunta 8): resolve a precisão sem aumentar a frequência.
-5. **Requisições condicionais** (`ETag`) para páginas que não mudaram.
+Antes de cifrar, o portal monta `{tipoConsulta, idMunicipio, idUf, pagina, qtdPorPagina, numeroLoterico, ...filtros}`:
 
-Hoje está implementada a leitura completa com teto de páginas (`COLETA_MAX_PAGINAS_ABERTURA=200`).
+| tipoConsulta | Escopo |
+| --- | --- |
+| 0 | município do comprador |
+| 1 | UF |
+| 2 | Brasil (nacional) |
+| 3 | lotérica específica (link público `#/bolao-caixa/{código}`) |
 
-## O que preciso de você: um HAR do portal
+Quando a lista da cidade acaba, o próprio portal continua para a UF (1) e depois para o Brasil (2) —
+por isso a vitrine que um comprador vê é "cidade, depois estado, depois Brasil".
 
-1. Abra o Chrome ou Edge numa janela anônima, aperte F12 e vá na aba **Network (Rede)**. Marque
-   **Preserve log** e **Disable cache**.
-2. Entre no Loterias Online e vá até a área de bolões do Marketplace.
-3. Navegue: abra a lista de uma modalidade (ex.: Lotofácil), vá para as páginas 2 e 3, filtre por
-   UF e por cidade, abra o detalhe de um bolão e troque de modalidade.
-4. Se der, repita por 2 ou 3 minutos perto das 21:45 (abertura).
-5. Exporte com **Export HAR (sanitized)** (o Chrome recente remove cookies e `Authorization`).
-6. **Não precisa fazer login.** Se a lista exigir login, só me diga isso (já é uma resposta
-   importante). Um HAR com login traz CPF, nome e token de sessão: nunca envie sem sanitizar.
-7. Coloque o arquivo em `docs/har/` (está no `.gitignore`, não vai para o git) ou anexe na conversa.
+Rotas da aplicação (AngularJS): `#/bolao-caixa/{modalidade}` (lista geral) e `#/bolao-caixa/{código}`
+(link da lotérica). A rota geral **exige login**: sem usuário logado o portal volta para a home. O link
+da lotérica **não exige login**. Antes de tudo, quem não está logado passa pela pergunta de idade.
 
-Alternativa: liberar os hosts acima na rede do ambiente (configurações do ambiente, Network access,
-Allowed domains). Mesmo assim o HAR é o melhor primeiro passo: o portal é uma aplicação JavaScript
-e as chamadas podem depender de tokens gerados pela página.
+## Respostas às perguntas da Fase 0
 
-## Como plugar a fonte real depois
+| # | Pergunta | Resposta |
+| --- | --- | --- |
+| 1 | Quais chamadas devolvem a lista? | `boloes/recuperar-boloes-disponiveis` (e `-link`), JSON |
+| 2 | Login, token, captcha, anti-robô? | Lista geral exige login; link da lotérica não. Pergunta de idade para quem não está logado. Há gerenciador anti-robô (cookies `__uzm*`); até agora sem desafio no Chromium headless. `q` cifrado. |
+| 3 | Paginação | 30 por página; `paginaAtual`, `ultimaPagina`, `totalRegistros` no JSON; Anterior/Seguinte na tela |
+| 4 | Ordem = vitrine? | É a ordem da tela (fila, chegada), mas **por cidade do comprador** e depois UF/Brasil. Até confirmar a semântica, a colocação vem da regra (fila + first_seen_at); a ordem observada fica guardada |
+| 5 | Filtros | modalidade, lotérica (nome ou código de 6 dígitos), valor mínimo/máximo da cota, cotas, apostas, dezenas, números que quer/não quer; ordenação por apostas, cotas disponíveis e valor |
+| 6 | Campos | ver acima; tudo o que o sistema precisa existe |
+| 7 | Cota com ou sem tarifa? | Os dois (`vrCotaSemTarifa`, `vrCotaComTarifa`) e a tarifa (`valorTarifaServico`) |
+| 8 | Hora de inclusão do bolão? | **Não existe**. first_seen_at continua vindo da observação |
+| 8b | Fila explícita? | **Sim: `index`** (nas págs. 2 e 3 todos tinham index 1 e nenhuma lotérica se repetia). Usado como fila observada; a calculada também é guardada |
+| 9 | Números dos jogos | `detalhar-bolao` → `apostas` (formato exato a confirmar; o normalizador aceita listas ou objetos com `numeros`) |
+| 10 | Concursos abertos | Vêm nos itens (`concurso`, `dataSorteio`, `horaSorteio`, `vrPremioEstimado`); não há chamada separada conhecida |
+| 11 | Contagem barata | `totalRegistros` da 1ª página (no escopo da consulta) |
+| 12 | Limites (429, ETag) | Não observado. O adaptador usa ritmo baixo (3 s entre ações por padrão) e backoff |
+| 13 | Abertura 21:45 | Não observado ainda |
+| 14 | Fila dinâmica? | Ainda não sabemos: guardamos `fila_observada_entrada` e `fila_observada` (atual); se divergirem, a fila é dinâmica |
+| 15 | Termos de uso | Validar com advogado antes de vender (SPEC, Riscos) |
 
-1. Implementar `concursosAbertos`, `contagens` e `pagina` em `FonteCaixaHttp`, usando
-   `ClienteHttpEducado.obter(url, { esperaJson: true })`.
-2. Escrever `normalizarBolao(bruto)` para converter o formato bruto em `BolaoFonte`.
-3. Guardar respostas reais **anonimizadas** em `packages/core/fonte/fixtures/caixa/` e criar o
-   teste de contrato bruto -> normalizado (se a CAIXA mudar o formato, ele quebra no CI).
-4. Rodar `FONTE=caixa pnpm poc:fonte` (3 páginas, com limite de requisições e backoff).
-5. Escolher a estratégia de leitura da abertura (seção acima) e ajustar `COLETA_*`.
+## O que falta descobrir
+
+1. **Como obter a lista UF/Brasil sem a conta pessoal de ninguém.** Opções para o dono do produto decidir:
+   a) conta **dedicada da empresa**, criada para isso, com a cidade escolhida (a lista começa pela cidade da conta);
+   b) só o **link público da lotérica** (`#/bolao-caixa/{código}`, sem login): serve para acompanhar lotéricas
+      específicas (fila e hora de entrada), mas não dá a colocação na vitrine;
+   c) não coletar a lista geral.
+2. Se `ultimaPagina` é o número da última página (o código do portal sugere que sim).
+3. Se, com login, ao passar da última página da cidade, a lista da UF inclui ou exclui a cidade.
+4. Comportamento às 21:45 (o concurso novo aparece antes de T0? em lote?) e se esgotados somem.
+5. Custo de ritmo: com 3 s entre ações, ler 70 páginas leva 3,5 min. **A meta de 5 s na abertura não cabe
+   num navegador lendo tudo.** Estratégias, depois de observar uma abertura real:
+   ler só a 1ª página de cada escopo/lotérica monitorada; ler as páginas onde cada fila termina (o bolão novo
+   sempre entra no fim da sua fila); ou acompanhar só os links das lotéricas da watchlist.
+
+## Como rodar o adaptador
+
+```bash
+pnpm caixa:preparar-sessao              # uma pessoa responde a pergunta de idade (e, se decidido, faz login na conta DEDICADA)
+FONTE=caixa-navegador CAIXA_MODALIDADES=mega-sena pnpm poc:fonte   # baixa até 3 páginas
+```
+
+No VPS: `docker compose up -d --build worker` com `FONTE=caixa-navegador` e o arquivo de sessão em
+`./.sessao-caixa/estado.json` (a sessão é preparada num computador com tela e copiada).
+Teste ao vivo daqui (21/11, sem sessão): o adaptador carregou o portal e parou corretamente em
+"o portal pediu a confirmação de maioridade", sem clicar em nada.
+
+## Arquivos
+
+- Contrato bruto e normalizador: `packages/core/fonte/adaptadores/caixa-bruto.ts`
+- Fixtures com a estrutura real (lotéricas fictícias): `packages/core/fonte/fixtures/caixa/`
+- Adaptador de navegador: `apps/worker/src/fontes/caixa-navegador.ts`; testes contra um portal falso local em `apps/worker/test/`
+- Preparar sessão: `apps/worker/src/caixa-preparar-sessao.ts`

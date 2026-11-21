@@ -12,9 +12,9 @@ concorrente abriu bolão na semana, em que dias, a que horas e em que colocaçã
 
 | Fase | Situação |
 | --- | --- |
-| 0 — Descobrir a fonte | **Pendente**: rede do ambiente bloqueou a CAIXA. Contrato do adaptador, cliente HTTP educado, fixtures sintéticas e PoC de 3 páginas prontos |
+| 0 — Descobrir a fonte | API mapeada (docs/fonte-caixa.md); adaptador `caixa-navegador` (Playwright) pronto. Falta decidir como obter a lista geral (exige login) |
 | 1 — Monorepo, schema, worker, eventos, coletas | Pronta (testada com fonte simulada, Postgres 16 e Redis reais) |
-| 2 — Raio-X de Abertura | Camada de regras pronta em `packages/core` (teste com abertura simulada de 200 bolões); falta job de fim de janela, API, telas, alertas |
+| 2 — Raio-X de Abertura | Regras, job de fim de janela, API, busca e telas 1 a 5 (`apps/web`, com dados simulados). Falta watchlist e alertas (dependem de contas) e a web ler do Postgres |
 
 ## Rodar
 
@@ -30,7 +30,13 @@ Worker sem Redis/Postgres (abertura simulada daqui a ~90 s, em memória):
 FILA=memoria REPOSITORIO=memoria FONTE=simulada pnpm worker:dev
 ```
 
-Com Docker Compose (Postgres 16 + Redis + worker):
+Web (telas do Raio-X com dados simulados) em http://localhost:3000:
+
+```bash
+pnpm web:dev
+```
+
+Com Docker Compose (Postgres 16 + Redis + worker + web):
 
 ```bash
 cp .env.example .env
