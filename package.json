@@ -1,0 +1,24 @@
+{
+  "name": "radar-loterico",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Coletor e inteligência do Marketplace de Bolões da CAIXA para lotéricas",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "db:migrar": "pnpm --filter @radar/db migrar",
+    "worker:dev": "pnpm --filter @radar/worker dev",
+    "poc:fonte": "pnpm --filter @radar/worker poc:fonte"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.20.6",
+    "turbo": "2.5.8",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

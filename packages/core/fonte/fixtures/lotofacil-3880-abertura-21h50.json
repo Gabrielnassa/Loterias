@@ -1,0 +1,1976 @@
+{
+  "descricao": "Lotofácil 3880, vitrine às 21:50:00 (T0 + 5 min) na ordem da vitrine",
+  "aviso": "DADOS SINTÉTICOS gerados pelo simulador (lotéricas e códigos fictícios, códigos começam com 99). Formato normalizado interno; não representa o JSON bruto da CAIXA.",
+  "capturadoEm": "2026-11-24T00:50:00.000Z",
+  "concurso": {
+    "modalidade": "lotofacil",
+    "concurso": 3880,
+    "dataSorteio": "2026-11-24",
+    "fechaEm": "2026-11-24T22:45:00.000Z"
+  },
+  "tamanhoPagina": 30,
+  "itens": [
+    {
+      "idCaixa": "SIM-3880-00124",
+      "loterica": {
+        "codigoCaixa": "99528299",
+        "nome": "Lotérica Trevo Real",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00110",
+      "loterica": {
+        "codigoCaixa": "99461195",
+        "nome": "Lotérica Canto Premiada",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Pituba"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 49
+    },
+    {
+      "idCaixa": "SIM-3880-00164",
+      "loterica": {
+        "codigoCaixa": "99655976",
+        "nome": "Lotérica Mundo Feliz",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00078",
+      "loterica": {
+        "codigoCaixa": "99324766",
+        "nome": "Lotérica Canto Central",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Jardim Irajá"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00160",
+      "loterica": {
+        "codigoCaixa": "99636571",
+        "nome": "Lotérica Ponto Real",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00022",
+      "loterica": {
+        "codigoCaixa": "99161013",
+        "nome": "Lotérica Casa Premiada",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Mooca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00195",
+      "loterica": {
+        "codigoCaixa": "99793022",
+        "nome": "Lotérica Recanto Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Ipiranga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 48
+    },
+    {
+      "idCaixa": "SIM-3880-00108",
+      "loterica": {
+        "codigoCaixa": "99449076",
+        "nome": "Lotérica Mundo Central",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "bairro": "Batel"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 47
+    },
+    {
+      "idCaixa": "SIM-3880-00055",
+      "loterica": {
+        "codigoCaixa": "99260616",
+        "nome": "Lotérica Estrela Grande",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Centro Histórico"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00001",
+      "loterica": {
+        "codigoCaixa": "99102733",
+        "nome": "Lotérica Sorte do Bairro",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Centro Histórico"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 13
+    },
+    {
+      "idCaixa": "SIM-3880-00143",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 36
+    },
+    {
+      "idCaixa": "SIM-3880-00118",
+      "loterica": {
+        "codigoCaixa": "99490950",
+        "nome": "Lotérica Estrela Real",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Barão Geraldo"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 14
+    },
+    {
+      "idCaixa": "SIM-3880-00066",
+      "loterica": {
+        "codigoCaixa": "99296773",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Gonzaga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 96
+    },
+    {
+      "idCaixa": "SIM-3880-00175",
+      "loterica": {
+        "codigoCaixa": "99716700",
+        "nome": "Lotérica Rota Central",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Gonzaga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 99
+    },
+    {
+      "idCaixa": "SIM-3880-00085",
+      "loterica": {
+        "codigoCaixa": "99355822",
+        "nome": "Lotérica Mundo Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Madureira"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 14
+    },
+    {
+      "idCaixa": "SIM-3880-00012",
+      "loterica": {
+        "codigoCaixa": "99134190",
+        "nome": "Lotérica Fortuna Grande",
+        "cidade": "Niterói",
+        "uf": "RJ",
+        "bairro": "Icaraí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 5,
+      "dezenas": 16,
+      "cotasTotal": 10,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00068",
+      "loterica": {
+        "codigoCaixa": "99303517",
+        "nome": "Lotérica Estrela Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 98
+    },
+    {
+      "idCaixa": "SIM-3880-00189",
+      "loterica": {
+        "codigoCaixa": "99771047",
+        "nome": "Lotérica Ponto Grande",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00182",
+      "loterica": {
+        "codigoCaixa": "99753140",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Boqueirão"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00111",
+      "loterica": {
+        "codigoCaixa": "99465617",
+        "nome": "Lotérica Mundo Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00038",
+      "loterica": {
+        "codigoCaixa": "99204626",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Santana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00015",
+      "loterica": {
+        "codigoCaixa": "99146334",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00007",
+      "loterica": {
+        "codigoCaixa": "99119291",
+        "nome": "Lotérica Casa de Ouro",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Madureira"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 49
+    },
+    {
+      "idCaixa": "SIM-3880-00161",
+      "loterica": {
+        "codigoCaixa": "99641635",
+        "nome": "Lotérica Fortuna Premiada",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00163",
+      "loterica": {
+        "codigoCaixa": "99646415",
+        "nome": "Lotérica Ponto Certa",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 15
+    },
+    {
+      "idCaixa": "SIM-3880-00192",
+      "loterica": {
+        "codigoCaixa": "99776335",
+        "nome": "Lotérica Estrela da Sorte",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Lapa"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 47
+    },
+    {
+      "idCaixa": "SIM-3880-00010",
+      "loterica": {
+        "codigoCaixa": "99128462",
+        "nome": "Lotérica Recanto Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Mooca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 19
+    },
+    {
+      "idCaixa": "SIM-3880-00132",
+      "loterica": {
+        "codigoCaixa": "99561598",
+        "nome": "Lotérica Sorte Certa",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Pituba"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00199",
+      "loterica": {
+        "codigoCaixa": "99812809",
+        "nome": "Lotérica Sorte Feliz",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Pampulha"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 38
+    },
+    {
+      "idCaixa": "SIM-3880-00166",
+      "loterica": {
+        "codigoCaixa": "99673772",
+        "nome": "Lotérica Mundo Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Santana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 5,
+      "dezenas": 16,
+      "cotasTotal": 10,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00173",
+      "loterica": {
+        "codigoCaixa": "99704270",
+        "nome": "Lotérica Fortuna Grande",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Ipiranga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00097",
+      "loterica": {
+        "codigoCaixa": "99409918",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00120",
+      "loterica": {
+        "codigoCaixa": "99508644",
+        "nome": "Lotérica Canto Feliz",
+        "cidade": "Uberlândia",
+        "uf": "MG",
+        "bairro": "Santa Mônica"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00152",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 98
+    },
+    {
+      "idCaixa": "SIM-3880-00170",
+      "loterica": {
+        "codigoCaixa": "99690245",
+        "nome": "Lotérica Ponto Nova",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00092",
+      "loterica": {
+        "codigoCaixa": "99394232",
+        "nome": "Lotérica Sorte Central",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00024",
+      "loterica": {
+        "codigoCaixa": "99174300",
+        "nome": "Lotérica Recanto da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00142",
+      "loterica": {
+        "codigoCaixa": "99597884",
+        "nome": "Lotérica Recanto Grande",
+        "cidade": "Uberlândia",
+        "uf": "MG",
+        "bairro": "Santa Mônica"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 97
+    },
+    {
+      "idCaixa": "SIM-3880-00027",
+      "loterica": {
+        "codigoCaixa": "99184508",
+        "nome": "Lotérica Fortuna Feliz",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00088",
+      "loterica": {
+        "codigoCaixa": "99374257",
+        "nome": "Lotérica Recanto de Ouro",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00049",
+      "loterica": {
+        "codigoCaixa": "99247563",
+        "nome": "Lotérica Sorte da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 49
+    },
+    {
+      "idCaixa": "SIM-3880-00102",
+      "loterica": {
+        "codigoCaixa": "99425215",
+        "nome": "Lotérica Trevo do Bairro",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00178",
+      "loterica": {
+        "codigoCaixa": "99737983",
+        "nome": "Lotérica Sorte Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00079",
+      "loterica": {
+        "codigoCaixa": "99332679",
+        "nome": "Lotérica Casa Central",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 38
+    },
+    {
+      "idCaixa": "SIM-3880-00176",
+      "loterica": {
+        "codigoCaixa": "99720040",
+        "nome": "Lotérica Ponto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 99
+    },
+    {
+      "idCaixa": "SIM-3880-00032",
+      "loterica": {
+        "codigoCaixa": "99199309",
+        "nome": "Lotérica Fortuna da Sorte",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 49
+    },
+    {
+      "idCaixa": "SIM-3880-00091",
+      "loterica": {
+        "codigoCaixa": "99390858",
+        "nome": "Lotérica Casa Grande",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Lapa"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 48
+    },
+    {
+      "idCaixa": "SIM-3880-00107",
+      "loterica": {
+        "codigoCaixa": "99447306",
+        "nome": "Lotérica Recanto Premiada",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Lapa"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 84
+    },
+    {
+      "idCaixa": "SIM-3880-00196",
+      "loterica": {
+        "codigoCaixa": "99798229",
+        "nome": "Lotérica Ponto Feliz",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Pampulha"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00089",
+      "loterica": {
+        "codigoCaixa": "99381023",
+        "nome": "Lotérica Mundo do Bairro",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Mooca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00087",
+      "loterica": {
+        "codigoCaixa": "99363113",
+        "nome": "Lotérica Trevo Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00119",
+      "loterica": {
+        "codigoCaixa": "99498562",
+        "nome": "Lotérica Trevo do Bairro",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Jardim Irajá"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 99
+    },
+    {
+      "idCaixa": "SIM-3880-00002",
+      "loterica": {
+        "codigoCaixa": "99110193",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Barão Geraldo"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 49
+    },
+    {
+      "idCaixa": "SIM-3880-00058",
+      "loterica": {
+        "codigoCaixa": "99271064",
+        "nome": "Lotérica Sorte de Ouro",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Moinhos de Vento"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00198",
+      "loterica": {
+        "codigoCaixa": "99808778",
+        "nome": "Lotérica Casa do Bairro",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 47
+    },
+    {
+      "idCaixa": "SIM-3880-00021",
+      "loterica": {
+        "codigoCaixa": "99150020",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00116",
+      "loterica": {
+        "codigoCaixa": "99482681",
+        "nome": "Lotérica Sorte Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Ipiranga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00125",
+      "loterica": {
+        "codigoCaixa": "99528299",
+        "nome": "Lotérica Trevo Real",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 99
+    },
+    {
+      "idCaixa": "SIM-3880-00069",
+      "loterica": {
+        "codigoCaixa": "99303517",
+        "nome": "Lotérica Estrela Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00067",
+      "loterica": {
+        "codigoCaixa": "99296773",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Gonzaga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00133",
+      "loterica": {
+        "codigoCaixa": "99561598",
+        "nome": "Lotérica Sorte Certa",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Pituba"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00144",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00112",
+      "loterica": {
+        "codigoCaixa": "99465617",
+        "nome": "Lotérica Mundo Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00056",
+      "loterica": {
+        "codigoCaixa": "99260616",
+        "nome": "Lotérica Estrela Grande",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Centro Histórico"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00109",
+      "loterica": {
+        "codigoCaixa": "99449076",
+        "nome": "Lotérica Mundo Central",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "bairro": "Batel"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00016",
+      "loterica": {
+        "codigoCaixa": "99146334",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00190",
+      "loterica": {
+        "codigoCaixa": "99771047",
+        "nome": "Lotérica Ponto Grande",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00193",
+      "loterica": {
+        "codigoCaixa": "99776335",
+        "nome": "Lotérica Estrela da Sorte",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Lapa"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 98
+    },
+    {
+      "idCaixa": "SIM-3880-00153",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 19
+    },
+    {
+      "idCaixa": "SIM-3880-00200",
+      "loterica": {
+        "codigoCaixa": "99812809",
+        "nome": "Lotérica Sorte Feliz",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Pampulha"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 5,
+      "dezenas": 16,
+      "cotasTotal": 10,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00011",
+      "loterica": {
+        "codigoCaixa": "99128462",
+        "nome": "Lotérica Recanto Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Mooca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00183",
+      "loterica": {
+        "codigoCaixa": "99753140",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Boqueirão"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00162",
+      "loterica": {
+        "codigoCaixa": "99641635",
+        "nome": "Lotérica Fortuna Premiada",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 34
+    },
+    {
+      "idCaixa": "SIM-3880-00086",
+      "loterica": {
+        "codigoCaixa": "99355822",
+        "nome": "Lotérica Mundo Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Madureira"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 29
+    },
+    {
+      "idCaixa": "SIM-3880-00098",
+      "loterica": {
+        "codigoCaixa": "99409918",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00103",
+      "loterica": {
+        "codigoCaixa": "99425215",
+        "nome": "Lotérica Trevo do Bairro",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00008",
+      "loterica": {
+        "codigoCaixa": "99119291",
+        "nome": "Lotérica Casa de Ouro",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Madureira"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00050",
+      "loterica": {
+        "codigoCaixa": "99247563",
+        "nome": "Lotérica Sorte da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00013",
+      "loterica": {
+        "codigoCaixa": "99134190",
+        "nome": "Lotérica Fortuna Grande",
+        "cidade": "Niterói",
+        "uf": "RJ",
+        "bairro": "Icaraí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00197",
+      "loterica": {
+        "codigoCaixa": "99798229",
+        "nome": "Lotérica Ponto Feliz",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Pampulha"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00033",
+      "loterica": {
+        "codigoCaixa": "99199309",
+        "nome": "Lotérica Fortuna da Sorte",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00174",
+      "loterica": {
+        "codigoCaixa": "99704270",
+        "nome": "Lotérica Fortuna Grande",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Ipiranga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00025",
+      "loterica": {
+        "codigoCaixa": "99174300",
+        "nome": "Lotérica Recanto da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00093",
+      "loterica": {
+        "codigoCaixa": "99394232",
+        "nome": "Lotérica Sorte Central",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00003",
+      "loterica": {
+        "codigoCaixa": "99110193",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Barão Geraldo"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 5,
+      "dezenas": 16,
+      "cotasTotal": 10,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00117",
+      "loterica": {
+        "codigoCaixa": "99482681",
+        "nome": "Lotérica Sorte Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Ipiranga"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00070",
+      "loterica": {
+        "codigoCaixa": "99303517",
+        "nome": "Lotérica Estrela Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00145",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 5,
+      "dezenas": 16,
+      "cotasTotal": 10,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00154",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 6,
+      "dezenas": 17,
+      "cotasTotal": 40,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 39
+    },
+    {
+      "idCaixa": "SIM-3880-00057",
+      "loterica": {
+        "codigoCaixa": "99260616",
+        "nome": "Lotérica Estrela Grande",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Centro Histórico"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00191",
+      "loterica": {
+        "codigoCaixa": "99771047",
+        "nome": "Lotérica Ponto Grande",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 99
+    },
+    {
+      "idCaixa": "SIM-3880-00113",
+      "loterica": {
+        "codigoCaixa": "99465617",
+        "nome": "Lotérica Mundo Central",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 96
+    },
+    {
+      "idCaixa": "SIM-3880-00009",
+      "loterica": {
+        "codigoCaixa": "99119291",
+        "nome": "Lotérica Casa de Ouro",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Madureira"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 93
+    },
+    {
+      "idCaixa": "SIM-3880-00034",
+      "loterica": {
+        "codigoCaixa": "99199309",
+        "nome": "Lotérica Fortuna da Sorte",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 9
+    },
+    {
+      "idCaixa": "SIM-3880-00026",
+      "loterica": {
+        "codigoCaixa": "99174300",
+        "nome": "Lotérica Recanto da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00099",
+      "loterica": {
+        "codigoCaixa": "99409918",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 2,
+      "dezenas": 18,
+      "cotasTotal": 100,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 100
+    },
+    {
+      "idCaixa": "SIM-3880-00014",
+      "loterica": {
+        "codigoCaixa": "99134190",
+        "nome": "Lotérica Fortuna Grande",
+        "cidade": "Niterói",
+        "uf": "RJ",
+        "bairro": "Icaraí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 1,
+      "dezenas": 18,
+      "cotasTotal": 50,
+      "valorCotaBase": 57.12,
+      "valorCotaExibido": 77.11,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00017",
+      "loterica": {
+        "codigoCaixa": "99146334",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3880-00051",
+      "loterica": {
+        "codigoCaixa": "99247563",
+        "nome": "Lotérica Sorte da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00146",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 30,
+      "dezenas": 15,
+      "cotasTotal": 10,
+      "valorCotaBase": 10.5,
+      "valorCotaExibido": 14.18,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3880-00155",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 19
+    },
+    {
+      "idCaixa": "SIM-3880-00100",
+      "loterica": {
+        "codigoCaixa": "99409918",
+        "nome": "Lotérica Canto Grande",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3880-00052",
+      "loterica": {
+        "codigoCaixa": "99247563",
+        "nome": "Lotérica Sorte da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 8,
+      "dezenas": 16,
+      "cotasTotal": 16,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 14
+    },
+    {
+      "idCaixa": "SIM-3880-00018",
+      "loterica": {
+        "codigoCaixa": "99146334",
+        "nome": "Lotérica Casa Real",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00156",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00147",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 16,
+      "cotasTotal": 20,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 19
+    },
+    {
+      "idCaixa": "SIM-3880-00053",
+      "loterica": {
+        "codigoCaixa": "99247563",
+        "nome": "Lotérica Sorte da Sorte",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 20,
+      "dezenas": 16,
+      "cotasTotal": 40,
+      "valorCotaBase": 28,
+      "valorCotaExibido": 37.8,
+      "cotasDisponiveis": 40
+    },
+    {
+      "idCaixa": "SIM-3880-00148",
+      "loterica": {
+        "codigoCaixa": "99602347",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 10,
+      "dezenas": 17,
+      "cotasTotal": 50,
+      "valorCotaBase": 95.2,
+      "valorCotaExibido": 128.52,
+      "cotasDisponiveis": 50
+    },
+    {
+      "idCaixa": "SIM-3880-00157",
+      "loterica": {
+        "codigoCaixa": "99619805",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "lotofacil",
+      "concurso": 3880,
+      "jogos": 3,
+      "dezenas": 17,
+      "cotasTotal": 20,
+      "valorCotaBase": 71.4,
+      "valorCotaExibido": 96.39,
+      "cotasDisponiveis": 20
+    }
+  ]
+}

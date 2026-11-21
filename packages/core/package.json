@@ -1,0 +1,24 @@
+{
+  "name": "@radar/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Regras de negócio puras (sem I/O de banco): fila, posição, página, financeiro, eventos, abertura e Raio-X",
+  "exports": {
+    ".": "./index.ts",
+    "./fonte": "./fonte/index.ts",
+    "./simulacao": "./simulacao/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

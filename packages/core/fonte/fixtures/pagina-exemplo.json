@@ -1,0 +1,555 @@
+{
+  "consulta": {
+    "modalidade": "mega-sena",
+    "concurso": 3105,
+    "pagina": 2
+  },
+  "pagina": 2,
+  "tamanhoPagina": 30,
+  "totalItens": 98,
+  "totalPaginas": 4,
+  "itens": [
+    {
+      "idCaixa": "SIM-3105-00023",
+      "loterica": {
+        "codigoCaixa": "99179226",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "bairro": "Portão"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 6,
+      "dezenas": 7,
+      "cotasTotal": 6,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 4
+    },
+    {
+      "idCaixa": "SIM-3105-00116",
+      "loterica": {
+        "codigoCaixa": "99473326",
+        "nome": "Lotérica Sorte Central",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Tijuca"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 11,
+      "cotasTotal": 66,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 38
+    },
+    {
+      "idCaixa": "SIM-3105-00099",
+      "loterica": {
+        "codigoCaixa": "99409523",
+        "nome": "Lotérica Sorte Certa",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Barra"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 4,
+      "dezenas": 9,
+      "cotasTotal": 48,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 14
+    },
+    {
+      "idCaixa": "SIM-3105-00001",
+      "loterica": {
+        "codigoCaixa": "99103112",
+        "nome": "Lotérica Recanto Nova",
+        "cidade": "Recife",
+        "uf": "PE",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 6
+    },
+    {
+      "idCaixa": "SIM-3105-00086",
+      "loterica": {
+        "codigoCaixa": "99375228",
+        "nome": "Lotérica Sorte Real",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Mooca"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 5,
+      "dezenas": 8,
+      "cotasTotal": 20,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 11
+    },
+    {
+      "idCaixa": "SIM-3105-00015",
+      "loterica": {
+        "codigoCaixa": "99152686",
+        "nome": "Lotérica Canto Certa",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Cambuí"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 6
+    },
+    {
+      "idCaixa": "SIM-3105-00033",
+      "loterica": {
+        "codigoCaixa": "99221153",
+        "nome": "Lotérica Trevo de Ouro",
+        "cidade": "Porto Alegre",
+        "uf": "RS",
+        "bairro": "Moinhos de Vento"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 8,
+      "cotasTotal": 40,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 17
+    },
+    {
+      "idCaixa": "SIM-3105-00032",
+      "loterica": {
+        "codigoCaixa": "99214635",
+        "nome": "Lotérica Trevo Grande",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Gonzaga"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 5
+    },
+    {
+      "idCaixa": "SIM-3105-00041",
+      "loterica": {
+        "codigoCaixa": "99260371",
+        "nome": "Lotérica Estrela da Sorte",
+        "cidade": "Uberlândia",
+        "uf": "MG",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 8,
+      "cotasTotal": 40,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 26
+    },
+    {
+      "idCaixa": "SIM-3105-00077",
+      "loterica": {
+        "codigoCaixa": "99350181",
+        "nome": "Lotérica Trevo do Bairro",
+        "cidade": "Niterói",
+        "uf": "RJ",
+        "bairro": "Icaraí"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 2
+    },
+    {
+      "idCaixa": "SIM-3105-00051",
+      "loterica": {
+        "codigoCaixa": "99280568",
+        "nome": "Lotérica Recanto Real",
+        "cidade": "Ribeirão Preto",
+        "uf": "SP",
+        "bairro": "Jardim Irajá"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 4,
+      "dezenas": 9,
+      "cotasTotal": 48,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 25
+    },
+    {
+      "idCaixa": "SIM-3105-00038",
+      "loterica": {
+        "codigoCaixa": "99247010",
+        "nome": "Lotérica Trevo Premiada",
+        "cidade": "Salvador",
+        "uf": "BA",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 7
+    },
+    {
+      "idCaixa": "SIM-3105-00074",
+      "loterica": {
+        "codigoCaixa": "99333431",
+        "nome": "Lotérica Ponto Grande",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 2,
+      "dezenas": 9,
+      "cotasTotal": 24,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 8
+    },
+    {
+      "idCaixa": "SIM-3105-00008",
+      "loterica": {
+        "codigoCaixa": "99128232",
+        "nome": "Lotérica Ponto Feliz",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Tatuapé"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 6,
+      "dezenas": 7,
+      "cotasTotal": 6,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 3
+    },
+    {
+      "idCaixa": "SIM-3105-00040",
+      "loterica": {
+        "codigoCaixa": "99252650",
+        "nome": "Lotérica Estrela Premiada",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 6,
+      "dezenas": 7,
+      "cotasTotal": 6,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 4
+    },
+    {
+      "idCaixa": "SIM-3105-00005",
+      "loterica": {
+        "codigoCaixa": "99111064",
+        "nome": "Lotérica Sorte Grande",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 5,
+      "dezenas": 8,
+      "cotasTotal": 20,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 9
+    },
+    {
+      "idCaixa": "SIM-3105-00091",
+      "loterica": {
+        "codigoCaixa": "99391290",
+        "nome": "Lotérica Canto Real",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Santana"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 6,
+      "dezenas": 7,
+      "cotasTotal": 6,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 4
+    },
+    {
+      "idCaixa": "SIM-3105-00073",
+      "loterica": {
+        "codigoCaixa": "99324199",
+        "nome": "Lotérica Estrela Premiada",
+        "cidade": "Santos",
+        "uf": "SP",
+        "bairro": "Gonzaga"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 10,
+      "cotasTotal": 30,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 20
+    },
+    {
+      "idCaixa": "SIM-3105-00095",
+      "loterica": {
+        "codigoCaixa": "99403115",
+        "nome": "Lotérica Mundo Certa",
+        "cidade": "São Paulo",
+        "uf": "SP",
+        "bairro": "Pinheiros"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 8,
+      "cotasTotal": 40,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 25
+    },
+    {
+      "idCaixa": "SIM-3105-00011",
+      "loterica": {
+        "codigoCaixa": "99137236",
+        "nome": "Lotérica Mundo Real",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Savassi"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 10,
+      "cotasTotal": 30,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 10
+    },
+    {
+      "idCaixa": "SIM-3105-00110",
+      "loterica": {
+        "codigoCaixa": "99455333",
+        "nome": "Lotérica Fortuna Premiada",
+        "cidade": "Niterói",
+        "uf": "RJ",
+        "bairro": "Icaraí"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 6,
+      "dezenas": 7,
+      "cotasTotal": 6,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 3
+    },
+    {
+      "idCaixa": "SIM-3105-00080",
+      "loterica": {
+        "codigoCaixa": "99356923",
+        "nome": "Lotérica Recanto da Sorte",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Barra da Tijuca"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 2,
+      "dezenas": 9,
+      "cotasTotal": 24,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 16
+    },
+    {
+      "idCaixa": "SIM-3105-00105",
+      "loterica": {
+        "codigoCaixa": "99434160",
+        "nome": "Lotérica Mundo Premiada",
+        "cidade": "Uberlândia",
+        "uf": "MG",
+        "bairro": "Santa Mônica"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 5,
+      "dezenas": 8,
+      "cotasTotal": 20,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 7
+    },
+    {
+      "idCaixa": "SIM-3105-00014",
+      "loterica": {
+        "codigoCaixa": "99145482",
+        "nome": "Lotérica Estrela Grande",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Barão Geraldo"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 11,
+      "cotasTotal": 66,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 12
+    },
+    {
+      "idCaixa": "SIM-3105-00102",
+      "loterica": {
+        "codigoCaixa": "99417673",
+        "nome": "Lotérica Ponto do Bairro",
+        "cidade": "Campinas",
+        "uf": "SP",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 11,
+      "cotasTotal": 66,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 35
+    },
+    {
+      "idCaixa": "SIM-3105-00114",
+      "loterica": {
+        "codigoCaixa": "99462080",
+        "nome": "Lotérica Casa do Bairro",
+        "cidade": "Uberlândia",
+        "uf": "MG",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 8,
+      "cotasTotal": 40,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 18
+    },
+    {
+      "idCaixa": "SIM-3105-00076",
+      "loterica": {
+        "codigoCaixa": "99342815",
+        "nome": "Lotérica Fortuna Feliz",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Centro"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 7,
+      "cotasTotal": 10,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 7
+    },
+    {
+      "idCaixa": "SIM-3105-00066",
+      "loterica": {
+        "codigoCaixa": "99309574",
+        "nome": "Lotérica Estrela Nova",
+        "cidade": "Belo Horizonte",
+        "uf": "MG",
+        "bairro": "Pampulha"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 10,
+      "dezenas": 8,
+      "cotasTotal": 40,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 24
+    },
+    {
+      "idCaixa": "SIM-3105-00084",
+      "loterica": {
+        "codigoCaixa": "99363085",
+        "nome": "Lotérica Recanto Nova",
+        "cidade": "Rio de Janeiro",
+        "uf": "RJ",
+        "bairro": "Copacabana"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 1,
+      "dezenas": 11,
+      "cotasTotal": 66,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 48
+    },
+    {
+      "idCaixa": "SIM-3105-00024",
+      "loterica": {
+        "codigoCaixa": "99179226",
+        "nome": "Lotérica Recanto do Bairro",
+        "cidade": "Curitiba",
+        "uf": "PR",
+        "bairro": "Portão"
+      },
+      "modalidade": "mega-sena",
+      "concurso": 3105,
+      "jogos": 2,
+      "dezenas": 9,
+      "cotasTotal": 24,
+      "valorCotaBase": 42,
+      "valorCotaExibido": 56.7,
+      "cotasDisponiveis": 17
+    }
+  ],
+  "ordemDaVitrine": true,
+  "obtidaEm": "2026-11-22T17:00:00.000Z"
+}

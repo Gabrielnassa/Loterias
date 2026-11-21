@@ -1,0 +1,11 @@
+node_modules/
+.turbo/
+dist/
+coverage/
+*.log
+.env
+.env.local
+# Capturas HAR podem conter cookies, tokens e dados pessoais: nunca versionar
+*.har
+docs/har/
+.DS_Store

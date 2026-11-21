@@ -1,0 +1,26 @@
+{
+  "name": "@radar/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Schema PostgreSQL 16 (SQL + espelho Drizzle), migrações e conexão",
+  "exports": {
+    ".": "./index.ts",
+    "./schema": "./schema.ts"
+  },
+  "scripts": {
+    "migrar": "tsx migrar.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.44.7",
+    "postgres": "3.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

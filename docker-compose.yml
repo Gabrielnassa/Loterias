@@ -1,0 +1,66 @@
+# Radar Lotérico — ambiente do coletor (VPS ou máquina local).
+#   cp .env.example .env   # ajuste senhas e FONTE
+#   docker compose up -d postgres redis
+#   docker compose up -d --build worker
+name: radar-loterico
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: radar
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-radar}
+      TZ: UTC
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d radar"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://radar:${POSTGRES_PASSWORD:-radar}@postgres:5432/radar
+      REDIS_URL: redis://redis:6379
+      FILA: bullmq
+      REPOSITORIO: postgres
+      FONTE: ${FONTE:-simulada}
+      NTP_SERVIDOR: ${NTP_SERVIDOR:-a.ntp.br}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      COLETA_INTERVALO_RAPIDO_MS: ${COLETA_INTERVALO_RAPIDO_MS:-5000}
+      COLETA_INTERVALO_LENTO_MS: ${COLETA_INTERVALO_LENTO_MS:-15000}
+      COLETA_ABERTURA_RAPIDA_MIN: ${COLETA_ABERTURA_RAPIDA_MIN:-15}
+      FONTE_INTERVALO_MIN_MS: ${FONTE_INTERVALO_MIN_MS:-250}
+      TZ: UTC
+
+volumes:
+  pgdata:
+  redisdata:
