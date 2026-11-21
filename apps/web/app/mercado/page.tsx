@@ -4,9 +4,10 @@ import { AtualizarSozinho } from '@/components/AtualizarSozinho';
 import { FormFiltros, Seletor } from '@/components/FormFiltros';
 import { Grafico } from '@/components/Grafico';
 import { Kpi } from '@/components/Kpi';
+import { PrevisaoFechamento } from '@/components/PrevisaoFechamento';
 import { fonteDeDados } from '@/lib/fonte-dados';
 import { fmtDataLonga, fmtHora, fmtInt, fmtMoeda, fmtPct, NOME_MODALIDADE } from '@/lib/formato';
-import { abasDoConcurso, lerAba, lerFiltro, lerInstante, monitoramento } from '@/lib/mercado';
+import { abasDoConcurso, lerAba, lerFiltro, lerInstante, monitoramento, previsaoDoConcurso } from '@/lib/mercado';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Monitoramento MKP' };
@@ -35,6 +36,7 @@ export default async function Monitoramento({ searchParams }: Props) {
   const sel = m.cartoes.find((c) => c.concurso.chave === sp.concurso) ?? m.cartoes[0];
   const aba = lerAba(sp.aba);
   const det = sel ? await abasDoConcurso(fonte, sel.concurso.chave, { em: m.em, aba, filtro }) : null;
+  const prev = sel && !sel.encerrado ? await previsaoDoConcurso(fonte, sel.concurso.chave, { em: m.em }) : null;
   const params: Record<string, string> = { ...(sp.uf ? { uf: sp.uf } : {}), ...(sp.em ? { em: sp.em } : {}), ...(sel ? { concurso: sel.concurso.chave } : {}) };
   const q = new URLSearchParams(params);
 
@@ -108,6 +110,7 @@ export default async function Monitoramento({ searchParams }: Props) {
             <Kpi rotulo="Filas" valor={fmtInt(sel.retrato.filas)} detalhe={`${fmtInt(sel.retrato.paginas)} páginas`} />
             <Kpi rotulo="Bolão médio à venda" valor={sel.retrato.valorMedioBolao === null ? '—' : fmtMoeda(sel.retrato.valorMedioBolao)} />
           </div>
+          {prev ? <PrevisaoFechamento d={prev} em={m.em} /> : null}
           <Abas abas={ABAS} ativa={aba} base="/mercado" params={params} />
           {aba === 'minuto' ? (
             <>

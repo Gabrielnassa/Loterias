@@ -1,6 +1,9 @@
 import {
+  backtestPrevisao,
   diaSP,
   fichaLoterica,
+  preverPorParecidos,
+  resumirConcurso,
   noDiaSP,
   panoramaNacional,
   resumoFilasMercado,
@@ -14,6 +17,7 @@ import {
   type FiltroRegiao,
   type LotericaRef,
   type ModalidadeSlug,
+  type ResumoConcurso,
 } from '@radar/core';
 import { concursosAVendaSimulados, historicoDeBoloesSimulado, megaDaViradaSimulada, vitrineSimulada } from '@radar/core/simulacao';
 import type { Sql } from '@radar/db';
@@ -50,6 +54,8 @@ export interface FonteMercado {
   historico(de: Date, ate: Date): Promise<BolaoHistorico[]>;
   /** O concurso especial (Mega da Virada) mais recente, se houver. */
   megaDaVirada(em: Date): Promise<ConcursoMercado | null>;
+  /** Concursos normais da modalidade que fecharam antes de `antesDe` (mais recentes primeiro). */
+  concursosAnteriores(modalidade: ModalidadeSlug, antesDe: Date, limite: number): Promise<ConcursoMercado[]>;
 }
 
 const CACHE_MS = 30_000;
@@ -96,6 +102,14 @@ class MercadoSimulado implements FonteMercado {
   }
   async megaDaVirada(em: Date): Promise<ConcursoMercado | null> {
     return paraConcurso(await this.virada(em));
+  }
+  async concursosAnteriores(modalidade: ModalidadeSlug, antesDe: Date, limite: number): Promise<ConcursoMercado[]> {
+    const h = this.f.historico();
+    return h.planos
+      .filter((p) => p.modalidade === modalidade && h.fechaEm(p.id)!.getTime() <= antesDe.getTime())
+      .sort((a, b) => b.t0.getTime() - a.t0.getTime())
+      .slice(0, limite)
+      .map((p) => ({ chave: p.id, modalidade: p.modalidade, concurso: p.concurso, abreEm: p.t0, fechaEm: h.fechaEm(p.id), sorteioEm: null, especial: false, premioEstimado: null }));
   }
 }
 
@@ -240,6 +254,14 @@ class MercadoPostgres implements FonteMercado {
       order by c.numero desc limit 1`;
     return r ? this.linhaConcurso(r) : null;
   }
+  async concursosAnteriores(modalidade: ModalidadeSlug, antesDe: Date, limite: number): Promise<ConcursoMercado[]> {
+    const rs = await this.sql<Parameters<MercadoPostgres['linhaConcurso']>[0][]>`
+      select m.slug, c.numero, c.abre_em, c.fecha_em, c.sorteio_em, c.especial, c.premio_estimado
+      from concursos c join modalidades m on m.id = c.modalidade_id
+      where m.slug = ${modalidade} and not c.especial and c.abre_em is not null and c.fecha_em <= ${antesDe.toISOString()}::timestamptz
+      order by c.abre_em desc limit ${limite}`;
+    return rs.map((r) => this.linhaConcurso(r));
+  }
 }
 
 const GLOBAL = globalThis as unknown as { __radarMercado?: WeakMap<object, FonteMercado> };
@@ -383,6 +405,42 @@ export async function painelMegaDaVirada(fonte: FonteDadosRaioX, o: { filtro?: F
     porDia,
     ufs: [...new Set(boloes.map((b) => b.loterica.uf))].sort(),
   };
+}
+
+const RESUMOS = new Map<string, ResumoConcurso>();
+
+/**
+ * Previsão de fechamento do concurso em andamento por concursos parecidos (mesma modalidade, mesma
+ * fração da janela), com faixa de 80%, pico, mínimo para zerar e o backtest dos últimos 16.
+ */
+export async function previsaoDoConcurso(fonte: FonteDadosRaioX, chave: string, o: { em?: Date | null } = {}) {
+  const m = fonteMercado(fonte);
+  const c = await m.concurso(chave);
+  if (!c || !c.fechaEm) return null;
+  const em = o.em ?? m.agora();
+  if (em.getTime() >= c.fechaEm.getTime() || em.getTime() <= c.abreEm.getTime()) return { concurso: c, previsao: null, backtest: null, motivo: 'fora da janela de vendas' };
+  const fracao = Math.round(((em.getTime() - c.abreEm.getTime()) / (c.fechaEm.getTime() - c.abreEm.getTime())) * 100) / 100;
+  const anteriores = await m.concursosAnteriores(c.modalidade, c.abreEm, 40);
+  const resumos: ResumoConcurso[] = [];
+  for (const a of anteriores) {
+    if (!a.fechaEm) continue;
+    const k = `${fonte.tipo}|${a.chave}|${fracao}`;
+    let r = RESUMOS.get(k);
+    if (!r) {
+      const boloes = await m.boloes(a.chave, a.fechaEm);
+      if (!boloes.length) continue;
+      r = resumirConcurso({ chave: a.chave, abreEm: a.abreEm.getTime(), fechaEm: a.fechaEm.getTime(), boloes }, fracao);
+      if (RESUMOS.size > 5000) RESUMOS.clear();
+      RESUMOS.set(k, r);
+    }
+    resumos.push(r);
+  }
+  const boloes = await m.boloes(chave, em);
+  const atual = resumirConcurso({ chave, abreEm: c.abreEm.getTime(), fechaEm: c.fechaEm.getTime(), boloes }, fracao, { agora: em.getTime() });
+  const previsao = preverPorParecidos(atual, resumos, { agora: em.getTime() });
+  const backtest = backtestPrevisao(resumos, { ultimos: 16 });
+  const ritmo = retratoMercado(boloes, em, { fechaEm: c.fechaEm, maiores: 0 }).ritmoPorMinuto * 60;
+  return { concurso: c, fracao, estado: atual.estado, previsao, backtest, ritmoPorHora: Math.round(ritmo), historico: resumos.length, motivo: previsao ? null : 'histórico insuficiente (menos de 3 concursos fechados)' };
 }
 
 export type { LotericaRef };

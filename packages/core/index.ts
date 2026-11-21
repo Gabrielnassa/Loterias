@@ -18,6 +18,7 @@ export * from './mercado/agregar';
 export * from './mercado/vitrine';
 export * from './mercado/filas';
 export * from './mercado/estatisticas';
+export * from './mercado/previsao';
 
 // Motor de dados
 export * from './eventos/estado';

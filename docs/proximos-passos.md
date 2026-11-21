@@ -61,7 +61,9 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
       `/estatisticas` (panorama), `/estatisticas/lotericas` (busca, Top 10, ficha completa), `/mega-da-virada`
       (contagem regressiva, filas, dia a dia). APIs com CSV/Excel. Simulação e Postgres (snapshots_bolao).
       Corrigido: gerador simulado travava com mais de ~330 lotéricas (nomes esgotados em São Paulo).
-- [ ] 3. Previsão de fechamento por concursos parecidos (faixa, mínimo para zerar, backtest).
+- [x] 3. Previsão de fechamento por concursos parecidos (`core/mercado/previsao.ts`): sobra de cotas, bolões e R$
+      com faixa de 80%, pico, mínimo para zerar x ritmo atual, sobra por faixa de preço, os parecidos e o backtest
+      dos últimos 16 ao lado (Monitoramento e `/api/mercado/previsao`). Testes com o histórico simulado.
 - [ ] 4. Sugestões: franquia de amanhã + otimizador de formato/cota/cotas (lucro esperado e risco).
 - [ ] 5. Simulador de posição + Cronômetro de abertura.
 - [ ] 6. Fase 5: site público /{slug} (SSR, SEO, filtros, jogos, chance, WhatsApp, CAIXA, 3 temas, métricas) + artes (Satori).

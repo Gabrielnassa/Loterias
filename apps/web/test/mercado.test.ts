@@ -126,3 +126,18 @@ suite('Mercado no Postgres (seed)', () => {
     expect(await m.megaDaVirada(ATE)).toBeNull(); // o seed não tem concurso especial
   });
 });
+
+describe('previsão de fechamento na web (simulada)', () => {
+  it('prevê o concurso em andamento com backtest, e a API responde', async () => {
+    const { previsaoDoConcurso } = await import('../lib/mercado');
+    const { GET } = await import('../app/api/mercado/previsao/route');
+    const chave = (await fonteMercado(fonte).concursosAVenda(AGORA))[0]!.chave;
+    const d = (await previsaoDoConcurso(fonte, chave))!;
+    expect(d.previsao).not.toBeNull();
+    expect(d.previsao!.cotasSobra.min).toBeLessThanOrEqual(d.previsao!.cotasSobra.max);
+    expect(d.backtest!.n).toBeGreaterThan(5);
+    expect(d.backtest!.itens.every((i) => i.abreEm.getTime() < d.concurso.abreEm.getTime())).toBe(true);
+    const j = await (await GET(req(`/api/mercado/previsao?concurso=${chave}`))).json();
+    expect(j.dados.previsao.parecidos.length).toBeGreaterThan(2);
+  });
+});
