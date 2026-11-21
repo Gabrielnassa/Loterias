@@ -8,6 +8,7 @@ import type {
   Participacao,
   RegraAbertura,
   ResultadoLeitura,
+  ResultadoOficial,
 } from '@radar/core';
 
 export interface ConcursoParaSalvar {
@@ -67,6 +68,9 @@ export interface Repositorio {
   regrasAbertura(): Promise<RegraAbertura[]>;
   /** Corrige o T0 do concurso (guarda o previsto). Nunca chamado para T0 manual. */
   ajustarAbreEm(ref: ConcursoRef, abreEm: Date, origem: OrigemT0): Promise<void>;
+  /** Concursos já sorteados (até 7 dias) sem resultado oficial gravado (nunca os do seed). */
+  concursosSemResultado(agora: Date, limite: number): Promise<ConcursoRef[]>;
+  salvarResultado(ref: ConcursoRef, resultado: ResultadoOficial, bruto: unknown): Promise<void>;
   /** Grava a abertura e SUBSTITUI as participações dela (idempotente; recalculável). */
   salvarAbertura(ref: ConcursoRef, abertura: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void>;
 }

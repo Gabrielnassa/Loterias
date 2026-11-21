@@ -14,7 +14,8 @@ os textos, as artes ou o código do oLoterico.
 | `packages/core/simulacao` | Simulador de abertura com "verdade" conhecida, `FonteSimulada`, coletor rápido, histórico simulado (800 lotéricas, 13 semanas) e JSON no formato bruto da CAIXA |
 | `packages/db` | DDL em SQL (`migrations/`, fonte da verdade), espelho Drizzle (`schema.ts`), migrador, partições |
 | `apps/worker` | Coletor contínuo: relógio NTP, agendador ao segundo, fila BullMQ (ou memória), coletor, job de fim de janela, repositórios Postgres/memória, adaptador `caixa-navegador` (Playwright) |
-| `apps/web` | Next.js 15 + Tailwind: telas do Raio-X e da Minha lotérica, API, busca, CSV/Excel, SSE ao vivo. Lê do Postgres (`lib/dados-postgres.ts`) ou da simulação (`lib/dados.ts`); escolha em `lib/fonte-dados.ts` |
+| `apps/web` | Next.js 15 + Tailwind: telas do Raio-X e da Minha lotérica (`/minha`: Bolões, Financeiro, Conferência, Posição na abertura), API, busca, CSV/Excel, SSE ao vivo. Lê do Postgres (`lib/dados-postgres.ts`, `lib/minha.ts`) ou da simulação (`lib/dados.ts`); escolha em `lib/fonte-dados.ts` |
+| `packages/core/minha`, `packages/core/conferencia` | Regras da Fase 3: financeiro por bolão (internet x balcão), resumo dia a dia, break-even por concurso, posição na abertura 7/30/90 dias, resultado oficial e prêmios por combinatória |
 | `packages/db/seed.ts` | Seed de demonstração: grava o histórico simulado no banco com `concursos.origem = 'seed'` (a web avisa "dados simulados") |
 | `docs/fonte-caixa.md` | Fase 0: API observada no portal, respostas e o que falta descobrir |
 | `docs/proximos-passos.md` | Ponto de retomada entre sessões |
@@ -34,6 +35,7 @@ DATABASE_URL=... pnpm db:seed                                             # grav
 pnpm caixa:preparar-sessao                                                # UMA PESSOA prepara a sessão do navegador
 FONTE=caixa-navegador CAIXA_MODALIDADES=mega-sena pnpm poc:fonte          # adaptador real (exige a sessão)
 pnpm observar-abertura -- --modalidade mega-sena --t0 2026-11-22T11:45    # registra uma abertura real em JSONL (README)
+pnpm resultados -- --modalidade mega-sena --concurso 3088                 # resultado oficial (grava com DATABASE_URL); atrás de proxy: NODE_USE_ENV_PROXY=1
 docker compose up -d postgres redis && docker compose up -d --build worker
 pnpm --filter @radar/core exec tsx fonte/fixtures/gerar.ts                # regenera fixtures sintéticas
 ```
@@ -126,6 +128,9 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | T0 por concurso | `core/coleta/calendario.ts`, tabela `regras_abertura` | `preverAbertura` pelas regras ativas (menor prioridade primeiro); `ajustarT0` = minuto cheio do 1º bolão se o concurso foi visto vazio até 5 min antes e a previsão errou por mais de 2 min; T0 manual nunca muda (`abre_em_origem`, `abre_em_previsto`) |
 | Snapshots | `aplicarLeitura` + `snapshots_bolao` | Grava linha do bolão novo, do que mudou, do que sumiu (`presente=false`) e keyframe de todos a cada 10 min; cada leitura fica em `coletas` |
 | Mercado | `core/mercado/agregar.ts` | `mercado_minuto` por concurso, UF e 'BR' (total) |
+| Resultado oficial | `core/conferencia/resultado.ts`, `apps/worker/src/fontes/resultados-caixa.ts` | API pública `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}` (formato conferido com a Mega 3.088); o coletor busca a cada 10 min os concursos sorteados sem resultado (`resultados`, `rateios`) |
+| Conferência | `core/conferencia/premios.ts` | Prêmio por faixa = C(h, j) x C(n − h, k − j) x rateio; seu prêmio = prêmio / cotas x cotas que sobraram. Mega, Quina, Lotofácil e Dupla Sena |
+| Estorno | `apps/web/lib/minha.ts` (`marcarEstorno`) | Só o usuário marca/desmarca (evento `estorno`); o coletor nunca desfaz |
 
 ## Raio-X de Abertura: definições (SPEC)
 

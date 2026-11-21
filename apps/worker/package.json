@@ -9,6 +9,7 @@
     "dev": "tsx watch src/main.ts",
     "observar-abertura": "tsx src/observar-abertura.ts",
     "poc:fonte": "tsx src/poc-fonte.ts",
+    "resultados": "tsx src/resultados.ts",
     "start": "tsx src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json"

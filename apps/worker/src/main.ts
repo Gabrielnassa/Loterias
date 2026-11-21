@@ -4,6 +4,7 @@ import { Coletor } from './coletor';
 import { lerConfig } from './config';
 import { criarFilaBullmq, criarFilaMemoria, type Fila } from './filas';
 import { criarFonte } from './fonte';
+import { criarBuscaResultados } from './fontes/resultados-caixa';
 import { criarLog } from './log';
 import { Relogio } from './relogio';
 import { RepositorioMemoria } from './repositorio/memoria';
@@ -59,12 +60,14 @@ async function principal() {
     log.info({ concurso: `${s.modalidade} ${s.concurso}`, t0: s.t0.toISOString(), boloes: s.boloes.length }, 'abertura SIMULADA cadastrada');
   }
 
+  const buscarResultados = amb.RESULTADOS_CAIXA ?? amb.FONTE.startsWith('caixa');
   const coletor = new Coletor({
     fonte,
     repo,
     relogio,
     log,
     config: cfg.coletor,
+    ...(buscarResultados ? { resultados: criarBuscaResultados() } : {}),
     alertar: (a) => log.error({ alerta: a }, 'ALERTA: verificar a fonte'),
   });
 

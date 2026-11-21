@@ -32,6 +32,8 @@ const esquema = z.object({
   COLETA_PARTICIPACAO_MIN: z.coerce.number().positive().default(30),
   COLETA_PAUSA_ACAO_HUMANA_MIN: z.coerce.number().positive().default(10),
   COLETA_COMPLETA_A_CADA_S: z.coerce.number().positive().default(60),
+  /** Buscar o resultado oficial na API pública da CAIXA (Conferência). Padrão: só com fonte real. */
+  RESULTADOS_CAIXA: bool.optional(),
   FONTE_INTERVALO_MIN_MS: z.coerce.number().int().nonnegative().default(250),
   FONTE_FIXTURES_DIR: z.string().optional(),
   CAIXA_BASE_URL: z.string().optional(),

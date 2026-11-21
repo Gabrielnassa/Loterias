@@ -111,6 +111,20 @@ suite('repositório PostgreSQL', () => {
       from abertura_participacoes p join aberturas a on a.id = p.abertura_id join lotericas l on l.id = p.loterica_id
       group by 1, 2, 3 order by 3 desc`;
     expect(linhas.length).toBe(participacoes);
+    // resultado oficial: o concurso encerrado aparece como "sem resultado" até ser gravado
+    const { horarioSP: _h } = await import('@radar/core');
+    const repo = new RepositorioPostgres(criarDb(sql));
+    await sql`update concursos set sorteio_em = encerrado_em where numero = 3500`;
+    const pendentes = await repo.concursosSemResultado(new Date(sim.fechaEm.getTime() + 2 * 3_600_000), 5);
+    expect(pendentes).toEqual([{ modalidade: 'lotofacil', concurso: 3500 }]);
+    await repo.salvarResultado({ modalidade: 'lotofacil', concurso: 3500 }, {
+      modalidade: 'lotofacil', concurso: 3500, dataApuracao: '2026-11-21', dezenas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], acumulado: false,
+      rateios: [{ faixa: 1, descricao: '15 acertos', acertos: 15, ganhadores: 1, valorPremio: 1_500_000 }],
+    }, { bruto: true });
+    expect(await repo.concursosSemResultado(new Date(sim.fechaEm.getTime() + 2 * 3_600_000), 5)).toEqual([]);
+    const { rateios } = await um(sql`select count(*)::int as rateios from rateios`);
+    expect(rateios).toBe(1);
+    void _h;
     const [c] = await sql`select encerrado_em from concursos where numero = 3500`;
     expect(c!.encerrado_em).not.toBeNull();
     const { encerrou } = await um(sql`select count(*)::int as encerrou from eventos_bolao where tipo = 'encerrou'`);

@@ -31,4 +31,9 @@ Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
       (dúvida aberta); T0 por concurso (`regras_abertura`, `preverAbertura`, `ajustarT0`). Migração 0003.
 - [x] B. Web lendo do Postgres (`lib/dados-postgres.ts`) + seed (`pnpm db:seed`); teste prova que dá o mesmo que a simulação.
 - [x] C. `pnpm observar-abertura` (apps/worker/src/observador.ts): JSONL com cada página, cada leitura e um resumo.
-- [ ] D. Fase 3 (Minha lotérica): Bolões MKP, Financeiro MKP, Conferência MKP, Posição na abertura, CSV/Excel.
+- [x] D. Fase 3 (Minha lotérica) em `/minha`: Bolões MKP, Financeiro MKP, Conferência MKP (resultado oficial da
+      CAIXA, migração 0004), Posição na abertura; CSV/Excel; estorno manual. Seed com jogos, balcão e resultados simulados.
+
+Pendências conhecidas para depois: multi-loja e contas (Fase 6), watchlist e alertas, arte do premiado (Fase 5),
+conferência de Lotomania/Timemania/Dia de Sorte/Super Sete/+Milionária/Loteca (regras de prêmio próprias),
+observar uma abertura real e calibrar a estratégia, testar as imagens Docker.

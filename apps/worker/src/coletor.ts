@@ -27,6 +27,7 @@ import {
 import { CONFIG_COLETOR_PADRAO, type ConfigColetor } from './config';
 import type { Log } from './log';
 import type { FonteDeTempo } from './relogio';
+import type { BuscarResultado } from './fontes/resultados-caixa';
 import type { ConcursoParaSalvar, Repositorio } from './repositorio/tipos';
 
 export interface ResumoTarefa {
@@ -44,6 +45,8 @@ export interface DepsColetor {
   relogio: FonteDeTempo;
   log: Log;
   config?: ConfigColetor;
+  /** Busca do resultado oficial (Conferência). Ausente = não busca. */
+  resultados?: BuscarResultado;
   /** Chamado em falhas seguidas, mudança de formato ou bloqueio (push/e-mail ficam para a Fase 6). */
   alertar?: (alerta: Alerta & { tarefa: string }) => void;
 }
@@ -60,6 +63,7 @@ export class Coletor {
   private readonly cfg: ConfigColetor;
   pausadoAte = 0;
   private regras: { em: number; regras: readonly RegraAbertura[] } | null = null;
+  private ultimaBuscaResultados = Number.NEGATIVE_INFINITY;
   /** Última leitura completa por concurso (base da estratégia de leitura na abertura). */
   private readonly ultimaCompleta = new Map<string, { em: number; duracaoMs: number }>();
 
@@ -81,6 +85,25 @@ export class Coletor {
         return this.encerrar(t);
       case 'abertura':
         return this.fecharAbertura(t);
+    }
+  }
+
+  /** A cada 10 min, busca o resultado oficial de até 3 concursos já sorteados que ainda não têm. */
+  private async buscarResultados(): Promise<void> {
+    const { resultados, repo, relogio, log } = this.d;
+    const agora = relogio.agora();
+    if (!resultados || agora.getTime() - this.ultimaBuscaResultados < 10 * 60_000) return;
+    this.ultimaBuscaResultados = agora.getTime();
+    for (const ref of await repo.concursosSemResultado(agora, 3)) {
+      try {
+        const r = await resultados(ref);
+        if (!r) continue;
+        await repo.salvarResultado(ref, r.resultado, r.bruto);
+        log.info({ concurso: chaveConcurso(ref), dezenas: r.resultado.dezenas }, 'resultado oficial gravado');
+      } catch (e) {
+        log.warn({ concurso: chaveConcurso(ref), erro: e instanceof Error ? e.message : String(e) }, 'falha ao buscar resultado oficial');
+        if (e instanceof BloqueadoPelaFonteError) break;
+      }
     }
   }
 
@@ -279,6 +302,7 @@ export class Coletor {
       }
       this.saude.registrarSucesso();
       await repo.finalizarColeta(coletaId, { terminouEm: relogio.agora(), itens: contagens.length, completa: true });
+      await this.buscarResultados();
       return { ok: true, itens: contagens.length };
     } catch (e) {
       const erro = this.falha(t, e);

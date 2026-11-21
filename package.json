@@ -17,7 +17,8 @@
     "web:build": "pnpm --filter @radar/web build",
     "caixa:preparar-sessao": "pnpm --filter @radar/worker caixa:preparar-sessao",
     "db:seed": "pnpm --filter @radar/db seed",
-    "observar-abertura": "pnpm --filter @radar/worker observar-abertura"
+    "observar-abertura": "pnpm --filter @radar/worker observar-abertura",
+    "resultados": "pnpm --filter @radar/worker resultados"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

@@ -10,6 +10,7 @@ import {
   type Participacao,
   type RegraAbertura,
   type ResultadoLeitura,
+  type ResultadoOficial,
 } from '@radar/core';
 import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
@@ -83,6 +84,18 @@ export class RepositorioMemoria implements Repositorio {
 
   async salvarMercado(ref: ConcursoRef, minuto: Date, linhas: readonly LinhaMercado[]): Promise<void> {
     for (const l of linhas) this.mercado.set(`${chaveConcurso(ref)}|${l.uf}|${minuto.toISOString()}`, { ...l, minuto });
+  }
+
+  readonly resultados = new Map<string, ResultadoOficial>();
+  async concursosSemResultado(agora: Date, limite: number): Promise<ConcursoRef[]> {
+    return [...this.concursos.values()]
+      .filter((c) => c.encerradoEm && c.encerradoEm.getTime() <= agora.getTime() && c.encerradoEm.getTime() > agora.getTime() - 7 * 86_400_000)
+      .filter((c) => !this.resultados.has(chaveConcurso(c)))
+      .slice(0, limite)
+      .map(({ modalidade, concurso }) => ({ modalidade, concurso }));
+  }
+  async salvarResultado(ref: ConcursoRef, resultado: ResultadoOficial): Promise<void> {
+    this.resultados.set(chaveConcurso(ref), resultado);
   }
 
   regras: RegraAbertura[] = [];

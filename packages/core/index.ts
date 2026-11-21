@@ -28,3 +28,11 @@ export * from './raio-x/ranking';
 // Adaptador da fonte (contrato, varredura, saúde, cliente HTTP)
 export * from './fonte';
 export * from './raio-x/busca';
+
+// Conferência (Fase 3)
+export * from './conferencia/resultado';
+export * from './conferencia/premios';
+
+// Minha lotérica (Fase 3)
+export * from './minha/financeiro-mkp';
+export * from './minha/posicao';

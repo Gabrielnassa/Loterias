@@ -11,6 +11,7 @@ import {
   date,
   doublePrecision,
   integer,
+  jsonb,
   numeric,
   pgTable,
   primaryKey,
@@ -229,6 +230,30 @@ export const franquiaDiaria = pgTable(
   (t) => [primaryKey({ columns: [t.lotericaId, t.dia] })],
 );
 
+export const resultados = pgTable('resultados', {
+  concursoId: id64('concurso_id').primaryKey(),
+  dataApuracao: date('data_apuracao', { mode: 'string' }).notNull(),
+  dezenas: integer('dezenas').array().notNull(),
+  dezenas2: integer('dezenas2').array(),
+  acumulado: boolean('acumulado').notNull().default(false),
+  origem: text('origem', { enum: ['caixa', 'seed'] }).notNull().default('caixa'),
+  obtidoEm: tz('obtido_em').notNull().defaultNow(),
+  bruto: jsonb('bruto'),
+});
+
+export const rateios = pgTable(
+  'rateios',
+  {
+    concursoId: id64('concurso_id').notNull(),
+    faixa: smallint('faixa').notNull(),
+    descricao: text('descricao').notNull(),
+    acertos: smallint('acertos'),
+    ganhadores: integer('ganhadores').notNull(),
+    valorPremio: numeric('valor_premio', { precision: 16, scale: 2 }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.concursoId, t.faixa] })],
+);
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -243,4 +268,6 @@ export const todasAsTabelas = {
   aberturaParticipacoes,
   franquiaDiaria,
   regrasAbertura,
+  resultados,
+  rateios,
 };

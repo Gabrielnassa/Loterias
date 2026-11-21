@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 
 const NAV: [string, string][] = [
   ['/', 'Início'],
+  ['/minha', 'Minha lotérica'],
   ['/ranking', 'Ranking'],
   ['/comparar', 'Comparar'],
   ['/ao-vivo', 'Ao vivo'],

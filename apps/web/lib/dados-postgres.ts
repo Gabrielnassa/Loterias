@@ -33,7 +33,8 @@ function lerIdAbertura(id: string): { slug: string; numero: number } | null {
 
 export class FontePostgresRaioX implements FonteDadosRaioX {
   readonly tipo = 'postgres' as const;
-  private readonly sql: Sql;
+  /** Conexão (usada também pela "Minha lotérica"). */
+  readonly sql: Sql;
   private caches = new Map<string, Cache<unknown>>();
   private simuladaAoVivo: FonteSimuladaRaioX | null = null;
 

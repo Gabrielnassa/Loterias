@@ -76,3 +76,16 @@ FONTE=caixa-navegador CAIXA_CONTA_DEDICADA=true pnpm observar-abertura -- --moda
 - Para no primeiro bloqueio, pedido de idade/login ou sessão expirada (fica registrado).
 - Me mande o arquivo `.jsonl` (ele não tem dados pessoais: só bolões e lotéricas da vitrine).
 - Teste do script sem a CAIXA: `FONTE=simulada pnpm observar-abertura -- --modalidade lotofacil --duracao-min 1`.
+
+## Minha lotérica (Fase 3)
+
+`/minha` na web: Bolões MKP (franquia de hoje, internet x balcão, break-even em cotas e %, colocação,
+estorno manual), Financeiro MKP (dia a dia, por loteria, maiores lucros e prejuízos), Conferência MKP
+(prêmios com o resultado e o rateio oficiais; "seu prêmio" = prêmio / cotas x cotas que sobraram) e
+Posição na abertura (7/30/90 dias, "abriu rápido?"). Tudo exporta CSV e Excel. Precisa do banco.
+
+- `RADAR_MINHA_LOTERICA=<código>` escolhe a lotérica (com o seed, a demonstração usa 980011).
+- `RADAR_FRANQUIA_LIMITE` (padrão 8000) é o teto diário da franquia.
+- Resultado oficial: o coletor busca sozinho quando a fonte é real (`RESULTADOS_CAIXA=true` força).
+  Manual: `pnpm resultados -- --modalidade mega-sena --concurso 3088`. Atrás de um proxy HTTP,
+  rode com `NODE_USE_ENV_PROXY=1`.

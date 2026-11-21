@@ -14,13 +14,14 @@ import {
   type Participacao,
   type RegraAbertura,
   type ResultadoLeitura,
+  type ResultadoOficial,
 } from '@radar/core';
 import { schema, type Db } from '@radar/db';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
 // Em SQL cru (sql`...`) o driver não converte Date: passar sempre ISO string + cast.
-const { aberturas, aberturaParticipacoes, boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, regrasAbertura, snapshotsBolao } = schema;
+const { aberturas, aberturaParticipacoes, boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, rateios, regrasAbertura, resultados, snapshotsBolao } = schema;
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
@@ -328,8 +329,10 @@ export class RepositorioPostgres implements Repositorio {
           );
           await tx.execute(sql`
             update boloes as b set
-              cotas_disponiveis = v.disp, status = v.status, esgotou_em = v.esgotou_em,
-              sobra_final = v.sobra, estornado = v.estornado, fila = v.fila, fila_observada = v.fila_obs
+              cotas_disponiveis = v.disp, esgotou_em = v.esgotou_em, sobra_final = v.sobra,
+              -- estorno é marcado pelo usuário na web: o coletor nunca desfaz
+              status = case when b.estornado then 'estornado' else v.status end,
+              fila = v.fila, fila_observada = v.fila_obs
             from (values ${valores}) as v(id, disp, status, esgotou_em, sobra, estornado, fila, fila_obs)
             where b.id = v.id`);
         }
@@ -454,6 +457,42 @@ export class RepositorioPostgres implements Repositorio {
       .update(concursos)
       .set({ abreEmPrevisto: sql`coalesce(${concursos.abreEmPrevisto}, ${concursos.abreEm})`, abreEm, abreEmOrigem: origem })
       .where(and(eq(concursos.id, concursoId), sql`${concursos.abreEmOrigem} <> 'manual'`));
+  }
+
+  async concursosSemResultado(agora: Date, limite: number): Promise<ConcursoRef[]> {
+    await this.carregarModalidades();
+    const linhas = await this.db
+      .select({ modalidadeId: concursos.modalidadeId, numero: concursos.numero })
+      .from(concursos)
+      .leftJoin(resultados, eq(resultados.concursoId, concursos.id))
+      .where(
+        and(
+          sql`${resultados.concursoId} is null`,
+          sql`${concursos.origem} <> 'seed'`,
+          sql`coalesce(${concursos.sorteioEm}, ${concursos.encerradoEm}) <= ${new Date(agora.getTime() - 30 * 60_000).toISOString()}::timestamptz`,
+          sql`coalesce(${concursos.sorteioEm}, ${concursos.encerradoEm}) > ${new Date(agora.getTime() - 7 * 86_400_000).toISOString()}::timestamptz`,
+        ),
+      )
+      .limit(limite);
+    return linhas
+      .map((l) => ({ modalidade: this.modalidadeSlugs.get(l.modalidadeId)!, concurso: l.numero }))
+      .filter((r) => r.modalidade);
+  }
+
+  async salvarResultado(ref: ConcursoRef, r: ResultadoOficial, bruto: unknown): Promise<void> {
+    const concursoId = await this.concursoId(ref);
+    await this.db.transaction(async (tx) => {
+      await tx
+        .insert(resultados)
+        .values({ concursoId, dataApuracao: r.dataApuracao, dezenas: r.dezenas, dezenas2: r.dezenas2 ?? null, acumulado: r.acumulado, origem: 'caixa', bruto })
+        .onConflictDoUpdate({ target: resultados.concursoId, set: { dezenas: r.dezenas, dezenas2: r.dezenas2 ?? null, acumulado: r.acumulado, bruto, obtidoEm: sql`now()` } });
+      await tx.delete(rateios).where(eq(rateios.concursoId, concursoId));
+      if (r.rateios.length) {
+        await tx.insert(rateios).values(
+          r.rateios.map((x) => ({ concursoId, faixa: x.faixa, descricao: x.descricao, acertos: x.acertos, ganhadores: x.ganhadores, valorPremio: x.valorPremio.toFixed(2) })),
+        );
+      }
+    });
   }
 
   async marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void> {

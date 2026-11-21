@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import { criarAleatorio, type ModalidadeSlug } from '@radar/core';
 import { gerarHistoricoSimulado } from '@radar/core/simulacao';
 import { sql } from 'drizzle-orm';
 import { criarDb, criarSql, type Db } from './cliente';
@@ -30,6 +31,22 @@ function emLotes<T>(itens: readonly T[], n: number): T[][] {
 }
 
 /** Apaga só o que veio do seed (concursos com origem 'seed' e o que depende deles). */
+/** Lotérica da demonstração ("Minha lotérica"): ganha jogos, cotas de balcão e conferência. */
+export const LOTERICA_DEMONSTRACAO = '980011';
+
+const UNIVERSO: Partial<Record<ModalidadeSlug, { n: number; k: number; faixas: [number, number, number][] }>> = {
+  // [acertos, valor típico do prêmio, ganhadores típicos] — valores SIMULADOS
+  'mega-sena': { n: 60, k: 6, faixas: [[6, 0, 0], [5, 52_000, 20], [4, 900, 1800]] },
+  quina: { n: 80, k: 5, faixas: [[5, 0, 0], [4, 9_000, 40], [3, 110, 3500], [2, 3.5, 90_000]] },
+  lotofacil: { n: 25, k: 15, faixas: [[15, 1_200_000, 2], [14, 1_600, 300], [13, 30, 9_000], [12, 12, 110_000], [11, 6, 600_000]] },
+};
+
+function sortear(r: ReturnType<typeof criarAleatorio>, n: number, k: number): number[] {
+  const s = new Set<number>();
+  while (s.size < k) s.add(r.inteiro(1, n));
+  return [...s].sort((a, b) => a - b);
+}
+
 export async function limparSeed(db: Db): Promise<void> {
   await db.execute(sql`
     with c as (select id from concursos where origem = 'seed')
@@ -39,6 +56,7 @@ export async function limparSeed(db: Db): Promise<void> {
   await db.execute(sql`delete from bolao_jogos where bolao_id in (select b.id from boloes b join concursos c on c.id = b.concurso_id where c.origem = 'seed')`);
   await db.execute(sql`delete from boloes where concurso_id in (select id from concursos where origem = 'seed')`);
   await db.execute(sql`delete from mercado_minuto where concurso_id in (select id from concursos where origem = 'seed')`);
+  await db.execute(sql`delete from resultados where concurso_id in (select id from concursos where origem = 'seed')`);
   await db.execute(sql`delete from concursos where origem = 'seed'`);
 }
 
@@ -89,6 +107,9 @@ export async function semearHistoricoSimulado(db: Db, o: OpcoesSeed = {}) {
           lote.map((b) => {
             const pos = b.posEntrada;
             const encerrado = b.sobraFinal !== null && b.sobraFinal !== undefined;
+            // lotérica de demonstração: parte das cotas impressas no balcão (o resto na internet)
+            const demo = b.loterica.codigoCaixa === LOTERICA_DEMONSTRACAO;
+            const balcao = demo && b.cotasTotal >= 5 && (b.cotasTotal + plano.concurso) % 2 === 0 ? Math.floor(b.cotasTotal * 0.2) : 0;
             return {
               idCaixa: `${plano.modalidade}:${b.id}`,
               lotericaId: lotericaId.get(b.loterica.codigoCaixa)!,
@@ -99,7 +120,7 @@ export async function semearHistoricoSimulado(db: Db, o: OpcoesSeed = {}) {
               valorCota: b.valorCotaBase.toFixed(2),
               valorAposta: (b.cotasTotal * b.valorCotaBase).toFixed(2),
               cotasDisponiveis: b.cotasDisponiveis,
-              cotasDigitais: b.cotasTotal,
+              cotasDigitais: b.cotasTotal - balcao,
               firstSeenAt: b.firstSeenAt,
               lastSeenAt: encerrado ? fechaEm : ate,
               fila: b.fila,
@@ -124,6 +145,25 @@ export async function semearHistoricoSimulado(db: Db, o: OpcoesSeed = {}) {
         .returning({ id: schema.boloes.id, idCaixa: schema.boloes.idCaixa });
       for (const x of r) bolaoId.set(x.idCaixa, x.id);
       nBoloes += r.length;
+    }
+    // jogos dos bolões da lotérica de demonstração + resultado e rateio SIMULADOS do concurso
+    const universo = UNIVERSO[plano.modalidade];
+    const rnd = criarAleatorio(plano.concurso * 7919 + plano.modalidade.length);
+    if (universo) {
+      const jogos = boloes
+        .filter((b) => b.loterica.codigoCaixa === LOTERICA_DEMONSTRACAO && bolaoId.has(`${plano.modalidade}:${b.id}`))
+        .flatMap((b) => Array.from({ length: b.jogos }, (_, ordem) => ({ bolaoId: bolaoId.get(`${plano.modalidade}:${b.id}`)!, ordem, numeros: sortear(rnd, universo.n, b.dezenas) })));
+      for (const lote of emLotes(jogos, 2000)) await db.insert(schema.bolaoJogos).values(lote);
+      if (fechaEm.getTime() <= ate.getTime()) {
+        const dataApuracao = new Date(fechaEm.getTime() + 3_600_000).toISOString().slice(0, 10);
+        await db.insert(schema.resultados).values({ concursoId: c.id, dataApuracao, dezenas: sortear(rnd, universo.n, universo.k), acumulado: true, origem: 'seed' });
+        await db.insert(schema.rateios).values(
+          universo.faixas.map(([acertos, valor, ganhadores], i) => {
+            const g = Math.round(ganhadores * (0.5 + rnd.proximo()));
+            return { concursoId: c.id, faixa: i + 1, descricao: `${acertos} acertos`, acertos, ganhadores: g, valorPremio: (g ? valor * (0.7 + 0.6 * rnd.proximo()) : 0).toFixed(2) };
+          }),
+        );
+      }
     }
     const [ab] = await db
       .insert(schema.aberturas)
