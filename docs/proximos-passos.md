@@ -68,7 +68,9 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
       loterias (procura da UF no mesmo dia da semana, concorrência, prêmio quando houver, lucro por R$) e otimizador
       de formato, cota e nº de cotas com lucro esperado, chance de prejuízo e P10/P90. No simulado quase tudo tem
       risco alto (vendem ~70%, perto do break-even de 67,7%): a tela avisa.
-- [ ] 5. Simulador de posição + Cronômetro de abertura.
+- [x] 5. Simulador de posição (`/minha/simulador`, `/api/minha/simulador`) pela curva de chegada das aberturas do
+      mesmo dia da semana; Cronômetro (`/minha/cronometro`) com contagem regressiva, alerta às 21:43 (som e
+      notificação), fila de bolões pré-montados no aparelho e placar ao vivo.
 - [ ] 6. Fase 5: site público /{slug} (SSR, SEO, filtros, jogos, chance, WhatsApp, CAIXA, 3 temas, métricas) + artes (Satori).
 - [ ] 7. Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (probabilidades e marcação).
 - Quando o Gabriel mandar dados reais da vitrine (cidade de São Paulo), trocar as fixtures de `fonte/fixtures/caixa/`.

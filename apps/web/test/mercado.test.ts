@@ -155,3 +155,22 @@ describe('Sugestões (simulada)', () => {
     expect(csv.split('\r\n')[0]).toContain('Loteria;Sugerido (R$);Formato');
   });
 });
+
+describe('Simulador de posição e Cronômetro (simulada)', () => {
+  it('página prevista para a hora de entrada, limite da pág. 1 e próxima abertura', async () => {
+    const { simuladorDePosicao, cronometro, atrasoDaHora, horaDoAtraso } = await import('../lib/abertura-ferramentas');
+    const { GET } = await import('../app/api/minha/simulador/route');
+    expect(atrasoDaHora('21:45:30', 5)).toBe(30);
+    expect(atrasoDaHora('11:46', 7)).toBe(60);
+    expect(horaDoAtraso(90, 5)).toBe('21:46:30');
+    const cedo = await simuladorDePosicao(fonte, { hora: '21:45:05', diaSemana: 5 });
+    const tarde = await simuladorDePosicao(fonte, { hora: '21:55:00', diaSemana: 5 });
+    expect(cedo.porEscopo[1]!.aberturas).toBeGreaterThan(0);
+    expect(tarde.porEscopo[2]!.posicaoMediana!).toBeGreaterThanOrEqual(cedo.porEscopo[2]!.posicaoMediana!);
+    const c = await cronometro(fonte);
+    expect(c.proxima.t0.toISOString()).toBe(horarioSP(2026, 11, 21, 21, 45).toISOString()); // 20/11 23:30 -> sábado 21:45
+    expect(c.placar.linhas.length).toBeGreaterThanOrEqual(0);
+    const j = await (await GET(req('/api/minha/simulador?hora=21:45:30&dia=5'))).json();
+    expect(j.dados.porEscopo).toHaveLength(3);
+  });
+});

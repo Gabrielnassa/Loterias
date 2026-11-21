@@ -8,6 +8,8 @@ const ABAS: [string, string][] = [
   ['/minha/conferencia', 'Conferência MKP'],
   ['/minha/posicao', 'Posição na abertura'],
   ['/minha/sugestoes', 'Sugestões'],
+  ['/minha/simulador', 'Simulador de posição'],
+  ['/minha/cronometro', 'Cronômetro'],
 ];
 
 export default async function LayoutMinha({ children }: { children: ReactNode }) {
