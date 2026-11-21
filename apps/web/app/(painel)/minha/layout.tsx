@@ -10,6 +10,8 @@ const ABAS: [string, string][] = [
   ['/minha/sugestoes', 'Sugestões'],
   ['/minha/simulador', 'Simulador de posição'],
   ['/minha/cronometro', 'Cronômetro'],
+  ['/minha/site', 'Meu site'],
+  ['/minha/midias', 'Mídias'],
 ];
 
 export default async function LayoutMinha({ children }: { children: ReactNode }) {

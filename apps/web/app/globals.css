@@ -56,3 +56,69 @@ body {
 .faixa-pag4\+ {
   @apply bg-rose-100 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100;
 }
+
+/* Site público da lotérica: 3 temas (tokens trocados pelo atributo data-tema) */
+.site {
+  --s-fundo: #f8fafc;
+  --s-cartao: #ffffff;
+  --s-texto: #0f172a;
+  --s-suave: #64748b;
+  --s-borda: #e2e8f0;
+  --s-destaque: #0e7490;
+  --s-destaque-texto: #ffffff;
+  background: var(--s-fundo);
+  color: var(--s-texto);
+}
+.site[data-tema='noite'] {
+  --s-fundo: #0b1120;
+  --s-cartao: #111827;
+  --s-texto: #e5e7eb;
+  --s-suave: #94a3b8;
+  --s-borda: #1f2937;
+  --s-destaque: #f59e0b;
+  --s-destaque-texto: #111827;
+}
+.site[data-tema='sorte'] {
+  --s-fundo: #f0fdf4;
+  --s-cartao: #ffffff;
+  --s-texto: #052e16;
+  --s-suave: #3f6212;
+  --s-borda: #bbf7d0;
+  --s-destaque: #15803d;
+  --s-destaque-texto: #ffffff;
+}
+.site-cartao {
+  background: var(--s-cartao);
+  border: 1px solid var(--s-borda);
+  border-radius: 0.9rem;
+}
+.site-suave {
+  color: var(--s-suave);
+}
+.site-botao {
+  background: var(--s-destaque);
+  color: var(--s-destaque-texto);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.site-botao-linha {
+  border: 1px solid var(--s-destaque);
+  color: var(--s-destaque);
+  border-radius: 0.6rem;
+  padding: 0.45rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.site-campo {
+  background: var(--s-cartao);
+  border: 1px solid var(--s-borda);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.875rem;
+  color: var(--s-texto);
+}

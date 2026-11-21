@@ -264,6 +264,31 @@ export const rateios = pgTable(
   (t) => [primaryKey({ columns: [t.concursoId, t.faixa] })],
 );
 
+export const sites = pgTable('sites', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  lotericaId: id64('loterica_id').notNull().unique(),
+  slug: text('slug').notNull().unique(),
+  whatsapp: text('whatsapp'),
+  instagram: text('instagram'),
+  endereco: text('endereco'),
+  horario: text('horario'),
+  sobre: text('sobre'),
+  tema: text('tema', { enum: ['classico', 'noite', 'sorte'] }).notNull().default('classico'),
+  linkCaixa: text('link_caixa'),
+  ativo: boolean('ativo').notNull().default(true),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  atualizadoEm: tz('atualizado_em').notNull().defaultNow(),
+});
+
+export const siteEventos = pgTable('site_eventos', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  siteId: id64('site_id').notNull(),
+  em: tz('em').notNull().defaultNow(),
+  tipo: text('tipo', { enum: ['visita', 'whatsapp', 'caixa', 'carrinho'] }).notNull(),
+  visitante: text('visitante').notNull(),
+  bolaoId: text('bolao_id'),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -280,4 +305,6 @@ export const todasAsTabelas = {
   regrasAbertura,
   resultados,
   rateios,
+  sites,
+  siteEventos,
 };

@@ -45,3 +45,4 @@ export * from './minha/financeiro-mkp';
 export * from './minha/posicao';
 export * from './sugestoes/otimizador';
 export * from './abertura/simulador-posicao';
+export * from './site/site';

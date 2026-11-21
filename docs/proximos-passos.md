@@ -71,7 +71,11 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
 - [x] 5. Simulador de posição (`/minha/simulador`, `/api/minha/simulador`) pela curva de chegada das aberturas do
       mesmo dia da semana; Cronômetro (`/minha/cronometro`) com contagem regressiva, alerta às 21:43 (som e
       notificação), fila de bolões pré-montados no aparelho e placar ao vivo.
-- [ ] 6. Fase 5: site público /{slug} (SSR, SEO, filtros, jogos, chance, WhatsApp, CAIXA, 3 temas, métricas) + artes (Satori).
+- [x] 6. Fase 5: site público `/{slug}` (SSR, título/descrição/OpenGraph/JSON-LD de loja local, sitemap e robots,
+      filtros, jogos de cada bolão, chance do prêmio, carrinho que manda o pedido no WhatsApp, link da CAIXA, 3 temas,
+      métricas anônimas em `site_eventos`), `/minha/site` (config + métricas) e `/minha/midias` com as 4 artes em PNG
+      (Satori + resvg). Painel movido para o grupo `app/(painel)`. Migração 0006.
+      Pendente para depois: domínio próprio por lotérica, QR code, pixel, upload de logo e foto do bilhete (OCR).
 - [ ] 7. Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (probabilidades e marcação).
 - Quando o Gabriel mandar dados reais da vitrine (cidade de São Paulo), trocar as fixtures de `fonte/fixtures/caixa/`.
 - Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
