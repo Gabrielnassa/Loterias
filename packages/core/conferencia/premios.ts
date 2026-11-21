@@ -31,28 +31,38 @@ export type RegraConferencia =
       tipo: 'numeros';
       /** Números da aposta simples. */
       k: number;
+      /** Máximo de números num jogo (volante oficial). */
+      max: number;
+      /** Universo dos números e quantos são sorteados. */
       de: number;
       ate: number;
+      sorteadas: number;
       dupla?: boolean;
       especial?: 'time-coracao' | 'mes-sorte';
-      /** +Milionária: trevos da aposta simples e o universo deles. */
-      trevos?: { k: number; de: number; ate: number };
+      /** +Milionária: trevos da aposta simples, máximo num jogo, universo e quantos são sorteados. */
+      trevos?: { k: number; max: number; de: number; ate: number; sorteados: number };
     }
-  | { tipo: 'colunas'; colunas: number; de: number; ate: number; maxPorColuna: number }
+  | { tipo: 'colunas'; colunas: number; de: number; ate: number }
   | { tipo: 'loteca'; jogos: number };
 
+/** Regras dos volantes, conferidas nas páginas oficiais da CAIXA em 21/11/2026. */
 export const REGRAS_CONFERENCIA: Record<ModalidadeSlug, RegraConferencia> = {
-  'mega-sena': { tipo: 'numeros', k: 6, de: 1, ate: 60 },
-  quina: { tipo: 'numeros', k: 5, de: 1, ate: 80 },
-  lotofacil: { tipo: 'numeros', k: 15, de: 1, ate: 25 },
-  'dupla-sena': { tipo: 'numeros', k: 6, de: 1, ate: 50, dupla: true },
-  lotomania: { tipo: 'numeros', k: 50, de: 0, ate: 99 },
-  timemania: { tipo: 'numeros', k: 10, de: 1, ate: 80, especial: 'time-coracao' },
-  'dia-de-sorte': { tipo: 'numeros', k: 7, de: 1, ate: 31, especial: 'mes-sorte' },
-  'mais-milionaria': { tipo: 'numeros', k: 6, de: 1, ate: 50, trevos: { k: 2, de: 1, ate: 6 } },
-  'super-sete': { tipo: 'colunas', colunas: 7, de: 0, ate: 9, maxPorColuna: 3 },
+  'mega-sena': { tipo: 'numeros', k: 6, max: 20, de: 1, ate: 60, sorteadas: 6 },
+  quina: { tipo: 'numeros', k: 5, max: 15, de: 1, ate: 80, sorteadas: 5 },
+  lotofacil: { tipo: 'numeros', k: 15, max: 20, de: 1, ate: 25, sorteadas: 15 },
+  'dupla-sena': { tipo: 'numeros', k: 6, max: 15, de: 1, ate: 50, sorteadas: 6, dupla: true },
+  lotomania: { tipo: 'numeros', k: 50, max: 50, de: 0, ate: 99, sorteadas: 20 },
+  timemania: { tipo: 'numeros', k: 10, max: 10, de: 1, ate: 80, sorteadas: 7, especial: 'time-coracao' },
+  'dia-de-sorte': { tipo: 'numeros', k: 7, max: 15, de: 1, ate: 31, sorteadas: 7, especial: 'mes-sorte' },
+  'mais-milionaria': { tipo: 'numeros', k: 6, max: 12, de: 1, ate: 50, sorteadas: 6, trevos: { k: 2, max: 6, de: 1, ate: 6, sorteados: 2 } },
+  // 7 números: 1 por coluna; 8 a 14: 1 ou 2 por coluna; 15 a 21: 2 ou 3 por coluna
+  'super-sete': { tipo: 'colunas', colunas: 7, de: 0, ate: 9 },
+  // cada jogo: 1, 2 (duplo) ou 3 (triplo) colunas
   loteca: { tipo: 'loteca', jogos: 14 },
 };
+
+/** Times do Coração da Timemania e meses do Dia de Sorte (probabilidade 1 em 80 e 1 em 12). */
+export const TIMES_TIMEMANIA = 80;
 
 export function modalidadeConferivel(m: ModalidadeSlug): boolean {
   return m in REGRAS_CONFERENCIA;
@@ -154,7 +164,7 @@ export function conferirJogo(entrada: number[] | JogoBolao, resultado: Resultado
 function conferirNumeros(regra: Extract<RegraConferencia, { tipo: 'numeros' }>, jogo: JogoBolao, res: ResultadoOficial): PremioAposta | { motivo: string } {
   const numeros = normalizarNumeros(res.modalidade, jogo.numeros);
   const n = numeros.length;
-  if (n < regra.k || !distintosNoIntervalo(numeros, regra.de, regra.ate)) return { motivo: 'jogo com números inválidos' };
+  if (n < regra.k || n > regra.max || !distintosNoIntervalo(numeros, regra.de, regra.ate)) return { motivo: 'jogo com números inválidos' };
   const sorteadas1 = new Set(normalizarNumeros(res.modalidade, res.dezenas));
   const h1 = numeros.filter((x) => sorteadas1.has(x)).length;
   let h2: number | undefined;
@@ -168,7 +178,7 @@ function conferirNumeros(regra: Extract<RegraConferencia, { tipo: 'numeros' }>, 
   let g: number | undefined;
   if (regra.trevos) {
     const t = jogo.trevos ?? [];
-    if (t.length < regra.trevos.k || !distintosNoIntervalo(t, regra.trevos.de, regra.trevos.ate)) return { motivo: 'jogo sem os trevos' };
+    if (t.length < regra.trevos.k || t.length > regra.trevos.max || !distintosNoIntervalo(t, regra.trevos.de, regra.trevos.ate)) return { motivo: 'jogo sem os trevos' };
     if (!res.trevos?.length) return { motivo: 'resultado sem os trevos' };
     const st = new Set(res.trevos);
     g = t.filter((x) => st.has(x)).length;
@@ -220,12 +230,23 @@ function conferirNumeros(regra: Extract<RegraConferencia, { tipo: 'numeros' }>, 
 
 function conferirSuperSete(regra: Extract<RegraConferencia, { tipo: 'colunas' }>, jogo: JogoBolao, res: ResultadoOficial): PremioAposta | { motivo: string } {
   const cols = jogo.colunas;
-  if (!cols || cols.length !== regra.colunas || cols.some((c) => !c.length || c.length > regra.maxPorColuna || !distintosNoIntervalo(c, regra.de, regra.ate))) {
+  if (!cols || cols.length !== regra.colunas || cols.some((c) => !c.length || !distintosNoIntervalo(c, regra.de, regra.ate))) {
     return { motivo: 'jogo sem as 7 colunas' };
   }
+  if (!colunasSuperSeteValidas(cols.map((c) => c.length))) return { motivo: 'jogo fora das regras do Super Sete' };
   if (res.dezenas.length !== regra.colunas) return { motivo: 'resultado sem as 7 colunas' };
   const acertou = cols.map((c, i) => c.includes(res.dezenas[i]!));
   return porDistribuicao(jogo, res, cols.map((c) => c.length), acertou);
+}
+
+/** Volante oficial: 7 números = 1 por coluna; 8 a 14 = 1 ou 2 por coluna; 15 a 21 = 2 ou 3 por coluna. */
+export function colunasSuperSeteValidas(porColuna: number[]): boolean {
+  if (porColuna.length !== 7) return false;
+  const n = porColuna.reduce((s, x) => s + x, 0);
+  if (n === 7) return porColuna.every((x) => x === 1);
+  if (n >= 8 && n <= 14) return porColuna.every((x) => x >= 1 && x <= 2);
+  if (n >= 15 && n <= 21) return porColuna.every((x) => x >= 2 && x <= 3);
+  return false;
 }
 
 function conferirLoteca(regra: Extract<RegraConferencia, { tipo: 'loteca' }>, jogo: JogoBolao, res: ResultadoOficial): PremioAposta | { motivo: string } {

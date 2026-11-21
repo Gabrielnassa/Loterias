@@ -34,6 +34,7 @@ export * from './raio-x/busca';
 // Conferência (Fase 3)
 export * from './conferencia/resultado';
 export * from './conferencia/premios';
+export * from './conferencia/probabilidade';
 
 // Minha lotérica (Fase 3)
 export * from './minha/financeiro-mkp';

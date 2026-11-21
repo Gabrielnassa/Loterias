@@ -46,6 +46,23 @@ observar uma abertura real e calibrar a estratégia, testar as imagens Docker.
       extras no jogo e no resultado). Corrigido: Dupla Sena real não diz o sorteio na faixa; JSON bruto com `\u0000`
       quebrava o jsonb ao gravar o resultado.
 - Próximo sem depender do Gabriel: trocar a fixture do Super Sete por uma real quando a API voltar
-  (`pnpm resultados -- --modalidade super-sete --concurso N`); confirmar a regra do Mês da Sorte com mais de 7 números.
+  (`pnpm resultados -- --modalidade super-sete --concurso N`).
+
+## Sessão 5 (21/11/2026, noite) — lote grande, nesta ordem
+
+Retomar do primeiro item sem [x]. Commit e push a cada item.
+
+- [x] 1. Conferência com as regras oficiais (páginas loterias.caixa.gov.br, 21/11/2026): teste de cada faixa de
+      cada modalidade com o rateio real, tabelas oficiais de probabilidade (10 modalidades) e de quantidade de
+      prêmios (Dia de Sorte, Loteca), regras do volante do Super Sete, limites de números; calendário oficial
+      em `modalidades.ts` (Mega, Quina, Timemania e Dia de Sorte com domingo); `probabilidade.ts`.
+- [ ] 2. Fase 4 Mercado: Monitoramento MKP (cartões ao vivo, abas, UF, Retrato), Filas, Estatísticas › Loterias
+      e Lotéricas (ficha), Mega da Virada.
+- [ ] 3. Previsão de fechamento por concursos parecidos (faixa, mínimo para zerar, backtest).
+- [ ] 4. Sugestões: franquia de amanhã + otimizador de formato/cota/cotas (lucro esperado e risco).
+- [ ] 5. Simulador de posição + Cronômetro de abertura.
+- [ ] 6. Fase 5: site público /{slug} (SSR, SEO, filtros, jogos, chance, WhatsApp, CAIXA, 3 temas, métricas) + artes (Satori).
+- [ ] 7. Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (probabilidades e marcação).
+- Quando o Gabriel mandar dados reais da vitrine (cidade de São Paulo), trocar as fixtures de `fonte/fixtures/caixa/`.
 - Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
   código da Legal Loterias.

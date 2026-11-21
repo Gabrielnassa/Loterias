@@ -130,6 +130,7 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | Mercado | `core/mercado/agregar.ts` | `mercado_minuto` por concurso, UF e 'BR' (total) |
 | Resultado oficial | `core/conferencia/resultado.ts`, `apps/worker/src/fontes/resultados-caixa.ts` | API pública `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}` (formato conferido em 21/11/2026 com JSON real de 9 modalidades; Super Sete deu erro 500 na CAIXA e tem fixture sintética). Guarda trevos, Time do Coração, Mês da Sorte e os 14 jogos da Loteca (migração 0005); o JSON bruto vai sem os bytes nulos que a CAIXA manda (`brutoParaGuardar`, o jsonb recusa). O coletor busca a cada 10 min os concursos sorteados sem resultado |
 | Conferência | `core/conferencia/premios.ts` | Aposta múltipla = todas as apostas simples nela. "k de N": C(h, j) x C(n − h, k − j); +Milionária x C(g, i) x C(t − g, 2 − i) pelos trevos que a faixa aceita; Super Sete e Loteca pelo polinômio ∏(acertou ? x + m − 1 : m); Time do Coração e Mês da Sorte pagam cada aposta simples com o time/mês; Dupla Sena separa os sorteios pela repetição da faixa (as descrições são iguais). Jogo sem a marcação necessária vira aviso, nunca prêmio chutado. Seu prêmio = prêmio / cotas x cotas que sobraram |
+| Probabilidade | `core/conferencia/probabilidade.ts` | Chance de cada faixa por jogo = hipergeométrica de acertar exatamente j (igual às tabelas oficiais de Mega, Quina, Lotofácil, Dupla Sena por sorteio, Lotomania, Timemania, Dia de Sorte, +Milionária e Super Sete); Loteca no critério da CAIXA (número esperado de apostas simples premiadas). Testes copiam as tabelas oficiais (`test/conferencia-oficial.test.ts`), inclusive a de quantidade de prêmios do Dia de Sorte (Mês de Sorte = 1 por aposta simples) e da Loteca |
 | Estorno | `apps/web/lib/minha.ts` (`marcarEstorno`) | Só o usuário marca/desmarca (evento `estorno`); o coletor nunca desfaz |
 | Código da lotérica | `core/dominio/loterica.ts` | Forma canônica = campo `loterica` do JSON (`2894`); aceita `21.002894-7`, `210028947`, `002894`. `RADAR_MINHA_LOTERICA` = várias lojas (`código=Nome`, separadas por vírgula). Coli Loterias (São Paulo/SP) = 2894, franquia R$ 8.000; Legal Loterias (Vila Prudente) com código a informar |
 
@@ -175,10 +176,8 @@ Ainda abertas:
 1. **Estornado conta na franquia?** Padrão atual: NÃO conta (configurável). Confirmar com o Gabriel.
 2. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
 3. Escopo da lista com conta dedicada (cidade → UF → Brasil): confirmar com a observação de uma abertura real.
-4. Preços/dias de sorteio em `core/dominio/modalidades.ts` são referência para simulação; confirmar no
-   Manual de Produtos.
-5. **Mês da Sorte com mais de 7 números** (Dia de Sorte): hoje paga 1 vez por aposta simples (8 números = 8
-   meses), pela regra geral de que a múltipla equivale às simples. Confirmar no regulamento.
-6. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
+4. Preços e dias de sorteio em `core/dominio/modalidades.ts` conferidos nas páginas oficiais (21/11/2026);
+   a Lotofácil não informa os dias na página (mantido seg a sáb). Horário de fechamento das cotas ainda é referência.
+5. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
    Sete e palpites da Loteca (o adaptador aceita os nomes prováveis; sem eles a faixa fica como aviso).
-7. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.
+6. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.

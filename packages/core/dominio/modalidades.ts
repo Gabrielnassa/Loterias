@@ -1,9 +1,10 @@
 /**
  * Modalidades conhecidas.
  *
- * ATENÇÃO: preços, dias de sorteio e horários abaixo são VALORES DE REFERÊNCIA para simulação e
- * defaults. A fonte da verdade é o calendário/Manual de Produtos da CAIXA (Anexo I) e o que o
- * Marketplace devolver. Confirmar antes de usar em cálculo exibido ao cliente.
+ * Preços da aposta simples e dias de sorteio conferidos nas páginas oficiais
+ * (loterias.caixa.gov.br/Paginas/{Modalidade}.aspx) em 21/11/2026: sorteios a partir das 21h e, aos
+ * domingos, a partir das 11h. A Lotofácil não informa os dias na página (mantido seg a sáb).
+ * O horário de fechamento das cotas ainda é referência; a fonte da verdade é o que o Marketplace devolver.
  */
 
 export const SLUGS_MODALIDADE = [
@@ -38,7 +39,7 @@ export interface Modalidade {
 export const MODALIDADES: Record<ModalidadeSlug, Modalidade> = {
   'mega-sena': {
     slug: 'mega-sena', nome: 'Mega-Sena', cor: '#209869',
-    dezenasApostaSimples: 6, precoApostaSimples: 6, diasSorteio: [2, 4, 6],
+    dezenasApostaSimples: 6, precoApostaSimples: 6, diasSorteio: [2, 4, 7],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
   lotofacil: {
@@ -48,7 +49,7 @@ export const MODALIDADES: Record<ModalidadeSlug, Modalidade> = {
   },
   quina: {
     slug: 'quina', nome: 'Quina', cor: '#260085',
-    dezenasApostaSimples: 5, precoApostaSimples: 3, diasSorteio: [1, 2, 3, 4, 5, 6],
+    dezenasApostaSimples: 5, precoApostaSimples: 3, diasSorteio: [1, 2, 3, 4, 5, 7],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
   lotomania: {
@@ -63,12 +64,12 @@ export const MODALIDADES: Record<ModalidadeSlug, Modalidade> = {
   },
   timemania: {
     slug: 'timemania', nome: 'Timemania', cor: '#00ff48',
-    precoApostaSimples: 3.5, diasSorteio: [2, 4, 6],
+    precoApostaSimples: 3.5, diasSorteio: [2, 4, 7],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
   'dia-de-sorte': {
     slug: 'dia-de-sorte', nome: 'Dia de Sorte', cor: '#cb852b',
-    dezenasApostaSimples: 7, precoApostaSimples: 2.5, diasSorteio: [2, 4, 6],
+    dezenasApostaSimples: 7, precoApostaSimples: 2.5, diasSorteio: [1, 2, 3, 4, 5, 7],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
   'super-sete': {
@@ -78,12 +79,13 @@ export const MODALIDADES: Record<ModalidadeSlug, Modalidade> = {
   },
   'mais-milionaria': {
     slug: 'mais-milionaria', nome: '+Milionária', cor: '#2e3078',
-    precoApostaSimples: 6, diasSorteio: [3, 6],
+    precoApostaSimples: 6, diasSorteio: [3, 5],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
   loteca: {
     slug: 'loteca', nome: 'Loteca', cor: '#fb1f00',
-    diasSorteio: [],
+    // concurso semanal: apostas até sábado 14h; a aposta mínima (R$ 4,00) já tem 1 duplo = 2 simples
+    precoApostaSimples: 2, diasSorteio: [],
     horarioFechamento: { hora: 20, minuto: 0 },
   },
 };
