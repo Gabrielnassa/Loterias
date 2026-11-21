@@ -113,8 +113,8 @@ navegador, reler a borda custa 2 ações ("Anterior" + "Seguinte") sem voltar à
 
 ## O que falta descobrir
 
-1. Observar uma abertura real com o script `observar-abertura` (README da raiz) e decidir os números
-   da estratégia (intervalo entre ações, margem de páginas, frequência da leitura completa).
+1. Observar uma abertura real com `pnpm observar-abertura` (instruções no README da raiz) e decidir
+   os números da estratégia (intervalo entre ações, margem de páginas, frequência da leitura completa).
 2. Se `ultimaPagina` é o número da última página (o código do portal sugere que sim).
 3. Se, com login, ao passar da última página da cidade, a lista da UF inclui ou exclui a cidade.
 4. Comportamento às 21:45 (o concurso novo aparece antes de T0? em lote?) e se esgotados somem.

@@ -7,6 +7,7 @@
   "scripts": {
     "caixa:preparar-sessao": "tsx src/caixa-preparar-sessao.ts",
     "dev": "tsx watch src/main.ts",
+    "observar-abertura": "tsx src/observar-abertura.ts",
     "poc:fonte": "tsx src/poc-fonte.ts",
     "start": "tsx src/main.ts",
     "test": "vitest run",

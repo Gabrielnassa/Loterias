@@ -17,3 +17,7 @@ docs/har/
 .next/
 next-env.d.ts.bak
 *.tsbuildinfo
+
+# saídas do observar-abertura (podem ser grandes; anexe as relevantes em docs/ se quiser versionar)
+apps/worker/observacoes/
+observacoes/

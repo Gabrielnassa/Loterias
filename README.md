@@ -56,3 +56,23 @@ Prova de conceito da fonte (3 páginas):
 ```bash
 FONTE=fixture pnpm poc:fonte
 ```
+
+## Observar uma abertura real (para decidir a estratégia de leitura)
+
+Rode alguns minutos antes da abertura (21:45, ou 11:45 no domingo), com a sessão do navegador já
+preparada por uma pessoa (`pnpm caixa:preparar-sessao`, conta DEDICADA):
+
+```bash
+FONTE=caixa-navegador CAIXA_CONTA_DEDICADA=true pnpm observar-abertura -- --modalidade mega-sena --t0 2026-11-22T11:45
+```
+
+- Espera até T0 − 1 min e faz leituras completas do concurso novo a cada 5 s (`--intervalo-s`) até
+  T0 + 31 min (`--duracao-min`). Se você não souber o número do concurso, ele detecta sozinho.
+- Grava em `apps/worker/observacoes/abertura-<modalidade>-<data>-<hora>.jsonl` (ou `--saida`):
+  uma linha por página lida (horário de início e fim, duração, itens, filas, bolões novos, hora do
+  servidor), uma por leitura (duração, páginas, total de páginas, bolões, 1ª fila, atraso do slot e o
+  que a estratégia faria) e um resumo no fim (quando a leitura completa passou de 5 s e com quantas
+  páginas). As linhas são gravadas na hora: se cair no meio, o que já foi lido fica no arquivo.
+- Para no primeiro bloqueio, pedido de idade/login ou sessão expirada (fica registrado).
+- Me mande o arquivo `.jsonl` (ele não tem dados pessoais: só bolões e lotéricas da vitrine).
+- Teste do script sem a CAIXA: `FONTE=simulada pnpm observar-abertura -- --modalidade lotofacil --duracao-min 1`.

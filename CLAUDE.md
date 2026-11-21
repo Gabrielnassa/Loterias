@@ -33,6 +33,7 @@ pnpm web:dev                                                              # web 
 DATABASE_URL=... pnpm db:seed                                             # grava o histórico simulado no banco (apaga só o seed com -- --limpar)
 pnpm caixa:preparar-sessao                                                # UMA PESSOA prepara a sessão do navegador
 FONTE=caixa-navegador CAIXA_MODALIDADES=mega-sena pnpm poc:fonte          # adaptador real (exige a sessão)
+pnpm observar-abertura -- --modalidade mega-sena --t0 2026-11-22T11:45    # registra uma abertura real em JSONL (README)
 docker compose up -d postgres redis && docker compose up -d --build worker
 pnpm --filter @radar/core exec tsx fonte/fixtures/gerar.ts                # regenera fixtures sintéticas
 ```
