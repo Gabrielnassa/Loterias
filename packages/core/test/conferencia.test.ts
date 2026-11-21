@@ -25,7 +25,7 @@ describe('prêmio de uma aposta (combinatória)', () => {
   it('aposta simples com 4 acertos = 1 quadra', () => {
     const p = premioDaAposta([10, 21, 24, 28, 1, 2], MEGA_3088)!;
     expect(p.acertos).toBe(4);
-    expect(p.faixas).toEqual([{ sorteio: 1, acertos: 4, quantidade: 1, valorUnitario: 730.43, valor: 730.43 }]);
+    expect(p.faixas).toEqual([{ sorteio: 1, faixa: 3, descricao: '4 acertos', acertos: 4, quantidade: 1, valorUnitario: 730.43, valor: 730.43 }]);
   });
   it('9 números com 5 acertos = 4 quinas + 30 quadras', () => {
     const p = premioDaAposta([10, 21, 24, 28, 34, 1, 2, 3, 4], MEGA_3088)!;

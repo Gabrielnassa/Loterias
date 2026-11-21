@@ -4,6 +4,7 @@ export * from './dominio/modalidades';
 export * from './dominio/tipos';
 export * from './dominio/codigo-bolao';
 export * from './dominio/loterica';
+export * from './dominio/jogo';
 export * from './tempo/fuso';
 export * from './util/estatistica';
 export * from './util/aleatorio';

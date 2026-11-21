@@ -1,4 +1,5 @@
 import { BOLOES_POR_PAGINA } from '../dominio/constantes';
+import type { JogoBolao } from '../dominio/jogo';
 import type { ModalidadeSlug } from '../dominio/modalidades';
 import type { ColocacaoPorEscopo, ConcursoRef, LotericaRef } from '../dominio/tipos';
 import type { ItemLeitura, LeituraVitrine } from '../fonte/varredura';
@@ -40,6 +41,7 @@ export interface BolaoRegistrado {
   valorCotaBase: number;
   valorCotaExibido?: number;
   numeros?: number[][];
+  jogosDetalhe?: JogoBolao[];
   /** Cotas oferecidas na internet (o restante do total fica no balcão), se a fonte informar. */
   cotasDigitais?: number;
   contemResiduo?: boolean;
@@ -172,6 +174,7 @@ function registrar(item: ItemLeitura, filaCalculada: number, empate: boolean): B
   };
   if (item.valorCotaExibido !== undefined) b.valorCotaExibido = item.valorCotaExibido;
   if (item.numeros) b.numeros = item.numeros;
+  if (item.jogosDetalhe) b.jogosDetalhe = item.jogosDetalhe;
   if (item.cotasDigitais !== undefined) b.cotasDigitais = item.cotasDigitais;
   if (item.contemResiduo) b.contemResiduo = true;
   if (item.valorUltimaCotaBase !== undefined) b.valorUltimaCotaBase = item.valorUltimaCotaBase;

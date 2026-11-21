@@ -15,7 +15,7 @@ os textos, as artes ou o código do oLoterico.
 | `packages/db` | DDL em SQL (`migrations/`, fonte da verdade), espelho Drizzle (`schema.ts`), migrador, partições |
 | `apps/worker` | Coletor contínuo: relógio NTP, agendador ao segundo, fila BullMQ (ou memória), coletor, job de fim de janela, repositórios Postgres/memória, adaptador `caixa-navegador` (Playwright) |
 | `apps/web` | Next.js 15 + Tailwind: telas do Raio-X e da Minha lotérica (`/minha`: Bolões, Financeiro, Conferência, Posição na abertura), API, busca, CSV/Excel, SSE ao vivo. Lê do Postgres (`lib/dados-postgres.ts`, `lib/minha.ts`) ou da simulação (`lib/dados.ts`); escolha em `lib/fonte-dados.ts` |
-| `packages/core/minha`, `packages/core/conferencia` | Regras da Fase 3: financeiro por bolão (internet x balcão), resumo dia a dia, break-even por concurso, posição na abertura 7/30/90 dias, resultado oficial e prêmios por combinatória |
+| `packages/core/minha`, `packages/core/conferencia` | Regras da Fase 3: financeiro por bolão (internet x balcão), resumo dia a dia, break-even por concurso, posição na abertura 7/30/90 dias, resultado oficial e prêmios das 10 modalidades |
 | `packages/db/seed.ts` | Seed de demonstração: grava o histórico simulado no banco com `concursos.origem = 'seed'` (a web avisa "dados simulados") |
 | `docs/fonte-caixa.md` | Fase 0: API observada no portal, respostas e o que falta descobrir |
 | `docs/proximos-passos.md` | Ponto de retomada entre sessões |
@@ -128,8 +128,8 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | T0 por concurso | `core/coleta/calendario.ts`, tabela `regras_abertura` | `preverAbertura` pelas regras ativas (menor prioridade primeiro); `ajustarT0` = minuto cheio do 1º bolão se o concurso foi visto vazio até 5 min antes e a previsão errou por mais de 2 min; T0 manual nunca muda (`abre_em_origem`, `abre_em_previsto`) |
 | Snapshots | `aplicarLeitura` + `snapshots_bolao` | Grava linha do bolão novo, do que mudou, do que sumiu (`presente=false`) e keyframe de todos a cada 10 min; cada leitura fica em `coletas` |
 | Mercado | `core/mercado/agregar.ts` | `mercado_minuto` por concurso, UF e 'BR' (total) |
-| Resultado oficial | `core/conferencia/resultado.ts`, `apps/worker/src/fontes/resultados-caixa.ts` | API pública `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}` (formato conferido com a Mega 3.088); o coletor busca a cada 10 min os concursos sorteados sem resultado (`resultados`, `rateios`) |
-| Conferência | `core/conferencia/premios.ts` | Prêmio por faixa = C(h, j) x C(n − h, k − j) x rateio; seu prêmio = prêmio / cotas x cotas que sobraram. Mega, Quina, Lotofácil e Dupla Sena |
+| Resultado oficial | `core/conferencia/resultado.ts`, `apps/worker/src/fontes/resultados-caixa.ts` | API pública `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}` (formato conferido em 21/11/2026 com JSON real de 9 modalidades; Super Sete deu erro 500 na CAIXA e tem fixture sintética). Guarda trevos, Time do Coração, Mês da Sorte e os 14 jogos da Loteca (migração 0005); o JSON bruto vai sem os bytes nulos que a CAIXA manda (`brutoParaGuardar`, o jsonb recusa). O coletor busca a cada 10 min os concursos sorteados sem resultado |
+| Conferência | `core/conferencia/premios.ts` | Aposta múltipla = todas as apostas simples nela. "k de N": C(h, j) x C(n − h, k − j); +Milionária x C(g, i) x C(t − g, 2 − i) pelos trevos que a faixa aceita; Super Sete e Loteca pelo polinômio ∏(acertou ? x + m − 1 : m); Time do Coração e Mês da Sorte pagam cada aposta simples com o time/mês; Dupla Sena separa os sorteios pela repetição da faixa (as descrições são iguais). Jogo sem a marcação necessária vira aviso, nunca prêmio chutado. Seu prêmio = prêmio / cotas x cotas que sobraram |
 | Estorno | `apps/web/lib/minha.ts` (`marcarEstorno`) | Só o usuário marca/desmarca (evento `estorno`); o coletor nunca desfaz |
 | Código da lotérica | `core/dominio/loterica.ts` | Forma canônica = campo `loterica` do JSON (`2894`); aceita `21.002894-7`, `210028947`, `002894`. `RADAR_MINHA_LOTERICA` = várias lojas (`código=Nome`, separadas por vírgula). Coli Loterias (São Paulo/SP) = 2894, franquia R$ 8.000; Legal Loterias (Vila Prudente) com código a informar |
 
@@ -177,3 +177,8 @@ Ainda abertas:
 3. Escopo da lista com conta dedicada (cidade → UF → Brasil): confirmar com a observação de uma abertura real.
 4. Preços/dias de sorteio em `core/dominio/modalidades.ts` são referência para simulação; confirmar no
    Manual de Produtos.
+5. **Mês da Sorte com mais de 7 números** (Dia de Sorte): hoje paga 1 vez por aposta simples (8 números = 8
+   meses), pela regra geral de que a múltipla equivale às simples. Confirmar no regulamento.
+6. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
+   Sete e palpites da Loteca (o adaptador aceita os nomes prováveis; sem eles a faixa fica como aviso).
+7. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.

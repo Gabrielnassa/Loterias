@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ModalidadeSlug } from '../../dominio/modalidades';
 import { normalizarCodigoLoterica } from '../../dominio/loterica';
+import { mesDaSorte, type ColunaLoteca, type JogoBolao } from '../../dominio/jogo';
 import { horarioSP, noDiaSP } from '../../tempo/fuso';
 import { FormatoInesperadoError } from '../erros';
 import type { BolaoFonte, ConcursoAbertoFonte, ConsultaBoloes, PaginaBoloes } from '../tipos';
@@ -38,7 +39,7 @@ export function caminhoDaUrlCaixa(url: string): string | null {
   }
 }
 
-/** Nome da modalidade na CAIXA -> slug interno. Só MEGA_SENA foi observado; os demais são o padrão provável. */
+/** Nome da modalidade na CAIXA -> slug interno. Na vitrine só MEGA_SENA foi observado; na API de resultados (21/11/2026) os 9 nomes abaixo, menos SUPER_SETE, apareceram iguais. */
 export const MODALIDADES_CAIXA: Record<string, ModalidadeSlug> = {
   MEGA_SENA: 'mega-sena',
   LOTOFACIL: 'lotofacil',
@@ -262,7 +263,75 @@ export function normalizarDetalheBolaoCaixa(json: unknown): BolaoFonte {
   const apostas = (bruto as { apostas?: unknown }).apostas;
   const numeros = lerApostas(apostas);
   if (numeros && numeros.length === b.jogos) b.numeros = numeros;
+  const detalhe = lerJogosDetalhe(apostas, b.modalidade);
+  if (detalhe && detalhe.length === b.jogos) b.jogosDetalhe = detalhe;
   return b;
+}
+
+/** Modalidades cujo prêmio depende de algo além dos números do jogo. */
+const COM_MARCACOES_EXTRAS: ReadonlySet<ModalidadeSlug> = new Set(['timemania', 'dia-de-sorte', 'mais-milionaria', 'super-sete', 'loteca']);
+
+function campo(o: Record<string, unknown>, nomes: string[]): unknown {
+  for (const n of nomes) if (o[n] !== undefined && o[n] !== null && o[n] !== '') return o[n];
+  return undefined;
+}
+
+/** "1X" / ["1","X"] / "COLUNA 1" / 0|1|2 (0 = meio) -> palpites de um jogo da Loteca. */
+function lerPalpite(v: unknown): ColunaLoteca[] | null {
+  const itens = Array.isArray(v) ? v : typeof v === 'string' ? v.toUpperCase().replace(/[^12X]/g, '').split('') : null;
+  if (!itens?.length) return null;
+  const out = new Set<ColunaLoteca>();
+  for (const x of itens) {
+    const s = String(x).toUpperCase().trim();
+    const c = s === '1' ? '1' : s === '2' ? '2' : s === 'X' || s === '0' || /EMPATE|MEIO/.test(s) ? 'X' : null;
+    if (!c) return null;
+    out.add(c);
+  }
+  return [...out];
+}
+
+/**
+ * Jogos com as marcações extras (formato da CAIXA ainda NÃO confirmado: aceita os nomes de campo
+ * prováveis e só devolve algo quando a modalidade precisa e o jogo trouxe a marcação).
+ */
+function lerJogosDetalhe(apostas: unknown, modalidade: ModalidadeSlug): JogoBolao[] | null {
+  if (!COM_MARCACOES_EXTRAS.has(modalidade) || !Array.isArray(apostas)) return null;
+  const jogos: JogoBolao[] = [];
+  for (const a of apostas) {
+    if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
+    const o = a as Record<string, unknown>;
+    const j: JogoBolao = { numeros: modalidade === 'super-sete' || modalidade === 'loteca' ? [] : (lerNumeros(o) ?? []) };
+    if (modalidade === 'mais-milionaria') {
+      const t = lerNumeros(campo(o, ['trevos', 'listaTrevos', 'trevosApostados']));
+      if (t) j.trevos = t;
+    }
+    if (modalidade === 'timemania') {
+      const t = campo(o, ['timeCoracao', 'nomeTimeCoracao', 'timeDoCoracao', 'time']);
+      if (typeof t === 'string' && t.trim()) j.timeCoracao = t.trim();
+    }
+    if (modalidade === 'dia-de-sorte') {
+      const m = mesDaSorte(campo(o, ['mesSorte', 'mesDaSorte', 'mesDeSorte', 'mes']) as string | number | undefined);
+      if (m) j.mesSorte = m;
+    }
+    if (modalidade === 'super-sete') {
+      const c = campo(o, ['colunas', 'numerosPorColuna']);
+      if (Array.isArray(c)) {
+        const cols = c.map(lerNumeros);
+        if (cols.every((x): x is number[] => x !== null)) j.colunas = cols;
+      }
+    }
+    if (modalidade === 'loteca') {
+      const p = campo(o, ['palpites', 'prognosticos', 'jogos']);
+      if (Array.isArray(p)) {
+        const ps = p.map((x) => lerPalpite(x && typeof x === 'object' && !Array.isArray(x) ? campo(x as Record<string, unknown>, ['palpite', 'prognostico', 'colunas']) : x));
+        if (ps.every((x): x is ColunaLoteca[] => x !== null)) j.palpites = ps;
+      }
+    }
+    const temExtra = j.trevos || j.timeCoracao || j.mesSorte || j.colunas || j.palpites;
+    if (!temExtra) return null;
+    jogos.push(j);
+  }
+  return jogos.length ? jogos : null;
 }
 
 function lerNumeros(v: unknown): number[] | null {

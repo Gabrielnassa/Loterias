@@ -140,3 +140,21 @@ Teste ao vivo daqui (21/11, sem sessão): o adaptador carregou o portal e parou 
 - Fixtures com a estrutura real (lotéricas fictícias): `packages/core/fonte/fixtures/caixa/`
 - Adaptador de navegador: `apps/worker/src/fontes/caixa-navegador.ts`; testes contra um portal falso local em `apps/worker/test/`
 - Preparar sessão: `apps/worker/src/caixa-preparar-sessao.ts`
+
+## API de resultados (conferida em 21/11/2026)
+
+`GET https://servicebus2.caixa.gov.br/portaldeloterias/api/{megasena|lotofacil|quina|lotomania|duplasena|timemania|diadesorte|supersete|maismilionaria|loteca}/{concurso}`
+(sem o concurso, devolve o último). Pública, sem login. Fixtures reais em `packages/core/fonte/fixtures/resultados/`.
+
+- `tipoJogo`: MEGA_SENA, LOTOFACIL, QUINA, LOTOMANIA, DUPLA_SENA, TIMEMANIA, DIA_DE_SORTE, MAIS_MILIONARIA, LOTECA.
+- `listaRateioPremio[].descricaoFaixa`: "4 acertos"; +Milionária "5 acertos + 2 trevos" / "+ 1 ou nenhum trevo" /
+  "+ 1 trevo"; Timemania "Time do Coração"; Dia de Sorte "Mês da Sorte"; Loteca "1º (14 acertos)".
+- Dupla Sena: 8 faixas, as 4 do 1º sorteio e depois as 4 do 2º, com a MESMA descrição; 2º sorteio em
+  `listaDezenasSegundoSorteio`.
+- `trevosSorteados` (+Milionária); `nomeTimeCoracaoMesSorte` = "CUIABA           /MT" ou "Junho"; nas outras
+  modalidades vem cheio de bytes nulos (`\u0000`), que o jsonb do PostgreSQL recusa (limpar antes de gravar).
+- Loteca: `listaDezenas` nulo; `listaResultadoEquipeEsportiva[]` com `nuSequencial` (1 a 14), times, gols,
+  `icSorteioResultado` e `resultado` (jogo não realizado: coluna sorteada; formato ainda não visto).
+- Lotomania: 20 dezenas de "00" a "99"; faixa "0 acertos".
+- Super Sete: devolveu HTTP 500 (erro interno da CAIXA, 412 do gateway) no último concurso e no 920;
+  presumido `dezenasSorteadasOrdemSorteio` na ordem das colunas.

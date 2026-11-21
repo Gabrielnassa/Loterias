@@ -44,7 +44,7 @@ export default async function ConferenciaMkp({ searchParams }: { searchParams: P
           <table className="tabela min-w-[900px]">
             <thead>
               <tr>
-                <th>Concurso</th><th>Apuração</th><th>Sorteadas</th><th>Formato</th><th className="text-right">Acertos</th><th>Faixas</th>
+                <th>Concurso</th><th>Apuração</th><th>Sorteio</th><th>Formato</th><th className="text-right">Acertos</th><th>Faixas</th>
                 <th className="text-right">Prêmio do bolão</th><th className="text-right">Por cota</th><th className="text-right">Sobraram</th><th className="text-right">Seu prêmio</th>
               </tr>
             </thead>
@@ -53,10 +53,13 @@ export default async function ConferenciaMkp({ searchParams }: { searchParams: P
                 <tr key={l.id} className={l.premioTotal > 0 ? 'bg-emerald-50/60 dark:bg-emerald-500/5' : ''}>
                   <td className="whitespace-nowrap">{NOME_MODALIDADE[l.modalidade]} {l.concurso}</td>
                   <td>{fmtDataCurta(l.dataApuracao)}</td>
-                  <td className="font-mono text-xs">{l.dezenas.map((x) => String(x).padStart(2, '0')).join(' ')}</td>
+                  <td className="font-mono text-xs">{l.sorteio}</td>
                   <td className="whitespace-nowrap font-mono text-xs">{l.formato}</td>
-                  <td className="text-right">{l.melhorAcerto}</td>
-                  <td className="text-xs">{l.faixas.length ? l.faixas.map((f) => `${f.quantidade}× ${f.acertos} acertos`).join(', ') : '—'}</td>
+                  <td className="text-right">{l.melhorAcerto ?? '—'}</td>
+                  <td className="text-xs">
+                    {l.faixasTexto.length ? l.faixasTexto.join(', ') : '—'}
+                    {l.avisos.length ? <span className="block text-amber-700 dark:text-amber-400" title={l.avisos.join('\n')}>⚠ {l.avisos.length === 1 ? l.avisos[0] : `${l.avisos.length} avisos: ${l.avisos[0]}…`}</span> : null}
+                  </td>
                   <td className="text-right">{fmtMoeda(l.premioTotal)}</td>
                   <td className="text-right">{fmtMoeda(l.premioPorCota)}</td>
                   <td className="text-right">{l.cotasSobradas}/{l.cotasTotal}</td>
@@ -66,6 +69,10 @@ export default async function ConferenciaMkp({ searchParams }: { searchParams: P
             </tbody>
           </table>
           {d.linhas.length === 0 ? <p className="py-6 text-center text-sm text-zinc-500">Nenhum bolão com resultado e jogos no período.</p> : null}
+          <p className="pt-2 text-xs text-zinc-500">
+            Confere as 10 modalidades com o rateio oficial. Trevos, Time do Coração, Mês da Sorte, colunas do Super Sete e palpites da Loteca
+            só entram quando o MKP informa a marcação do jogo; sem ela, a faixa fica como aviso e não é somada.
+          </p>
         </div>
       </section>
     </div>

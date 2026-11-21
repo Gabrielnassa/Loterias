@@ -11,9 +11,14 @@ import {
   modalidadeConferivel,
   normalizarCodigoLoterica,
   posicaoNaAbertura,
+  resumoDoSorteio,
   resumoFinanceiro,
+  rotuloFaixa,
   somarDias,
   type BolaoMinha,
+  type ColunaLoteca,
+  type JogoBolao,
+  type PartidaLoteca,
   type ColocacaoPorEscopo,
   type ModalidadeSlug,
   type ResultadoOficial,
@@ -213,16 +218,32 @@ export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number;
   const concursos = [...new Set(linhas.map((l) => l.concurso_id))];
   if (!concursos.length) return { loterica, linhas: [], totalPremios: 0, totalLoterica: 0, resultados: 0 };
   const [resultados, rateios, jogos] = await Promise.all([
-    sql<{ concurso_id: number; data_apuracao: string | Date; dezenas: number[]; dezenas2: number[] | null; acumulado: boolean; origem: string }[]>`
-      select concurso_id, data_apuracao, dezenas, dezenas2, acumulado, origem from resultados where concurso_id = any(${concursos})`,
+    sql<{
+      concurso_id: number; data_apuracao: string | Date; dezenas: number[]; dezenas2: number[] | null; trevos: number[] | null;
+      time_coracao: string | null; mes_sorte: number | null; partidas: PartidaLoteca[] | null; acumulado: boolean; origem: string;
+    }[]>`
+      select concurso_id, data_apuracao, dezenas, dezenas2, trevos, time_coracao, mes_sorte, partidas, acumulado, origem
+      from resultados where concurso_id = any(${concursos})`,
     sql<{ concurso_id: number; faixa: number; descricao: string; acertos: number | null; ganhadores: number; valor_premio: string }[]>`
       select concurso_id, faixa, descricao, acertos, ganhadores, valor_premio from rateios where concurso_id = any(${concursos}) order by faixa`,
-    sql<{ bolao_id: number; ordem: number; numeros: number[] }[]>`
-      select bolao_id, ordem, numeros from bolao_jogos where bolao_id = any(${linhas.map((l) => l.id)}) order by bolao_id, ordem`,
+    sql<{ bolao_id: number; ordem: number; numeros: number[]; trevos: number[] | null; time_coracao: string | null; mes_sorte: number | null; colunas: unknown }[]>`
+      select bolao_id, ordem, numeros, trevos, time_coracao, mes_sorte, colunas
+      from bolao_jogos where bolao_id = any(${linhas.map((l) => l.id)}) order by bolao_id, ordem`,
   ]);
   const resPorConcurso = new Map(resultados.map((r) => [r.concurso_id, r]));
-  const jogosPorBolao = new Map<number, number[][]>();
-  for (const j of jogos) jogosPorBolao.set(j.bolao_id, [...(jogosPorBolao.get(j.bolao_id) ?? []), j.numeros]);
+  const slugDoBolao = new Map(linhas.map((l) => [l.id, l.slug]));
+  const jogosPorBolao = new Map<number, JogoBolao[]>();
+  for (const j of jogos) {
+    const jogo: JogoBolao = { numeros: j.numeros };
+    if (j.trevos?.length) jogo.trevos = j.trevos;
+    if (j.time_coracao) jogo.timeCoracao = j.time_coracao;
+    if (j.mes_sorte) jogo.mesSorte = j.mes_sorte;
+    if (Array.isArray(j.colunas)) {
+      if (slugDoBolao.get(j.bolao_id) === 'loteca') jogo.palpites = j.colunas as ColunaLoteca[][];
+      else jogo.colunas = j.colunas as number[][];
+    }
+    jogosPorBolao.set(j.bolao_id, [...(jogosPorBolao.get(j.bolao_id) ?? []), jogo]);
+  }
   const saida = [];
   for (const l of linhas) {
     const r = resPorConcurso.get(l.concurso_id);
@@ -234,27 +255,40 @@ export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number;
       dataApuracao: typeof r.data_apuracao === 'string' ? r.data_apuracao.slice(0, 10) : r.data_apuracao.toISOString().slice(0, 10),
       dezenas: r.dezenas,
       ...(r.dezenas2 ? { dezenas2: r.dezenas2 } : {}),
+      ...(r.trevos?.length ? { trevos: r.trevos } : {}),
+      ...(r.time_coracao ? { timeCoracao: r.time_coracao } : {}),
+      ...(r.mes_sorte ? { mesSorte: r.mes_sorte } : {}),
+      ...(r.partidas ? { partidas: r.partidas } : {}),
       acumulado: r.acumulado,
       rateios: rateios.filter((x) => x.concurso_id === l.concurso_id).map((x) => ({ faixa: x.faixa, descricao: x.descricao, acertos: x.acertos, ganhadores: x.ganhadores, valorPremio: Number(x.valor_premio) })),
     };
     const sobradas = l.sobra_final ?? l.cotas_disponiveis;
     const c = conferirBolao(js, oficial, l.cotas_total, sobradas);
     if (!c) continue;
+    const dupla = l.slug === 'dupla-sena';
+    const faixas = c.apostas.flatMap((a) => a.faixas);
     saida.push({
       id: l.id,
       modalidade: l.slug,
       concurso: l.numero,
       dataApuracao: oficial.dataApuracao,
       dezenas: oficial.dezenas,
+      sorteio: resumoDoSorteio(oficial),
       origemResultado: r.origem,
       formato: formatarCodigoBolao({ jogos: l.jogos, dezenas: l.dezenas, cotas: l.cotas_total }),
-      melhorAcerto: Math.max(...c.apostas.map((a) => a.acertos)),
-      faixas: c.apostas.flatMap((a) => a.faixas),
+      melhorAcerto: c.apostas.length ? Math.max(...c.apostas.map((a) => Math.max(a.acertos, a.acertos2 ?? 0))) : null,
+      faixas,
+      faixasTexto: faixas.map((f) => rotuloFaixa(f, dupla)),
       premioTotal: c.premioTotal,
       premioPorCota: c.premioPorCota,
       cotasTotal: c.cotasTotal,
       cotasSobradas: c.cotasSobradas,
       premioLoterica: c.premioLoterica,
+      /** Jogos que não deu para conferir e faixas pendentes (o prêmio acima não as inclui). */
+      avisos: [
+        ...c.naoConferidos.map((n) => `jogo ${n.ordem + 1}: ${n.motivo}`),
+        ...[...new Set(c.apostas.flatMap((a) => a.pendencias ?? []))],
+      ],
       jogos: js,
     });
   }

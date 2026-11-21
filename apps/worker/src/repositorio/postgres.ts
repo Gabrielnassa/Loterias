@@ -1,4 +1,5 @@
 import {
+  brutoParaGuardar,
   chaveConcurso,
   ehModalidade,
   pagina,
@@ -6,6 +7,7 @@ import {
   type BolaoRegistrado,
   type ColocacaoPorEscopo,
   type ConcursoAgendavel,
+  type JogoBolao,
   type ConcursoRef,
   type LinhaMercado,
   type LotericaRef,
@@ -313,7 +315,15 @@ export class RepositorioPostgres implements Repositorio {
           }
         }
         const jogos = r.novos.flatMap((b) =>
-          (b.numeros ?? []).map((numeros, ordem) => ({ bolaoId: this.bolaoIds.get(b.idCaixa)!, ordem, numeros })),
+          (b.jogosDetalhe ?? (b.numeros ?? []).map((numeros): JogoBolao => ({ numeros }))).map((j, ordem) => ({
+            bolaoId: this.bolaoIds.get(b.idCaixa)!,
+            ordem,
+            numeros: j.numeros,
+            trevos: j.trevos ?? null,
+            timeCoracao: j.timeCoracao ?? null,
+            mesSorte: j.mesSorte ?? null,
+            colunas: j.colunas ?? j.palpites ?? null,
+          })),
         );
         for (const lote of emLotes(jogos, 2000)) await tx.insert(bolaoJogos).values(lote).onConflictDoNothing();
 
@@ -479,13 +489,23 @@ export class RepositorioPostgres implements Repositorio {
       .filter((r) => r.modalidade);
   }
 
-  async salvarResultado(ref: ConcursoRef, r: ResultadoOficial, bruto: unknown): Promise<void> {
+  async salvarResultado(ref: ConcursoRef, r: ResultadoOficial, brutoOriginal: unknown): Promise<void> {
     const concursoId = await this.concursoId(ref);
+    const bruto = brutoParaGuardar(brutoOriginal);
+    const extras = {
+      dezenas: r.dezenas,
+      dezenas2: r.dezenas2 ?? null,
+      trevos: r.trevos ?? null,
+      timeCoracao: r.timeCoracao ?? null,
+      mesSorte: r.mesSorte ?? null,
+      partidas: r.partidas ?? null,
+      acumulado: r.acumulado,
+    };
     await this.db.transaction(async (tx) => {
       await tx
         .insert(resultados)
-        .values({ concursoId, dataApuracao: r.dataApuracao, dezenas: r.dezenas, dezenas2: r.dezenas2 ?? null, acumulado: r.acumulado, origem: 'caixa', bruto })
-        .onConflictDoUpdate({ target: resultados.concursoId, set: { dezenas: r.dezenas, dezenas2: r.dezenas2 ?? null, acumulado: r.acumulado, bruto, obtidoEm: sql`now()` } });
+        .values({ concursoId, dataApuracao: r.dataApuracao, ...extras, origem: 'caixa', bruto })
+        .onConflictDoUpdate({ target: resultados.concursoId, set: { ...extras, bruto, obtidoEm: sql`now()` } });
       await tx.delete(rateios).where(eq(rateios.concursoId, concursoId));
       if (r.rateios.length) {
         await tx.insert(rateios).values(

@@ -22,6 +22,7 @@ import {
   time,
   timestamp,
 } from 'drizzle-orm/pg-core';
+import type { PartidaLoteca } from '@radar/core';
 
 const tz = (nome: string) => timestamp(nome, { withTimezone: true, mode: 'date' });
 const id64 = (nome: string) => bigint(nome, { mode: 'number' });
@@ -122,6 +123,11 @@ export const bolaoJogos = pgTable(
     bolaoId: id64('bolao_id').notNull(),
     ordem: smallint('ordem').notNull(),
     numeros: integer('numeros').array().notNull(),
+    trevos: integer('trevos').array(),
+    timeCoracao: text('time_coracao'),
+    mesSorte: smallint('mes_sorte'),
+    /** Super Sete: dígitos por coluna (number[][]); Loteca: palpites por jogo (("1" | "X" | "2")[][]). */
+    colunas: jsonb('colunas').$type<number[][] | string[][]>(),
   },
   (t) => [primaryKey({ columns: [t.bolaoId, t.ordem] })],
 );
@@ -235,6 +241,10 @@ export const resultados = pgTable('resultados', {
   dataApuracao: date('data_apuracao', { mode: 'string' }).notNull(),
   dezenas: integer('dezenas').array().notNull(),
   dezenas2: integer('dezenas2').array(),
+  trevos: integer('trevos').array(),
+  timeCoracao: text('time_coracao'),
+  mesSorte: smallint('mes_sorte'),
+  partidas: jsonb('partidas').$type<PartidaLoteca[]>(),
   acumulado: boolean('acumulado').notNull().default(false),
   origem: text('origem', { enum: ['caixa', 'seed'] }).notNull().default('caixa'),
   obtidoEm: tz('obtido_em').notNull().defaultNow(),

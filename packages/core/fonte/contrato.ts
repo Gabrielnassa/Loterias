@@ -32,6 +32,18 @@ export const esquemaBolao = z
     valorCotaBase: z.number().positive(),
     valorCotaExibido: z.number().positive().optional(),
     numeros: z.array(z.array(z.number().int())).optional(),
+    jogosDetalhe: z
+      .array(
+        z.object({
+          numeros: z.array(z.number().int()),
+          trevos: z.array(z.number().int()).optional(),
+          timeCoracao: z.string().min(1).optional(),
+          mesSorte: z.number().int().min(1).max(12).optional(),
+          colunas: z.array(z.array(z.number().int().min(0).max(9))).optional(),
+          palpites: z.array(z.array(z.enum(['1', 'X', '2']))).optional(),
+        }),
+      )
+      .optional(),
     inseridoEmFonte: z.date().optional(),
     filaFonte: inteiroPositivo.optional(),
     cotasDigitais: inteiroNaoNegativo.optional(),
@@ -42,6 +54,7 @@ export const esquemaBolao = z
   })
   .refine((b) => b.cotasDisponiveis <= b.cotasTotal, { message: 'cotasDisponiveis > cotasTotal' })
   .refine((b) => !b.numeros || b.numeros.length === b.jogos, { message: 'numeros.length != jogos' })
+  .refine((b) => !b.jogosDetalhe || b.jogosDetalhe.length === b.jogos, { message: 'jogosDetalhe.length != jogos' })
   .refine((b) => b.cotasDigitais === undefined || b.cotasDigitais <= b.cotasTotal, { message: 'cotasDigitais > cotasTotal' });
 
 export const esquemaPagina = z.object({

@@ -35,13 +35,17 @@ Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
       CAIXA, migração 0004), Posição na abertura; CSV/Excel; estorno manual. Seed com jogos, balcão e resultados simulados.
 
 Pendências conhecidas para depois: multi-loja e contas (Fase 6), watchlist e alertas, arte do premiado (Fase 5),
-conferência de Lotomania/Timemania/Dia de Sorte/Super Sete/+Milionária/Loteca (regras de prêmio próprias),
 observar uma abertura real e calibrar a estratégia, testar as imagens Docker.
 
 ## Sessão 4 (21/11/2026, noite)
 
 - [x] Código da lotérica em qualquer forma (`normalizarCodigoLoterica`) e várias lojas em
       `RADAR_MINHA_LOTERICA` (Coli Loterias = 2894, franquia R$ 8.000). Seletor de loja na `/minha`.
-- [ ] Conferência das outras modalidades (Lotomania, Timemania, Dia de Sorte, Super Sete, +Milionária, Loteca).
+- [x] Conferência das 10 modalidades (`core/conferencia/premios.ts`), com resultado REAL da CAIXA de 9 delas em
+      `packages/core/fonte/fixtures/resultados/` (Super Sete sintético: a API deu erro 500). Migração 0005 (marcações
+      extras no jogo e no resultado). Corrigido: Dupla Sena real não diz o sorteio na faixa; JSON bruto com `\u0000`
+      quebrava o jsonb ao gravar o resultado.
+- Próximo sem depender do Gabriel: trocar a fixture do Super Sete por uma real quando a API voltar
+  (`pnpm resultados -- --modalidade super-sete --concurso N`); confirmar a regra do Mês da Sorte com mais de 7 números.
 - Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
   código da Legal Loterias.

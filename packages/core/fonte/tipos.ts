@@ -1,3 +1,4 @@
+import type { JogoBolao } from '../dominio/jogo';
 import type { ModalidadeSlug } from '../dominio/modalidades';
 import type { LotericaRef } from '../dominio/tipos';
 
@@ -26,6 +27,9 @@ export interface BolaoFonte {
   valorCotaExibido?: number;
   /** Números de cada jogo, se a fonte informar (pode exigir chamada de detalhe). */
   numeros?: number[][];
+  /** Jogos com as marcações além dos números (trevos, Time do Coração, Mês da Sorte, colunas do
+   * Super Sete, palpites da Loteca), se a fonte informar. Quando vem, vale no lugar de `numeros`. */
+  jogosDetalhe?: JogoBolao[];
   /** Horário de inserção informado pela própria fonte, se existir (dispensaria a inferência). */
   inseridoEmFonte?: Date;
   /** Fila informada pela fonte (campo `index` da CAIXA), quando vier. */

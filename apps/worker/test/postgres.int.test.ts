@@ -124,6 +124,24 @@ suite('repositório PostgreSQL', () => {
     expect(await repo.concursosSemResultado(new Date(sim.fechaEm.getTime() + 2 * 3_600_000), 5)).toEqual([]);
     const { rateios } = await um(sql`select count(*)::int as rateios from rateios`);
     expect(rateios).toBe(1);
+    // as outras modalidades guardam o que têm de próprio (trevos, time, mês, os jogos da Loteca)
+    const { normalizarResultadoCaixa } = await import('@radar/core');
+    const { readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    for (const nome of ['maismilionaria-408', 'timemania-2470', 'diadesorte-1352', 'loteca-1283']) {
+      const bruto = JSON.parse(readFileSync(join(import.meta.dirname, '..', '..', '..', 'packages', 'core', 'fonte', 'fixtures', 'resultados', `${nome}.json`), 'utf8'));
+      const r = normalizarResultadoCaixa(bruto);
+      await repo.salvarResultado({ modalidade: r.modalidade, concurso: r.concurso }, r, bruto);
+    }
+    const extras = await sql`select m.slug, r.trevos, r.time_coracao, r.mes_sorte, jsonb_array_length(r.partidas) as partidas
+      from resultados r join concursos c on c.id = r.concurso_id join modalidades m on m.id = c.modalidade_id
+      where m.slug <> 'lotofacil' order by m.slug`;
+    expect(extras.map((x) => [x.slug, x.trevos, x.time_coracao, x.mes_sorte, x.partidas])).toEqual([
+      ['dia-de-sorte', null, null, 6, null],
+      ['loteca', null, null, null, 14],
+      ['mais-milionaria', [1, 3], null, null, null],
+      ['timemania', null, 'CUIABA /MT', null, null],
+    ]);
     void _h;
     const [c] = await sql`select encerrado_em from concursos where numero = 3500`;
     expect(c!.encerrado_em).not.toBeNull();

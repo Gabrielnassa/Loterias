@@ -1,5 +1,7 @@
 import ExcelJS from 'exceljs';
-import { horarioSP } from '@radar/core';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { horarioSP, normalizarResultadoCaixa } from '@radar/core';
 import { criarDb, criarSql, migrar, recriarBancoDeTeste, type Sql } from '@radar/db';
 import { semearHistoricoSimulado } from '@radar/db/seed';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -59,6 +61,51 @@ suite('Minha lotérica (Fase 3) no Postgres', () => {
     expect(c.linhas.length).toBeGreaterThan(5);
     for (const l of c.linhas) expect(l.premioLoterica).toBeCloseTo((l.premioTotal / l.cotasTotal) * l.cotasSobradas, 1);
     expect(c.linhas.every((l) => l.origemResultado === 'seed')).toBe(true);
+  });
+
+  it('Conferência das outras modalidades: +Milionária (trevos) e Loteca (duplo), com resultado REAL', async () => {
+    const fixture = (nome: string) =>
+      normalizarResultadoCaixa(JSON.parse(readFileSync(join(import.meta.dirname, '..', '..', '..', 'packages', 'core', 'fonte', 'fixtures', 'resultados', `${nome}.json`), 'utf8')));
+    const arr = (xs: number[]) => `{${xs.join(',')}}`;
+    const casos = [
+      { slug: 'mais-milionaria', r: fixture('maismilionaria-408'), jogos: [
+        { numeros: [5, 20, 33, 35, 1, 2, 3], trevos: [1, 3, 6], colunas: null },
+        { numeros: [5, 20, 33, 35, 38, 46], trevos: null, colunas: null }, // veio sem os trevos: aviso, não soma
+      ] },
+      { slug: 'loteca', r: fixture('loteca-1283'), jogos: [
+        { numeros: [], trevos: null, colunas: ['2X1121221XXX12'.split('').map((c, i) => (i === 0 ? [c, '1'] : [c]))].flat() },
+      ] },
+    ];
+    for (const { slug, r, jogos } of casos) {
+      const [c] = await sql`insert into concursos (modalidade_id, numero, data_sorteio, origem)
+        select id, ${r.concurso}, ${r.dataApuracao}::date, 'seed' from modalidades where slug = ${slug} returning id`;
+      const [b] = await sql`insert into boloes (id_caixa, loterica_id, concurso_id, jogos, dezenas, cotas_total, valor_cota, valor_aposta,
+          cotas_disponiveis, first_seen_at, last_seen_at, fila, fila_calculada, pos_entrada_calc_brasil, pos_entrada_calc_uf, pos_entrada_calc_cidade, status, sobra_final)
+        select ${`teste:${slug}`}, l.id, ${c!.id}, ${jogos.length}, 7, 10, 10, 100, 4, ${new Date(ATE.getTime() - 86_400_000).toISOString()}::timestamptz,
+          ${ATE.toISOString()}::timestamptz, 1, 1, 1, 1, 1, 'encerrado', 4
+        from lotericas l where l.codigo_caixa = '980011' returning id`;
+      for (const [ordem, j] of jogos.entries()) {
+        await sql`insert into bolao_jogos (bolao_id, ordem, numeros, trevos, colunas)
+          values (${b!.id}, ${ordem}, ${arr(j.numeros)}::int[], ${j.trevos ? arr(j.trevos) : null}::int[], ${j.colunas === null ? null : JSON.stringify(j.colunas)}::jsonb)`;
+      }
+      await sql`insert into resultados (concurso_id, data_apuracao, dezenas, trevos, partidas, acumulado, origem)
+        values (${c!.id}, ${r.dataApuracao}::date, ${arr(r.dezenas)}::int[], ${r.trevos ? arr(r.trevos) : null}::int[], ${r.partidas ? JSON.stringify(r.partidas) : null}::jsonb, ${r.acumulado}, 'caixa')`;
+      for (const x of r.rateios) {
+        await sql`insert into rateios (concurso_id, faixa, descricao, acertos, ganhadores, valor_premio)
+          values (${c!.id}, ${x.faixa}, ${x.descricao}, ${x.acertos}, ${x.ganhadores}, ${x.valorPremio})`;
+      }
+    }
+    const conf = await conferenciaMkp(pg, { dias: 30 });
+    const mais = conf.linhas.find((l) => l.modalidade === 'mais-milionaria')!;
+    expect(mais.sorteio).toBe('05 20 33 35 38 46 + trevos 1 3');
+    expect(mais.premioTotal).toBe(6386.69); // 4+2 x3, 4+1/0 x6, 3+2 x4, 3+1 x8
+    expect(mais.premioLoterica).toBe(2554.68); // 6.386,69 / 10 x 4
+    expect(mais.avisos).toEqual(['jogo 2: jogo sem os trevos']);
+    const loteca = conf.linhas.find((l) => l.modalidade === 'loteca')!;
+    expect(loteca.sorteio).toBe('2X1121221XXX12');
+    expect(loteca.faixasTexto).toEqual(['1× 1º (14 acertos)', '1× 2º (13 acertos)']);
+    expect(loteca.premioTotal).toBe(12588.1);
+    expect(loteca.origemResultado).toBe('caixa');
   });
 
   it('Posição na abertura 7/30/90', async () => {
