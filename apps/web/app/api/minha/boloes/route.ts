@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 /** GET /api/minha/boloes?dias=7&formato=json|csv|xlsx — Bolões MKP (ativos + últimos dias). */
 export async function GET(req: Request) {
-  const dias = Math.min(90, Math.max(1, Number(new URL(req.url).searchParams.get('dias')) || 7));
-  return responder(req, () => boloesMkp(fonteDeDados(), { dias }), { nome: 'boloes-mkp', aba: 'Bolões', colunas: COLUNAS_BOLOES });
+  const s = new URL(req.url).searchParams;
+  const dias = Math.min(90, Math.max(1, Number(s.get('dias')) || 7));
+  return responder(req, () => boloesMkp(fonteDeDados(), { dias, loja: s.get('loja') }), { nome: 'boloes-mkp', aba: 'Bolões', colunas: COLUNAS_BOLOES });
 }

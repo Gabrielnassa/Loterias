@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   return responder(
     req,
     async () => {
-      const r = await financeiroMkp(fonteDeDados(), { ...(de && DIA.test(de) ? { de } : {}), ...(ate && DIA.test(ate) ? { ate } : {}) });
+      const r = await financeiroMkp(fonteDeDados(), { ...(de && DIA.test(de) ? { de } : {}), ...(ate && DIA.test(ate) ? { ate } : {}), loja: s.get('loja') });
       return { ...r, linhas: r.boloes };
     },
     { nome: 'financeiro-mkp', aba: 'Financeiro', colunas: COLUNAS_FINANCEIRO },

@@ -13,7 +13,7 @@ export default async function ConferenciaMkp({ searchParams }: { searchParams: P
   const dias = Number(sp.dias) || 30;
   let d;
   try {
-    d = await conferenciaMkp(fonteDeDados(), { dias });
+    d = await conferenciaMkp(fonteDeDados(), { dias, loja: sp.loja ?? null });
   } catch (e) {
     if (e instanceof MinhaIndisponivel) return <Indisponivel mensagem={e.message} />;
     throw e;
@@ -31,11 +31,12 @@ export default async function ConferenciaMkp({ searchParams }: { searchParams: P
       <section className="cartao space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <FormFiltros>
+            <input type="hidden" name="loja" value={d.loterica.codigoCaixa} />
             <Seletor nome="dias" rotulo="Período" valor={String(dias)} opcoes={[['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias']]} />
           </FormFiltros>
           <div className="flex gap-2">
-            <a className="botao" href={`/api/minha/conferencia?dias=${dias}&formato=csv`}>CSV</a>
-            <a className="botao" href={`/api/minha/conferencia?dias=${dias}&formato=xlsx`}>Baixar planilha</a>
+            <a className="botao" href={`/api/minha/conferencia?dias=${dias}&loja=${d.loterica.codigoCaixa}&formato=csv`}>CSV</a>
+            <a className="botao" href={`/api/minha/conferencia?dias=${dias}&loja=${d.loterica.codigoCaixa}&formato=xlsx`}>Baixar planilha</a>
           </div>
         </div>
         {simulado ? <p className="text-xs text-amber-700 dark:text-amber-400">Resultados e rateios do seed são SIMULADOS. Com o coletor real, vêm da API oficial da CAIXA.</p> : null}

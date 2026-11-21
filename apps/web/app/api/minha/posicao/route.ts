@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic';
 /** GET /api/minha/posicao?dias=7|30|90 — posição na abertura. */
 export async function GET(req: Request) {
   try {
-    return json(await posicaoMinha(fonteDeDados(), { dias: Number(new URL(req.url).searchParams.get('dias')) || 30 }));
+    const s = new URL(req.url).searchParams;
+    return json(await posicaoMinha(fonteDeDados(), { dias: Number(s.get('dias')) || 30, loja: s.get('loja') }));
   } catch (e) {
     if (e instanceof MinhaIndisponivel) return erro(e.message, 409);
     throw e;

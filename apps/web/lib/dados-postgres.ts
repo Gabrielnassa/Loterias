@@ -1,6 +1,6 @@
-import { buscarLotericas, calcularParticipacoes, pagina, type LotericaRef, type ModalidadeSlug, type ParticipacaoInfo } from '@radar/core';
+import { buscarLotericas, calcularParticipacoes, lerLotericasConfiguradas, pagina, type LotericaRef, type ModalidadeSlug, type ParticipacaoInfo } from '@radar/core';
 import { criarSql, type Sql } from '@radar/db';
-import { FonteSimuladaRaioX, type AberturaDetalhada, type AoVivo, type BolaoDaJanela, type FonteDadosRaioX } from './dados';
+import { FonteSimuladaRaioX, type AberturaDetalhada, type AoVivo, type BolaoDaJanela, type FonteDadosRaioX, type MinhaLotericaRef } from './dados';
 
 /**
  * Fonte de dados da web lendo do PostgreSQL: `aberturas` e `abertura_participacoes` (gravadas pelo
@@ -241,12 +241,27 @@ export class FontePostgresRaioX implements FonteDadosRaioX {
     };
   }
 
-  async minhaLoterica(): Promise<LotericaRef | null> {
-    const codigo = this.opcoes.minhaLoterica ?? process.env.RADAR_MINHA_LOTERICA;
+  /**
+   * Lotéricas do dono: RADAR_MINHA_LOTERICA aceita várias, separadas por vírgula, cada uma `código`
+   * ou `código=Nome`, e o código em qualquer forma (21.002894-7, 210028947, 002894 ou 2894).
+   * Sem configuração e com o seed: a lotérica fictícia de demonstração (980011).
+   */
+  async minhasLotericas(): Promise<MinhaLotericaRef[]> {
+    const config = lerLotericasConfiguradas(this.opcoes.minhaLoterica ?? process.env.RADAR_MINHA_LOTERICA);
     const ls = await this.lotericas();
-    if (codigo) return ls.find((l) => l.codigoCaixa === codigo) ?? null;
-    // demonstração com o seed: a lotérica fictícia "Trevo de Ouro" (980011)
-    return (await this.simulado()) ? (ls.find((l) => l.codigoCaixa === '980011') ?? null) : null;
+    if (!config.length) {
+      const demo = (await this.simulado()) ? ls.find((l) => l.codigoCaixa === '980011') : undefined;
+      return demo ? [demo] : [];
+    }
+    return config.map((c) => {
+      const l = ls.find((x) => x.codigoCaixa === c.codigoCaixa);
+      // configurada mas ainda sem bolões vistos pelo coletor
+      return l ? { ...l, ...(c.nome ? { nome: c.nome } : {}) } : { codigoCaixa: c.codigoCaixa, nome: c.nome ?? `Lotérica ${c.codigoInformado}`, cidade: '', uf: '', semDados: true };
+    });
+  }
+
+  async minhaLoterica(): Promise<MinhaLotericaRef | null> {
+    return (await this.minhasLotericas())[0] ?? null;
   }
 
   async fechar(): Promise<void> {

@@ -15,7 +15,7 @@ export default async function BoloesMkp({ searchParams }: { searchParams: Promis
   const dias = Number(sp.dias) || 7;
   let d;
   try {
-    d = await boloesMkp(fonteDeDados(), { dias });
+    d = await boloesMkp(fonteDeDados(), { dias, loja: sp.loja ?? null });
   } catch (e) {
     if (e instanceof MinhaIndisponivel) return <Indisponivel mensagem={e.message} />;
     throw e;
@@ -51,11 +51,12 @@ export default async function BoloesMkp({ searchParams }: { searchParams: Promis
       <section className="cartao space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <FormFiltros>
+            <input type="hidden" name="loja" value={d.loterica.codigoCaixa} />
             <Seletor nome="dias" rotulo="Período" valor={String(dias)} opcoes={[['1', 'Hoje'], ['7', '7 dias'], ['30', '30 dias']]} />
           </FormFiltros>
           <div className="flex gap-2">
-            <a className="botao" href={`/api/minha/boloes?dias=${dias}&formato=csv`}>CSV</a>
-            <a className="botao" href={`/api/minha/boloes?dias=${dias}&formato=xlsx`}>Excel</a>
+            <a className="botao" href={`/api/minha/boloes?dias=${dias}&loja=${d.loterica.codigoCaixa}&formato=csv`}>CSV</a>
+            <a className="botao" href={`/api/minha/boloes?dias=${dias}&loja=${d.loterica.codigoCaixa}&formato=xlsx`}>Excel</a>
           </div>
         </div>
         <div className="overflow-x-auto">

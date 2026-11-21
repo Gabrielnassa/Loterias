@@ -84,7 +84,10 @@ estorno manual), Financeiro MKP (dia a dia, por loteria, maiores lucros e preju�
 (prêmios com o resultado e o rateio oficiais; "seu prêmio" = prêmio / cotas x cotas que sobraram) e
 Posição na abertura (7/30/90 dias, "abriu rápido?"). Tudo exporta CSV e Excel. Precisa do banco.
 
-- `RADAR_MINHA_LOTERICA=<código>` escolhe a lotérica (com o seed, a demonstração usa 980011).
+- `RADAR_MINHA_LOTERICA` lista as lotéricas do dono, separadas por vírgula, cada uma `código` ou
+  `código=Nome`, com o código em qualquer forma (`21.002894-7`, `210028947`, `002894` ou `2894`).
+  Ex.: `RADAR_MINHA_LOTERICA="21.002894-7=Coli Loterias"`. Com mais de uma, a tela mostra um seletor
+  de loja. Sem a variável e com o seed, a demonstração usa a lotérica fictícia 980011.
 - `RADAR_FRANQUIA_LIMITE` (padrão 8000) é o teto diário da franquia.
 - Resultado oficial: o coletor busca sozinho quando a fonte é real (`RESULTADOS_CAIXA=true` força).
   Manual: `pnpm resultados -- --modalidade mega-sena --concurso 3088`. Atrás de um proxy HTTP,

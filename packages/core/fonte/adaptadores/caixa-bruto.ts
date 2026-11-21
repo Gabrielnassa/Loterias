@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { ModalidadeSlug } from '../../dominio/modalidades';
+import { normalizarCodigoLoterica } from '../../dominio/loterica';
 import { horarioSP, noDiaSP } from '../../tempo/fuso';
 import { FormatoInesperadoError } from '../erros';
 import type { BolaoFonte, ConcursoAbertoFonte, ConsultaBoloes, PaginaBoloes } from '../tipos';
@@ -163,7 +164,7 @@ export function normalizarBolao(bruto: unknown): BolaoFonte {
   const out: BolaoFonte = {
     idCaixa: b.codigoBolao,
     loterica: {
-      codigoCaixa: String(b.loterica),
+      codigoCaixa: normalizarCodigoLoterica(b.loterica) ?? String(b.loterica),
       nome,
       cidade: b.municipio.nome.trim(),
       uf: b.uf.sigla.toUpperCase(),

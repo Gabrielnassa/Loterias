@@ -131,6 +131,7 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | Resultado oficial | `core/conferencia/resultado.ts`, `apps/worker/src/fontes/resultados-caixa.ts` | API pública `servicebus2.caixa.gov.br/portaldeloterias/api/{modalidade}/{concurso}` (formato conferido com a Mega 3.088); o coletor busca a cada 10 min os concursos sorteados sem resultado (`resultados`, `rateios`) |
 | Conferência | `core/conferencia/premios.ts` | Prêmio por faixa = C(h, j) x C(n − h, k − j) x rateio; seu prêmio = prêmio / cotas x cotas que sobraram. Mega, Quina, Lotofácil e Dupla Sena |
 | Estorno | `apps/web/lib/minha.ts` (`marcarEstorno`) | Só o usuário marca/desmarca (evento `estorno`); o coletor nunca desfaz |
+| Código da lotérica | `core/dominio/loterica.ts` | Forma canônica = campo `loterica` do JSON (`2894`); aceita `21.002894-7`, `210028947`, `002894`. `RADAR_MINHA_LOTERICA` = várias lojas (`código=Nome`, separadas por vírgula). Coli Loterias (São Paulo/SP) = 2894, franquia R$ 8.000; Legal Loterias (Vila Prudente) com código a informar |
 
 ## Raio-X de Abertura: definições (SPEC)
 

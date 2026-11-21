@@ -45,6 +45,9 @@ export interface AoVivo {
   participacoes: Participacao[];
 }
 
+/** Lotérica do dono (multi-loja). `semDados`: configurada, mas o coletor ainda não viu bolões dela. */
+export type MinhaLotericaRef = LotericaRef & { semDados?: boolean };
+
 export interface FonteDadosRaioX {
   readonly tipo: 'simulada' | 'postgres';
   agora(): Date;
@@ -58,8 +61,10 @@ export interface FonteDadosRaioX {
   abertura(id: string): Promise<AberturaDetalhada | null>;
   boloesDaAbertura(id: string): Promise<BolaoDaJanela[] | null>;
   aoVivo(agora: Date): Promise<AoVivo>;
-  /** Lotérica do usuário (na demonstração, a 1ª lotérica simulada). */
-  minhaLoterica(): Promise<LotericaRef | null>;
+  /** Lotéricas do dono (RADAR_MINHA_LOTERICA, várias separadas por vírgula; na demonstração, a simulada). */
+  minhasLotericas(): Promise<MinhaLotericaRef[]>;
+  /** A 1ª das lotéricas do dono (atalho para destaque em rankings e ao vivo). */
+  minhaLoterica(): Promise<MinhaLotericaRef | null>;
 }
 
 export class FonteSimuladaRaioX implements FonteDadosRaioX {
@@ -134,8 +139,12 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
   async aoVivo(agora: Date): Promise<AoVivo> {
     return { emAndamento: true, ...aberturaAoVivoSimulada(this.historico(), agora) };
   }
+  async minhasLotericas() {
+    const demo = this.historico().lotericas[0];
+    return demo ? [demo] : [];
+  }
   async minhaLoterica() {
-    return this.historico().lotericas[0] ?? null;
+    return (await this.minhasLotericas())[0] ?? null;
   }
 }
 

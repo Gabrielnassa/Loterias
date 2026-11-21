@@ -80,8 +80,9 @@ services:
     environment:
       DATABASE_URL: postgres://radar:${POSTGRES_PASSWORD:-radar}@postgres:5432/radar
       RADAR_FONTE_WEB: postgres
-      # código da sua lotérica (Fase 3: Minha lotérica). Com o seed de demonstração: 980011
+      # lotéricas do dono (várias, separadas por vírgula; código em qualquer forma). Ex.: 21.002894-7=Coli Loterias
       RADAR_MINHA_LOTERICA: ${RADAR_MINHA_LOTERICA:-}
+      RADAR_FRANQUIA_LIMITE: ${RADAR_FRANQUIA_LIMITE:-8000}
       TZ: UTC
 
 volumes:

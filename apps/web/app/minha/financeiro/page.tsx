@@ -14,17 +14,18 @@ export default async function FinanceiroMkp({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   let d;
   try {
-    d = await financeiroMkp(fonteDeDados(), { ...(sp.de && DIA.test(sp.de) ? { de: sp.de } : {}), ...(sp.ate && DIA.test(sp.ate) ? { ate: sp.ate } : {}) });
+    d = await financeiroMkp(fonteDeDados(), { ...(sp.de && DIA.test(sp.de) ? { de: sp.de } : {}), ...(sp.ate && DIA.test(sp.ate) ? { ate: sp.ate } : {}), loja: sp.loja ?? null });
   } catch (e) {
     if (e instanceof MinhaIndisponivel) return <Indisponivel mensagem={e.message} />;
     throw e;
   }
-  const q = `de=${d.de}&ate=${d.ate}`;
+  const q = `de=${d.de}&ate=${d.ate}&loja=${d.loterica.codigoCaixa}`;
   const t = d.total;
   return (
     <div className="space-y-6">
       <section className="cartao flex flex-wrap items-end justify-between gap-3 print:hidden">
         <FormFiltros>
+          <input type="hidden" name="loja" value={d.loterica.codigoCaixa} />
           <label className="flex flex-col gap-1">
             <span className="rotulo">De</span>
             <input type="date" name="de" defaultValue={d.de} className="campo" />

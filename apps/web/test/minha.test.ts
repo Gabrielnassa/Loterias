@@ -95,6 +95,35 @@ suite('Minha lotérica (Fase 3) no Postgres', () => {
   });
 });
 
+suite('várias lotéricas do dono (multi-loja) no Postgres', () => {
+  let sql: Sql;
+  beforeAll(async () => {
+    sql = criarSql(await recriarBancoDeTeste(URL!, 'radar_teste_multiloja'), { max: 2 });
+    await migrar(sql, () => {});
+    await semearHistoricoSimulado(criarDb(sql), { ate: ATE, semanas: 2, nLotericas: 60 });
+  }, 120_000);
+  afterAll(async () => {
+    await sql?.end();
+  });
+
+  it('aceita o código em qualquer forma, com nome, e marca a loja que ainda não tem dados', async () => {
+    const pg = new FontePostgresRaioX(sql, () => ATE, { minhaLoterica: '21.002894-7=Coli Loterias, 980011' });
+    const lojas = await pg.minhasLotericas();
+    expect(lojas.map((l) => [l.codigoCaixa, l.nome, l.semDados ?? false])).toEqual([
+      ['2894', 'Coli Loterias', true],
+      ['980011', 'Lotérica Trevo de Ouro', false],
+    ]);
+    // a 1ª é a padrão; a Coli ainda não tem bolões no banco (só o seed fictício)
+    const coli = await boloesMkp(pg, { loja: '002894' });
+    expect(coli.loterica.codigoCaixa).toBe('2894');
+    expect(coli.linhas).toEqual([]);
+    expect(coli.franquia.limite).toBe(8000);
+    const demo = await boloesMkp(pg, { loja: '980011' });
+    expect(demo.linhas.length).toBeGreaterThan(0);
+    await expect(boloesMkp(pg, { loja: '123456' })).rejects.toThrow(/não está entre as suas/);
+  });
+});
+
 describe('Minha lotérica sem banco', () => {
   it('bolões/financeiro/conferência respondem 409 explicando que precisa do banco', async () => {
     definirFonteDeDados(new FonteSimuladaRaioX(() => ATE, 60 * 60_000, { semanas: 2, nLotericas: 100 }));

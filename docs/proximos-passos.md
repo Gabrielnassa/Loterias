@@ -37,3 +37,11 @@ Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
 Pendências conhecidas para depois: multi-loja e contas (Fase 6), watchlist e alertas, arte do premiado (Fase 5),
 conferência de Lotomania/Timemania/Dia de Sorte/Super Sete/+Milionária/Loteca (regras de prêmio próprias),
 observar uma abertura real e calibrar a estratégia, testar as imagens Docker.
+
+## Sessão 4 (21/11/2026, noite)
+
+- [x] Código da lotérica em qualquer forma (`normalizarCodigoLoterica`) e várias lojas em
+      `RADAR_MINHA_LOTERICA` (Coli Loterias = 2894, franquia R$ 8.000). Seletor de loja na `/minha`.
+- [ ] Conferência das outras modalidades (Lotomania, Timemania, Dia de Sorte, Super Sete, +Milionária, Loteca).
+- Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
+  código da Legal Loterias.

@@ -18,7 +18,7 @@ export default async function PosicaoNaAbertura({ searchParams }: { searchParams
   const dias = Number(sp.dias) || 30;
   let d;
   try {
-    d = await posicaoMinha(fonteDeDados(), { dias });
+    d = await posicaoMinha(fonteDeDados(), { dias, loja: sp.loja ?? null });
   } catch (e) {
     if (e instanceof MinhaIndisponivel) return <Indisponivel mensagem={e.message} />;
     throw e;
@@ -29,6 +29,7 @@ export default async function PosicaoNaAbertura({ searchParams }: { searchParams
     <div className="space-y-6">
       <section className="cartao">
         <FormFiltros>
+          <input type="hidden" name="loja" value={d.loterica.codigoCaixa} />
           <Seletor nome="dias" rotulo="Período" valor={String(d.dias)} opcoes={[['7', '7 dias'], ['30', '30 dias'], ['90', '90 dias']]} />
         </FormFiltros>
       </section>

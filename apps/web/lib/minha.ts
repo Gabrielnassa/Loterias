@@ -9,17 +9,17 @@ import {
   franquiaUsada,
   inicioDoDiaSP,
   modalidadeConferivel,
+  normalizarCodigoLoterica,
   posicaoNaAbertura,
   resumoFinanceiro,
   somarDias,
   type BolaoMinha,
   type ColocacaoPorEscopo,
-  type LotericaRef,
   type ModalidadeSlug,
   type ResultadoOficial,
 } from '@radar/core';
 import type { Sql } from '@radar/db';
-import type { FonteDadosRaioX } from './dados';
+import type { FonteDadosRaioX, MinhaLotericaRef } from './dados';
 import type { FontePostgresRaioX } from './dados-postgres';
 
 /**
@@ -42,9 +42,14 @@ function sqlDe(fonte: FonteDadosRaioX): Sql {
   return sql;
 }
 
-export async function minhaLoterica(fonte: FonteDadosRaioX): Promise<LotericaRef> {
-  const l = await fonte.minhaLoterica();
-  if (!l) throw new MinhaIndisponivel('defina RADAR_MINHA_LOTERICA com o código da sua lotérica');
+/** Uma das lotéricas do dono (`loja` em qualquer forma do código); sem `loja`, a 1ª configurada. */
+export async function minhaLoterica(fonte: FonteDadosRaioX, loja?: string | null): Promise<MinhaLotericaRef> {
+  const minhas = await fonte.minhasLotericas();
+  if (!minhas.length) throw new MinhaIndisponivel('defina RADAR_MINHA_LOTERICA com o código da sua lotérica (ex.: 2894=Coli Loterias)');
+  if (!loja) return minhas[0]!;
+  const c = normalizarCodigoLoterica(loja);
+  const l = minhas.find((m) => m.codigoCaixa === c);
+  if (!l) throw new MinhaIndisponivel(`a lotérica ${loja} não está entre as suas (RADAR_MINHA_LOTERICA)`);
   return l;
 }
 
@@ -134,9 +139,9 @@ async function colocacoesAtuais(sql: Sql, concursos: number[]): Promise<Map<stri
 }
 
 /** Bolões MKP: ativos + os dos últimos `dias` dias, com financeiro, break-even, fila e colocação. */
-export async function boloesMkp(fonte: FonteDadosRaioX, o: { dias?: number } = {}) {
+export async function boloesMkp(fonte: FonteDadosRaioX, o: { dias?: number; loja?: string | null } = {}) {
   const sql = sqlDe(fonte);
-  const loterica = await minhaLoterica(fonte);
+  const loterica = await minhaLoterica(fonte, o.loja);
   const agora = fonte.agora();
   const dias = o.dias ?? 7;
   const linhas = await carregarBoloes(sql, loterica.codigoCaixa, inicioDoDiaSP(somarDias(diaSP(agora), -(dias - 1))));
@@ -187,9 +192,9 @@ export async function boloesMkp(fonte: FonteDadosRaioX, o: { dias?: number } = {
 }
 
 /** Financeiro MKP de um período (por data de inserção do bolão). */
-export async function financeiroMkp(fonte: FonteDadosRaioX, o: { de?: string; ate?: string } = {}) {
+export async function financeiroMkp(fonte: FonteDadosRaioX, o: { de?: string; ate?: string; loja?: string | null } = {}) {
   const sql = sqlDe(fonte);
-  const loterica = await minhaLoterica(fonte);
+  const loterica = await minhaLoterica(fonte, o.loja);
   const agora = fonte.agora();
   const ate = o.ate ?? diaSP(agora);
   const de = o.de ?? somarDias(ate, -29);
@@ -199,9 +204,9 @@ export async function financeiroMkp(fonte: FonteDadosRaioX, o: { de?: string; at
 }
 
 /** Conferência MKP: prêmios dos meus bolões com resultado e rateio oficiais. */
-export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number } = {}) {
+export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number; loja?: string | null } = {}) {
   const sql = sqlDe(fonte);
-  const loterica = await minhaLoterica(fonte);
+  const loterica = await minhaLoterica(fonte, o.loja);
   const agora = fonte.agora();
   const desde = inicioDoDiaSP(somarDias(diaSP(agora), -((o.dias ?? 30) - 1)));
   const linhas = (await carregarBoloes(sql, loterica.codigoCaixa, desde)).filter((l) => !l.estornado && modalidadeConferivel(l.slug));
@@ -264,8 +269,8 @@ export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number 
 }
 
 /** Posição na abertura (7/30/90 dias): funciona com o banco ou com a simulação. */
-export async function posicaoMinha(fonte: FonteDadosRaioX, o: { dias?: number } = {}) {
-  const loterica = await minhaLoterica(fonte);
+export async function posicaoMinha(fonte: FonteDadosRaioX, o: { dias?: number; loja?: string | null } = {}) {
+  const loterica = await minhaLoterica(fonte, o.loja);
   const [aberturas, participacoes, lotericas] = await Promise.all([fonte.aberturas(), fonte.participacoes(), fonte.lotericas()]);
   const dias = o.dias === 7 || o.dias === 90 ? o.dias : 30;
   return { loterica, ...posicaoNaAbertura(loterica, aberturas, participacoes, new Map(lotericas.map((l) => [l.codigoCaixa, l])), { dias, ate: fonte.agora() }) };
@@ -274,7 +279,8 @@ export async function posicaoMinha(fonte: FonteDadosRaioX, o: { dias?: number } 
 /** Estorno manual (marcar/desmarcar) de um bolão da MINHA lotérica. */
 export async function marcarEstorno(fonte: FonteDadosRaioX, bolaoId: number, estornado: boolean): Promise<boolean> {
   const sql = sqlDe(fonte);
-  const loterica = await minhaLoterica(fonte);
+  const minhas = (await fonte.minhasLotericas()).map((l) => l.codigoCaixa);
+  if (!minhas.length) throw new MinhaIndisponivel('defina RADAR_MINHA_LOTERICA com o código da sua lotérica');
   return sql.begin(async (tx) => {
     const r = await tx`
       update boloes b set
@@ -285,7 +291,7 @@ export async function marcarEstorno(fonte: FonteDadosRaioX, bolaoId: number, est
                       when b.cotas_disponiveis = 0 then 'esgotado'
                       else 'a_venda' end
       from lotericas l
-      where b.id = ${bolaoId} and l.id = b.loterica_id and l.codigo_caixa = ${loterica.codigoCaixa} and b.estornado <> ${estornado}
+      where b.id = ${bolaoId} and l.id = b.loterica_id and l.codigo_caixa = any(${minhas}) and b.estornado <> ${estornado}
       returning b.id`;
     if (!r.length) return false;
     await tx`insert into eventos_bolao (bolao_id, tipo, em, quantidade) values (${bolaoId}, 'estorno', now(), ${estornado ? 1 : -1})`;
