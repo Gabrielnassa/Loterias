@@ -6,9 +6,10 @@ import {
   type EventoBolao,
   type LinhaMercado,
   type LinhaSnapshot,
+  type Participacao,
   type ResultadoLeitura,
 } from '@radar/core';
-import type { ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
+import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
 type ConcursoMem = ConcursoAgendavel & { origem: ConcursoParaSalvar['origem']; dataSorteio?: string; encerradoEm?: Date };
 
@@ -20,13 +21,17 @@ export class RepositorioMemoria implements Repositorio {
   readonly eventos: (EventoBolao & { coletaId: number })[] = [];
   readonly coletas: (InicioColeta & Partial<FimColeta> & { id: number })[] = [];
   readonly mercado = new Map<string, LinhaMercado & { minuto: Date }>();
+  readonly aberturas = new Map<string, AberturaParaSalvar & { participacoes: Participacao[] }>();
   falharAoSalvar = false;
 
   async concursosAgendaveis(agora: Date): Promise<ConcursoAgendavel[]> {
     return [...this.concursos.values()]
       .filter((c) => !c.encerradoEm)
       .filter((c) => c.origem !== 'previsao' || !c.abreEm || c.abreEm.getTime() > agora.getTime() - 3 * 3_600_000)
-      .map(({ modalidade, concurso, abreEm, fechaEm, encerrado }) => ({ modalidade, concurso, abreEm, fechaEm, encerrado }));
+      .map(({ modalidade, concurso, abreEm, fechaEm, encerrado }) => ({
+        modalidade, concurso, abreEm, fechaEm, encerrado,
+        aberturaProcessada: this.aberturas.has(chaveConcurso({ modalidade, concurso })),
+      }));
   }
 
   async salvarConcursos(cs: readonly ConcursoParaSalvar[]): Promise<void> {
@@ -73,6 +78,10 @@ export class RepositorioMemoria implements Repositorio {
 
   async salvarMercado(ref: ConcursoRef, minuto: Date, linhas: readonly LinhaMercado[]): Promise<void> {
     for (const l of linhas) this.mercado.set(`${chaveConcurso(ref)}|${l.uf}|${minuto.toISOString()}`, { ...l, minuto });
+  }
+
+  async salvarAbertura(ref: ConcursoRef, a: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void> {
+    this.aberturas.set(chaveConcurso(ref), { ...a, participacoes: structuredClone([...participacoes]) });
   }
 
   async marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void> {

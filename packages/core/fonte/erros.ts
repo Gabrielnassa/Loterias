@@ -36,3 +36,13 @@ export class LimiteDeRequisicoesError extends ErroFonte {
 
 /** Endpoint ainda não mapeado (Fase 0 pendente). */
 export class FonteNaoMapeadaError extends ErroFonte {}
+
+/**
+ * O portal pediu uma ação que só uma PESSOA pode fazer (ex.: "Você tem mais de 18 anos?",
+ * aceite de termos). O coletor nunca responde sozinho: para e pede que o operador prepare a
+ * sessão manualmente (`pnpm --filter @radar/worker caixa:preparar-sessao`).
+ */
+export class ConfirmacaoHumanaNecessariaError extends BloqueadoPelaFonteError {}
+
+/** A tela exige login. O coletor não faz login sozinho nem usa conta pessoal. */
+export class LoginNecessarioError extends BloqueadoPelaFonteError {}

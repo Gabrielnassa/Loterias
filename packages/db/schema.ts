@@ -76,6 +76,13 @@ export const boloes = pgTable('boloes', {
   firstSeenAt: tz('first_seen_at').notNull(),
   lastSeenAt: tz('last_seen_at').notNull(),
   fila: integer('fila').notNull(),
+  filaCalculada: integer('fila_calculada').notNull(),
+  filaObservada: integer('fila_observada'),
+  filaObservadaEntrada: integer('fila_observada_entrada'),
+  cotasDigitais: integer('cotas_digitais'),
+  contemResiduo: boolean('contem_residuo').notNull().default(false),
+  valorUltimaCota: numeric('valor_ultima_cota', { precision: 12, scale: 2 }),
+  tarifaCota: numeric('tarifa_cota', { precision: 12, scale: 2 }),
   ordemPrimeiraLeitura: integer('ordem_primeira_leitura'),
   posEntradaBrasil: integer('pos_entrada_brasil'),
   posEntradaUf: integer('pos_entrada_uf'),
@@ -128,7 +135,7 @@ export const eventosBolao = pgTable('eventos_bolao', {
 
 export const coletas = pgTable('coletas', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  tipo: text('tipo', { enum: ['varredura', 'contagens', 'encerrar', 'concursos'] }).notNull(),
+  tipo: text('tipo', { enum: ['varredura', 'contagens', 'encerrar', 'concursos', 'abertura'] }).notNull(),
   modo: text('modo', { enum: ['normal', 'abertura'] }).notNull(),
   modalidade: text('modalidade'),
   concurso: integer('concurso'),
@@ -142,6 +149,7 @@ export const coletas = pgTable('coletas', {
   novos: integer('novos'),
   eventos: integer('eventos'),
   erro: text('erro'),
+  desvioServidorMs: integer('desvio_servidor_ms'),
 });
 
 export const mercadoMinuto = pgTable(

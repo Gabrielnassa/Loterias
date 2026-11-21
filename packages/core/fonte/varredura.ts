@@ -25,6 +25,8 @@ export interface LeituraVitrine extends ConcursoRef {
   itens: ItemLeitura[];
   /** Erro que interrompeu a leitura depois da 1ª página (leitura parcial). */
   erro?: Error;
+  /** Hora do servidor da fonte − hora do coletor, na 1ª página que informou (ms). */
+  desvioServidorMs?: number;
 }
 
 export interface OpcoesVarredura {
@@ -56,6 +58,7 @@ export async function varrerConcurso(
   let ordemDaVitrine = true;
   let totalPaginasFonte: number | undefined;
   let erro: Error | undefined;
+  let desvioServidorMs: number | undefined;
 
   for (let p = 1; p <= maxPaginas; p++) {
     let pagina;
@@ -71,6 +74,9 @@ export async function varrerConcurso(
     paginasLidas++;
     ordemDaVitrine &&= pagina.ordemDaVitrine;
     if (pagina.totalPaginas !== undefined) totalPaginasFonte = pagina.totalPaginas;
+    if (desvioServidorMs === undefined && pagina.horaServidor) {
+      desvioServidorMs = pagina.horaServidor.getTime() - pagina.obtidaEm.getTime();
+    }
     for (const b of pagina.itens) {
       if (vistos.has(b.idCaixa)) {
         duplicados++;
@@ -100,5 +106,6 @@ export async function varrerConcurso(
     duplicados,
     itens,
     ...(erro ? { erro } : {}),
+    ...(desvioServidorMs !== undefined ? { desvioServidorMs } : {}),
   };
 }

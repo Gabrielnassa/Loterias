@@ -8,7 +8,7 @@ const bool = z
 const esquema = z.object({
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
-  FONTE: z.enum(['simulada', 'fixture', 'caixa']).default('simulada'),
+  FONTE: z.enum(['simulada', 'fixture', 'caixa', 'caixa-navegador']).default('simulada'),
   FILA: z.enum(['bullmq', 'memoria']).default('bullmq'),
   REPOSITORIO: z.enum(['postgres', 'memoria']).default('postgres'),
   MIGRAR_NA_PARTIDA: bool.default('true'),
@@ -29,9 +29,18 @@ const esquema = z.object({
   COLETA_KEYFRAME_MIN: z.coerce.number().positive().default(10),
   COLETA_LEITURAS_PARA_SUMICO: z.coerce.number().int().positive().default(2),
   COLETA_PAUSA_BLOQUEIO_MIN: z.coerce.number().positive().default(30),
+  COLETA_PARTICIPACAO_MIN: z.coerce.number().positive().default(30),
   FONTE_INTERVALO_MIN_MS: z.coerce.number().int().nonnegative().default(250),
   FONTE_FIXTURES_DIR: z.string().optional(),
   CAIXA_BASE_URL: z.string().optional(),
+  // adaptador caixa-navegador (Playwright)
+  CAIXA_BASE_URL_NAVEGADOR: z.string().default('https://www.loteriasonline.caixa.gov.br/silce-web/'),
+  CAIXA_SESSAO: z.string().default('.sessao-caixa/estado.json'),
+  CAIXA_HEADLESS: bool.default('true'),
+  CAIXA_INTERVALO_MS: z.coerce.number().int().positive().default(3000),
+  CAIXA_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
+  CAIXA_MODALIDADES: z.string().default('mega-sena,lotofacil,quina'),
+  CAIXA_NAVEGADOR_EXECUTAVEL: z.string().optional(),
   SIMULACAO_T0: z.string().optional(),
   SIMULACAO_BOLOES: z.coerce.number().int().positive().default(200),
   SIMULACAO_SEMENTE: z.coerce.number().int().default(20261116),
@@ -50,6 +59,9 @@ export interface ConfigColetor {
   keyframeMs: number;
   leiturasParaSumico: number;
   pausaBloqueioMs: number;
+  /** Janela da abertura e limite de participação (minutos após T0). */
+  janelaMin: number;
+  participacaoMin: number;
 }
 
 export const CONFIG_COLETOR_PADRAO: ConfigColetor = {
@@ -57,6 +69,8 @@ export const CONFIG_COLETOR_PADRAO: ConfigColetor = {
   keyframeMs: 10 * 60_000,
   leiturasParaSumico: 2,
   pausaBloqueioMs: 30 * 60_000,
+  janelaMin: 60,
+  participacaoMin: 30,
 };
 
 export function lerConfig(env: NodeJS.ProcessEnv = process.env): ConfigWorker {
@@ -79,6 +93,8 @@ export function lerConfig(env: NodeJS.ProcessEnv = process.env): ConfigWorker {
       keyframeMs: amb.COLETA_KEYFRAME_MIN * 60_000,
       leiturasParaSumico: amb.COLETA_LEITURAS_PARA_SUMICO,
       pausaBloqueioMs: amb.COLETA_PAUSA_BLOQUEIO_MIN * 60_000,
+      janelaMin: amb.COLETA_ABERTURA_DURACAO_MIN,
+      participacaoMin: amb.COLETA_PARTICIPACAO_MIN,
     },
   };
 }

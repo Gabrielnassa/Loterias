@@ -60,14 +60,34 @@ describe('tarefas devidas', () => {
 
   it('encerrar sai uma vez depois do fechamento', () => {
     const depois = new Date(concurso.fechaEm.getTime() + 1000);
-    const ts = tarefasDevidas(depois, [concurso], new Map([['contagens', Number.MAX_SAFE_INTEGER]]));
+    const processado = { ...concurso, aberturaProcessada: true };
+    const ts = tarefasDevidas(depois, [processado], new Map([['contagens', Number.MAX_SAFE_INTEGER]]));
     expect(ts).toEqual([expect.objectContaining({ tipo: 'encerrar', chave: 'encerrar:lotofacil#3500' })]);
-    expect(tarefasDevidas(depois, [concurso], new Map([['contagens', Number.MAX_SAFE_INTEGER], ['encerrar:lotofacil#3500', 0]]))).toEqual([]);
+    expect(tarefasDevidas(depois, [processado], new Map([['contagens', Number.MAX_SAFE_INTEGER], ['encerrar:lotofacil#3500', 0]]))).toEqual([]);
+    // se a janela nunca foi processada (worker fora do ar), as duas tarefas saem
+    expect(tarefasDevidas(depois, [concurso], new Map([['contagens', Number.MAX_SAFE_INTEGER]])).map((t) => t.tipo).sort()).toEqual(['abertura', 'encerrar']);
   });
 
   it('configuração alternativa (ex.: 5 s até T0 + 30 min)', () => {
     const cfg = { ...CONFIG_COLETA_PADRAO, aberturaRapidaMs: 30 * 60_000 };
     expect(modoDoConcurso(mais(20 * 60), concurso, cfg)).toMatchObject({ intervaloMs: 5000 });
+  });
+});
+
+describe('fim da janela da abertura', () => {
+  it('sai uma vez em T0 + 60 min e não sai se já processada', () => {
+    expect(tarefasDevidas(mais(3599), [concurso], new Map()).some((t) => t.tipo === 'abertura')).toBe(false);
+    const ts = tarefasDevidas(mais(3600), [concurso], new Map());
+    const t = ts.find((x) => x.tipo === 'abertura')!;
+    expect(t).toMatchObject({ chave: 'fechar-abertura:lotofacil#3500', slot: 0, t0: T0 });
+    expect(t.agendadaPara.getTime()).toBe(T0.getTime() + 3600_000);
+    expect(tarefasDevidas(mais(3700), [concurso], new Map([[t.chave, 0]])).some((x) => x.tipo === 'abertura')).toBe(false);
+    expect(tarefasDevidas(mais(3700), [{ ...concurso, aberturaProcessada: true }], new Map()).some((x) => x.tipo === 'abertura')).toBe(false);
+  });
+  it('encerrar leva o T0 para recalcular as participações com a sobra', () => {
+    const depois = new Date(concurso.fechaEm.getTime() + 1000);
+    const t = tarefasDevidas(depois, [{ ...concurso, aberturaProcessada: true }], new Map([['contagens', Number.MAX_SAFE_INTEGER]]))[0]!;
+    expect(t).toMatchObject({ tipo: 'encerrar', t0: T0 });
   });
 });
 

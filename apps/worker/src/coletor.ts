@@ -2,6 +2,8 @@ import {
   agregarMercado,
   aplicarLeitura,
   BloqueadoPelaFonteError,
+  bolaoDaAbertura,
+  calcularParticipacoes,
   chaveConcurso,
   encerrarConcurso,
   minutoDe,
@@ -67,6 +69,42 @@ export class Coletor {
         return this.contagens(t);
       case 'encerrar':
         return this.encerrar(t);
+      case 'abertura':
+        return this.fecharAbertura(t);
+    }
+  }
+
+  /** Calcula as participações da abertura a partir do estado e grava (substitui as anteriores). */
+  private async gravarParticipacoes(estado: EstadoConcurso, t0: Date): Promise<number> {
+    const participacoes = calcularParticipacoes(
+      { t0, janelaMin: this.cfg.janelaMin, participacaoMin: this.cfg.participacaoMin },
+      [...estado.boloes.values()].map(bolaoDaAbertura),
+    );
+    await this.d.repo.salvarAbertura(
+      estado,
+      { t0, janelaMin: this.cfg.janelaMin, participacaoMin: this.cfg.participacaoMin, processadaEm: this.d.relogio.agora() },
+      participacoes,
+    );
+    return participacoes.length;
+  }
+
+  /** Fim da janela (T0 + 60 min): grava abertura_participacoes, base do Raio-X. */
+  private async fecharAbertura(t: Extract<Tarefa, { tipo: 'abertura' }>): Promise<ResumoTarefa> {
+    const { repo, relogio } = this.d;
+    const ref = t.concurso;
+    const coletaId = await repo.iniciarColeta({
+      tipo: 'abertura', modo: 'abertura', modalidade: ref.modalidade, concurso: ref.concurso, agendadaPara: t.agendadaPara, iniciouEm: relogio.agora(),
+    });
+    try {
+      const n = await this.gravarParticipacoes(await this.estado(ref), t.t0);
+      await repo.finalizarColeta(coletaId, { terminouEm: relogio.agora(), itens: n, completa: true });
+      this.d.log.info({ concurso: chaveConcurso(ref), participacoes: n }, 'abertura processada');
+      return { ok: true, itens: n };
+    } catch (e) {
+      const erro = e instanceof Error ? e.message : String(e);
+      this.d.log.error({ tarefa: t.chave, erro }, 'falha ao processar a abertura');
+      await repo.finalizarColeta(coletaId, { terminouEm: relogio.agora(), erro }).catch(() => {});
+      return { ok: false, erro };
     }
   }
 
@@ -135,6 +173,7 @@ export class Coletor {
         novos: r.novos.length,
         eventos: r.eventos.length,
         ...(leitura.erro ? { erro: `leitura parcial: ${leitura.erro.message}` } : {}),
+        ...(leitura.desvioServidorMs !== undefined ? { desvioServidorMs: Math.round(leitura.desvioServidorMs) } : {}),
       });
       if (r.novos.length) this.d.log.debug({ tarefa: t.chave, novos: r.novos.length }, 'bolões novos');
       return { ok: true, itens: leitura.itens.length, novos: r.novos.length, eventos: r.eventos.length };
@@ -201,6 +240,8 @@ export class Coletor {
       const em = t.agendadaPara;
       const r = encerrarConcurso(estado, em);
       await repo.salvarLeitura(ref, r, coletaId, estado.ultimaLeituraEm ?? em);
+      // com a sobra final conhecida, recalcula a abertura (% vendido e sobra do Raio-X)
+      if (t.t0) await this.gravarParticipacoes(estado, t.t0);
       await repo.marcarEncerrado(ref, em);
       this.estados.delete(chaveConcurso(ref));
       await repo.finalizarColeta(coletaId, { terminouEm: relogio.agora(), eventos: r.eventos.length, completa: true });

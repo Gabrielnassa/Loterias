@@ -40,9 +40,21 @@ export interface BolaoRegistrado {
   valorCotaBase: number;
   valorCotaExibido?: number;
   numeros?: number[][];
+  /** Cotas oferecidas na internet (o restante do total fica no balcão), se a fonte informar. */
+  cotasDigitais?: number;
+  contemResiduo?: boolean;
+  valorUltimaCotaBase?: number;
+  tarifaPorCotaFonte?: number;
   firstSeenAt: Date;
   lastSeenAt: Date;
+  /** Fila EFETIVA (usada nas colocações): a observada na fonte, se vier; senão a calculada. */
   fila: number;
+  /** Fila pela regra (ordem de first_seen_at entre os bolões da lotérica). Sempre preenchida. */
+  filaCalculada: number;
+  /** Fila informada pela fonte (campo `index`) na leitura mais recente; null se a fonte não informa. */
+  filaObservada: number | null;
+  /** Fila informada pela fonte quando o bolão apareceu (comparar com a atual revela fila dinâmica). */
+  filaObservadaEntrada: number | null;
   /** Posição observada na leitura em que apareceu (desempate da ordem de chegada). */
   ordemPrimeiraLeitura: number;
   cotasDisponiveis: number;
@@ -81,7 +93,7 @@ export function novoEstadoConcurso(ref: ConcursoRef, boloes: readonly BolaoRegis
   for (const b of boloes) {
     estado.boloes.set(b.idCaixa, b);
     const cod = b.loterica.codigoCaixa;
-    estado.boloesPorLoterica.set(cod, Math.max(estado.boloesPorLoterica.get(cod) ?? 0, b.fila));
+    estado.boloesPorLoterica.set(cod, Math.max(estado.boloesPorLoterica.get(cod) ?? 0, b.filaCalculada));
   }
   return estado;
 }
@@ -125,8 +137,9 @@ function paraVitrine(b: BolaoRegistrado): BolaoNaVitrine {
   };
 }
 
-function registrar(item: ItemLeitura, fila: number, empate: boolean): BolaoRegistrado {
+function registrar(item: ItemLeitura, filaCalculada: number, empate: boolean): BolaoRegistrado {
   const firstSeenAt = item.inseridoEmFonte ?? item.vistoEm;
+  const filaObservada = item.filaFonte ?? null;
   const b: BolaoRegistrado = {
     idCaixa: item.idCaixa,
     loterica: item.loterica,
@@ -138,7 +151,10 @@ function registrar(item: ItemLeitura, fila: number, empate: boolean): BolaoRegis
     valorCotaBase: item.valorCotaBase,
     firstSeenAt,
     lastSeenAt: item.vistoEm,
-    fila,
+    fila: filaObservada ?? filaCalculada,
+    filaCalculada,
+    filaObservada,
+    filaObservadaEntrada: filaObservada,
     ordemPrimeiraLeitura: item.posicaoObservada,
     cotasDisponiveis: item.cotasDisponiveis,
     status: item.cotasDisponiveis === 0 ? 'esgotado' : 'a_venda',
@@ -153,6 +169,10 @@ function registrar(item: ItemLeitura, fila: number, empate: boolean): BolaoRegis
   };
   if (item.valorCotaExibido !== undefined) b.valorCotaExibido = item.valorCotaExibido;
   if (item.numeros) b.numeros = item.numeros;
+  if (item.cotasDigitais !== undefined) b.cotasDigitais = item.cotasDigitais;
+  if (item.contemResiduo) b.contemResiduo = true;
+  if (item.valorUltimaCotaBase !== undefined) b.valorUltimaCotaBase = item.valorUltimaCotaBase;
+  if (item.tarifaPorCotaFonte !== undefined) b.tarifaPorCotaFonte = item.tarifaPorCotaFonte;
   return b;
 }
 
@@ -210,6 +230,12 @@ export function aplicarLeitura(
     b.lastSeenAt = it.vistoEm;
     b.ausencias = 0;
     b.primeiraAusenciaEm = null;
+    if (it.filaFonte !== undefined && it.filaFonte !== b.filaObservada) {
+      // a fonte mudou a fila do bolão (fila dinâmica?): acompanha a observada, mantém a calculada
+      b.filaObservada = it.filaFonte;
+      b.fila = it.filaFonte;
+      alterados.add(b.idCaixa);
+    }
     if (b.status === 'estornado' || b.status === 'encerrado') continue;
     const antes = b.cotasDisponiveis;
     const agora = it.cotasDisponiveis;

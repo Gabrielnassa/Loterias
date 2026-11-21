@@ -11,12 +11,17 @@ export interface Fila {
 
 /** Chave de exclusão: no máximo uma leitura por concurso ao mesmo tempo. */
 function chaveExclusiva(t: Tarefa): string {
-  return t.tipo === 'contagens' ? 'contagens' : chaveConcurso(t.concurso);
+  if (t.tipo === 'contagens') return 'contagens';
+  // o job da abertura só lê o estado: não deve atrasar a leitura do mesmo concurso
+  if (t.tipo === 'abertura') return `abertura:${chaveConcurso(t.concurso)}`;
+  return chaveConcurso(t.concurso);
 }
 
 /** Tarefas viajam como JSON: Date vira string e precisa voltar. */
 function reviver(t: Tarefa): Tarefa {
-  return { ...t, agendadaPara: new Date(t.agendadaPara) };
+  const r = { ...t, agendadaPara: new Date(t.agendadaPara) } as Tarefa;
+  if ('t0' in r && r.t0) (r as { t0: Date }).t0 = new Date(r.t0);
+  return r;
 }
 
 class ControleOcupacao {

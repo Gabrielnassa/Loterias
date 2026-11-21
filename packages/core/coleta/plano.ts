@@ -34,6 +34,8 @@ export interface ConcursoAgendavel extends ConcursoRef {
   abreEm?: Date | null;
   fechaEm?: Date | null;
   encerrado?: boolean;
+  /** A janela da abertura já foi processada (participações gravadas). */
+  aberturaProcessada?: boolean;
 }
 
 export type ModoConcurso =
@@ -81,10 +83,12 @@ export type Tarefa =
       agendadaPara: Date;
       prioridade: number;
     }
-  | { tipo: 'encerrar'; chave: string; concurso: ConcursoRef; slot: number; agendadaPara: Date; prioridade: number };
+  | { tipo: 'encerrar'; chave: string; concurso: ConcursoRef; slot: number; agendadaPara: Date; prioridade: number; t0?: Date }
+  /** Fim da janela da abertura: calcula e grava as participações (base do Raio-X). */
+  | { tipo: 'abertura'; chave: string; concurso: ConcursoRef; t0: Date; slot: number; agendadaPara: Date; prioridade: number };
 
 /** Prioridades (menor = mais urgente), no padrão do BullMQ. */
-export const PRIORIDADE = { abertura: 1, encerrar: 2, contagens: 3, normal: 5 } as const;
+export const PRIORIDADE = { abertura: 1, encerrar: 2, fecharAbertura: 2, contagens: 3, normal: 5 } as const;
 
 /**
  * Tarefas devidas agora. `ultimos` guarda, por chave de tarefa, o último slot já disparado —
@@ -112,11 +116,23 @@ export function tarefasDevidas(
 
   for (const c of concursos) {
     const ref = { modalidade: c.modalidade, concurso: c.concurso };
+    if (c.abreEm && !c.aberturaProcessada && !c.encerrado) {
+      const fimJanela = c.abreEm.getTime() + cfg.aberturaDuracaoMs;
+      const chave = `fechar-abertura:${chaveConcurso(ref)}`;
+      if (agora.getTime() >= fimJanela && devido(chave, 0)) {
+        tarefas.push({
+          tipo: 'abertura', chave, concurso: ref, t0: c.abreEm, slot: 0, agendadaPara: new Date(fimJanela), prioridade: PRIORIDADE.fecharAbertura,
+        });
+      }
+    }
     const m = modoDoConcurso(agora, c, cfg);
     if (m.modo === 'fechado') {
       const chave = `encerrar:${chaveConcurso(ref)}`;
       if (!c.encerrado && c.fechaEm && devido(chave, 0)) {
-        tarefas.push({ tipo: 'encerrar', chave, concurso: ref, slot: 0, agendadaPara: c.fechaEm, prioridade: PRIORIDADE.encerrar });
+        tarefas.push({
+          tipo: 'encerrar', chave, concurso: ref, slot: 0, agendadaPara: c.fechaEm, prioridade: PRIORIDADE.encerrar,
+          ...(c.abreEm ? { t0: c.abreEm } : {}),
+        });
       }
       continue;
     }

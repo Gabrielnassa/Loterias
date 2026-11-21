@@ -53,6 +53,7 @@ async function principal() {
   }
 
   const { fonte, simulacoes } = criarFonte(cfg, relogio);
+  if (fonte.fechar) finalizar.push(() => fonte.fechar!());
   for (const s of simulacoes) {
     await repo.salvarConcursos([{ modalidade: s.modalidade, concurso: s.concurso, abreEm: s.t0, fechaEm: s.fechaEm, origem: 'manual' }]);
     log.info({ concurso: `${s.modalidade} ${s.concurso}`, t0: s.t0.toISOString(), boloes: s.boloes.length }, 'abertura SIMULADA cadastrada');

@@ -33,9 +33,16 @@ export const esquemaBolao = z
     valorCotaExibido: z.number().positive().optional(),
     numeros: z.array(z.array(z.number().int())).optional(),
     inseridoEmFonte: z.date().optional(),
+    filaFonte: inteiroPositivo.optional(),
+    cotasDigitais: inteiroNaoNegativo.optional(),
+    contemResiduo: z.boolean().optional(),
+    valorUltimaCotaBase: z.number().positive().optional(),
+    tarifaPorCotaFonte: z.number().nonnegative().optional(),
+    trevos: inteiroNaoNegativo.optional(),
   })
   .refine((b) => b.cotasDisponiveis <= b.cotasTotal, { message: 'cotasDisponiveis > cotasTotal' })
-  .refine((b) => !b.numeros || b.numeros.length === b.jogos, { message: 'numeros.length != jogos' });
+  .refine((b) => !b.numeros || b.numeros.length === b.jogos, { message: 'numeros.length != jogos' })
+  .refine((b) => b.cotasDigitais === undefined || b.cotasDigitais <= b.cotasTotal, { message: 'cotasDigitais > cotasTotal' });
 
 export const esquemaPagina = z.object({
   consulta: z.object({
@@ -53,6 +60,7 @@ export const esquemaPagina = z.object({
   itens: z.array(esquemaBolao),
   ordemDaVitrine: z.boolean(),
   obtidaEm: z.date(),
+  horaServidor: z.date().optional(),
 });
 
 export function validarPagina(p: unknown): PaginaBoloes {

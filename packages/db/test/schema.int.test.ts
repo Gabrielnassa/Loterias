@@ -24,7 +24,7 @@ suite('schema no PostgreSQL', () => {
   });
 
   it('aplica as migrações uma vez só', async () => {
-    expect(await migrar(sql, () => {})).toEqual(['0001_inicial.sql']);
+    expect(await migrar(sql, () => {})).toEqual(['0001_inicial.sql', '0002_fila_observada.sql']);
     expect(await migrar(sql, () => {})).toEqual([]);
   });
 
@@ -81,8 +81,8 @@ suite('schema no PostgreSQL', () => {
     const [l] = await sql<{ id: number }[]>`select id from lotericas limit 1`;
     const inserir = (disp: number, status = 'a_venda') => sql`
       insert into boloes (id_caixa, loterica_id, concurso_id, jogos, dezenas, cotas_total, valor_cota, valor_aposta,
-        cotas_disponiveis, first_seen_at, last_seen_at, fila, pos_entrada_calc_brasil, pos_entrada_calc_uf, pos_entrada_calc_cidade, status)
-      values (${'X' + disp + status}, ${l!.id}, ${c!.id}, 1, 6, 10, 1.8, 18, ${disp}, now(), now(), 1, 1, 1, 1, ${status})`;
+        cotas_disponiveis, first_seen_at, last_seen_at, fila, fila_calculada, pos_entrada_calc_brasil, pos_entrada_calc_uf, pos_entrada_calc_cidade, status)
+      values (${'X' + disp + status}, ${l!.id}, ${c!.id}, 1, 6, 10, 1.8, 18, ${disp}, now(), now(), 1, 1, 1, 1, 1, ${status})`;
     await inserir(10);
     await expect(inserir(11)).rejects.toThrow();
     await expect(inserir(5, 'vendido')).rejects.toThrow();

@@ -148,3 +148,38 @@ describe('eventos derivados de pares de snapshots', () => {
     expect(() => aplicarLeitura(e, { ...leitura(5, []), concurso: 9999 })).toThrow();
   });
 });
+
+describe('fila observada (campo index da CAIXA) x fila calculada', () => {
+  const comFila = (id: string, l: LotericaRef, disp: number, filaFonte: number) => ({ ...b(id, l, disp), filaFonte });
+
+  it('usa a fila da fonte como efetiva e guarda a calculada', () => {
+    const e = novoEstadoConcurso(ref);
+    // a fonte diz que o 1º bolão visto de A já é da 2ª fila (o da 1ª fila foi inserido antes do coletor)
+    aplicarLeitura(e, leitura(5, [comFila('x', A, 10, 2)]));
+    const x = e.boloes.get('x')!;
+    expect(x).toMatchObject({ fila: 2, filaCalculada: 1, filaObservada: 2, filaObservadaEntrada: 2 });
+  });
+
+  it('colocação calculada usa a fila efetiva', () => {
+    const e = novoEstadoConcurso(ref);
+    const r = aplicarLeitura(e, { ...leitura(5, [comFila('x', A, 10, 2), comFila('y', B, 10, 1)]), ordemDaVitrine: false });
+    expect(r.novos.find((n) => n.idCaixa === 'y')!.posEntradaCalculada.brasil.posicao).toBe(1);
+    expect(r.novos.find((n) => n.idCaixa === 'x')!.posEntradaCalculada.brasil.posicao).toBe(2);
+    expect(r.novos.every((n) => n.posEntradaObservada === null)).toBe(true);
+  });
+
+  it('se a fonte muda o index depois, acompanha (fila dinâmica) e marca como alterado', () => {
+    const e = novoEstadoConcurso(ref);
+    aplicarLeitura(e, leitura(5, [comFila('x', A, 10, 1), comFila('z', A, 10, 2)]));
+    const r = aplicarLeitura(e, leitura(10, [comFila('z', A, 10, 1)]));
+    const z = e.boloes.get('z')!;
+    expect(z).toMatchObject({ fila: 1, filaCalculada: 2, filaObservada: 1, filaObservadaEntrada: 2 });
+    expect(r.alterados.map((a) => a.idCaixa)).toContain('z');
+  });
+
+  it('sem index, fila efetiva = calculada', () => {
+    const e = novoEstadoConcurso(ref);
+    aplicarLeitura(e, leitura(5, [b('x', A, 10), b('z', A, 10)]));
+    expect(e.boloes.get('z')).toMatchObject({ fila: 2, filaCalculada: 2, filaObservada: null });
+  });
+});

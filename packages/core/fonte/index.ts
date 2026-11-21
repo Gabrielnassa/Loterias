@@ -6,3 +6,4 @@ export * from './saude';
 export * from './cliente-http';
 export * from './adaptadores/fixture';
 export * from './adaptadores/caixa-http';
+export * from './adaptadores/caixa-bruto';

@@ -14,13 +14,19 @@ async function poc() {
   const cfg = lerConfig({ ...process.env, FILA: 'memoria', REPOSITORIO: 'memoria', FONTE: process.env.FONTE ?? 'fixture' });
   const relogio = new Relogio();
   const { fonte } = criarFonte(cfg, relogio);
-  const abertos = await fonte.concursosAbertos();
+  const abertos = await fonte.concursosAbertos().catch(async (e) => {
+    await fonte.fechar?.();
+    throw e;
+  });
   console.log(`fonte: ${fonte.nome} — concursos abertos:`, abertos.map((c) => `${c.modalidade} ${c.concurso}`).join(', ') || 'nenhum');
   const alvo = process.env.POC_MODALIDADE
     ? { modalidade: process.env.POC_MODALIDADE as ModalidadeSlug, concurso: Number(process.env.POC_CONCURSO) }
     : abertos[0];
-  if (!alvo) return;
-  const leitura = await varrerConcurso(fonte, alvo, { maxPaginas: 3 });
+  if (!alvo) {
+    await fonte.fechar?.();
+    return;
+  }
+  const leitura = await varrerConcurso(fonte, alvo, { maxPaginas: 3 }).finally(() => fonte.fechar?.());
   console.log(`${alvo.modalidade} ${alvo.concurso}: ${leitura.paginasLidas} página(s), ${leitura.itens.length} bolões, completa=${leitura.completa}`);
   for (const b of leitura.itens.slice(0, 10)) {
     console.log(

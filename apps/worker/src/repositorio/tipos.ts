@@ -1,4 +1,4 @@
-import type { BolaoRegistrado, ConcursoAgendavel, ConcursoRef, LinhaMercado, ModalidadeSlug, ResultadoLeitura } from '@radar/core';
+import type { BolaoRegistrado, ConcursoAgendavel, ConcursoRef, LinhaMercado, ModalidadeSlug, Participacao, ResultadoLeitura } from '@radar/core';
 
 export interface ConcursoParaSalvar {
   modalidade: ModalidadeSlug;
@@ -14,7 +14,7 @@ export interface ConcursoParaSalvar {
 }
 
 export interface InicioColeta {
-  tipo: 'varredura' | 'contagens' | 'encerrar' | 'concursos';
+  tipo: 'varredura' | 'contagens' | 'encerrar' | 'concursos' | 'abertura';
   modo: 'normal' | 'abertura';
   modalidade?: ModalidadeSlug;
   concurso?: number;
@@ -31,6 +31,7 @@ export interface FimColeta {
   novos?: number;
   eventos?: number;
   erro?: string;
+  desvioServidorMs?: number;
 }
 
 /**
@@ -47,4 +48,13 @@ export interface Repositorio {
   salvarLeitura(ref: ConcursoRef, r: ResultadoLeitura, coletaId: number, vistoEm: Date): Promise<void>;
   salvarMercado(ref: ConcursoRef, minuto: Date, linhas: readonly LinhaMercado[]): Promise<void>;
   marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void>;
+  /** Grava a abertura e SUBSTITUI as participações dela (idempotente; recalculável). */
+  salvarAbertura(ref: ConcursoRef, abertura: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void>;
+}
+
+export interface AberturaParaSalvar {
+  t0: Date;
+  janelaMin: number;
+  participacaoMin: number;
+  processadaEm: Date;
 }

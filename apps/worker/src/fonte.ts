@@ -3,7 +3,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { carregarFixture, ClienteHttpEducado, FonteCaixaHttp, FonteFixture, type FonteBoloes } from '@radar/core/fonte';
 import { FonteSimulada, gerarAberturaSimulada, type AberturaSimulada } from '@radar/core/simulacao';
+import { ehModalidade } from '@radar/core';
 import type { ConfigWorker } from './config';
+import { FonteCaixaNavegador } from './fontes/caixa-navegador';
 import type { FonteDeTempo } from './relogio';
 
 const FIXTURES_PADRAO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'packages', 'core', 'fonte', 'fixtures');
@@ -30,6 +32,20 @@ export function criarFonte(cfg: ConfigWorker, relogio: FonteDeTempo): FonteCriad
       const sim = gerarAberturaSimulada({ semente: amb.SIMULACAO_SEMENTE, t0, nBoloes: amb.SIMULACAO_BOLOES, modalidade: 'lotofacil', concurso: 3880 });
       return { fonte: new FonteSimulada([sim], () => relogio.agora()), simulacoes: [sim] };
     }
+    case 'caixa-navegador':
+      return {
+        fonte: new FonteCaixaNavegador({
+          baseUrl: amb.CAIXA_BASE_URL_NAVEGADOR,
+          estadoSessao: amb.CAIXA_SESSAO,
+          headless: amb.CAIXA_HEADLESS,
+          intervaloMinimoMs: amb.CAIXA_INTERVALO_MS,
+          timeoutMs: amb.CAIXA_TIMEOUT_MS,
+          modalidades: amb.CAIXA_MODALIDADES.split(',').map((m) => m.trim()).filter(ehModalidade),
+          ...(amb.CAIXA_NAVEGADOR_EXECUTAVEL ? { executavel: amb.CAIXA_NAVEGADOR_EXECUTAVEL } : {}),
+          agora: () => relogio.agora(),
+        }),
+        simulacoes: [],
+      };
     case 'caixa':
       return {
         fonte: new FonteCaixaHttp(

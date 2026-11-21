@@ -97,6 +97,20 @@ suite('repositório PostgreSQL', () => {
     await rodarAte(sim.fechaEm.getTime() + 3000);
     const { semSobra } = await um(sql`select count(*)::int as "semSobra" from boloes where sobra_final is null or status <> 'encerrado'`);
     expect(semSobra).toBe(0);
+    // abertura processada no fim da janela e recalculada no encerramento (com sobra)
+    const { participacoes, semSobraP } = await um(sql`select count(*)::int as participacoes,
+      count(*) filter (where sobra is null)::int as "semSobraP" from abertura_participacoes`);
+    expect(participacoes).toBeGreaterThan(20);
+    expect(semSobraP).toBe(0);
+    // consulta-base do Raio-X (SPEC) sobre dados reais do coletor. Agrupa por l.id além do nome:
+    // agrupar só por nome (como no exemplo da SPEC) junta lotéricas homônimas.
+    const linhas = await sql`select l.id, l.nome, date_trunc('week', a.t0 at time zone 'America/Sao_Paulo') as semana,
+        count(*) as aberturas, min(p.pos_uf) as melhor_pos_uf,
+        percentile_cont(0.5) within group (order by p.atraso_s) as atraso_mediano_s,
+        avg((p.pagina_uf = 1)::int) as pct_pagina1
+      from abertura_participacoes p join aberturas a on a.id = p.abertura_id join lotericas l on l.id = p.loterica_id
+      group by 1, 2, 3 order by 3 desc`;
+    expect(linhas.length).toBe(participacoes);
     const [c] = await sql`select encerrado_em from concursos where numero = 3500`;
     expect(c!.encerrado_em).not.toBeNull();
     const { encerrou } = await um(sql`select count(*)::int as encerrou from eventos_bolao where tipo = 'encerrou'`);

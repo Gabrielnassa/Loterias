@@ -121,3 +121,19 @@ describe('franquia diária (05:00 a 23:00, valor sem tarifa)', () => {
     expect(franquiaDisponivel(8000, 9000)).toBe(0);
   });
 });
+
+describe('tarifa observada no portal (21/11/2026)', () => {
+  it('cota de R$ 20,16: tarifa R$ 7,05 (truncada), cota com tarifa R$ 27,21', async () => {
+    const { tarifaPorCota, valorDasApostas } = await import('../regras/financeiro');
+    expect(tarifaPorCota(20.16)).toBe(7.05);
+    expect(tarifaPorCota(71.4)).toBe(24.99);
+    expect(Math.round((20.16 + tarifaPorCota(20.16)) * 100) / 100).toBe(27.21);
+    // Mega-Sena 4 jogos de 9 dezenas: 4 x C(9,6)=84 x R$ 6 = R$ 2.016 / 100 cotas = R$ 20,16
+    expect(valorDasApostas({ cotasTotal: 100, valorCotaBase: 20.16 })).toBe(2016);
+    expect(valorDasApostas({ cotasTotal: 3, valorCotaBase: 33.33, contemResiduo: true, valorUltimaCotaBase: 33.34 })).toBe(100);
+    const r = resultadoBolao({ cotasTotal: 100, valorCotaBase: 20.16, cotasVendidasInternet: 3 });
+    expect(r.tarifa).toBe(21.15); // 3 x 7,05 (e não 3 x 7,056 = 21,17)
+    expect(r.recebidoInternet).toBe(81.63); // 3 x 27,21
+    expect(resultadoBolao({ cotasTotal: 100, valorCotaBase: 20.16, cotasVendidasInternet: 3, tarifaPorCotaFonte: 7.05 }).tarifa).toBe(21.15);
+  });
+});

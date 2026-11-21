@@ -1,4 +1,6 @@
 import {
+  bolaoDaAbertura,
+  calcularParticipacoes,
   BloqueadoPelaFonteError,
   FonteIndisponivelError,
   horaSP,
@@ -61,6 +63,14 @@ describe('coletor de ponta a ponta (agendador + fila + coletor + repositório)',
       expect(erro).toBeLessThanOrEqual(b.chegadaEm.getTime() < T0.getTime() + 15 * 60_000 ? 5000 : 15000);
       expect(reg.fila).toBe(b.fila);
     }
+    // fim da janela (T0 + 60 min): participações gravadas uma vez, iguais ao cálculo do core
+    const ab = repo.aberturas.get('lotofacil#3500')!;
+    expect(ab.t0).toEqual(T0);
+    expect(ab.participacoes.length).toBeGreaterThan(30);
+    expect(repo.coletas.filter((c) => c.tipo === 'abertura')).toHaveLength(1);
+    const esperado = calcularParticipacoes({ t0: T0 }, [...repo.boloes.values()].map(bolaoDaAbertura));
+    expect(ab.participacoes.map((p) => [p.loterica.codigoCaixa, p.posUf, p.atrasoS])).toEqual(esperado.map((p) => [p.loterica.codigoCaixa, p.posUf, p.atrasoS]));
+    expect(ab.participacoes.every((p) => p.sobra === null)).toBe(true);
     // mercado por minuto (BR e UFs)
     const ufs = new Set([...repo.mercado.values()].map((m) => m.uf));
     expect(ufs.has('BR')).toBe(true);
@@ -88,6 +98,10 @@ describe('coletor de ponta a ponta (agendador + fila + coletor + repositório)',
     expect([...repo.boloes.values()].every((b) => b.status === 'encerrado' && b.sobraFinal !== null)).toBe(true);
     expect(repo.concursos.get('lotofacil#3500')?.encerrado).toBe(true);
     expect(repo.coletas.filter((c) => c.tipo === 'encerrar')).toHaveLength(1);
+    // o encerramento recalcula a abertura com a sobra final
+    const ab = repo.aberturas.get('lotofacil#3500')!;
+    expect(ab.participacoes.length).toBeGreaterThan(0);
+    expect(ab.participacoes.every((p) => p.sobra !== null)).toBe(true);
   });
 });
 

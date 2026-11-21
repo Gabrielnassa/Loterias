@@ -2,6 +2,7 @@ import {
   chaveConcurso,
   ehModalidade,
   pagina,
+  valorDasApostas,
   type BolaoRegistrado,
   type ColocacaoPorEscopo,
   type ConcursoAgendavel,
@@ -9,14 +10,15 @@ import {
   type LinhaMercado,
   type LotericaRef,
   type ModalidadeSlug,
+  type Participacao,
   type ResultadoLeitura,
 } from '@radar/core';
 import { schema, type Db } from '@radar/db';
 import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
+import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
 // Em SQL cru (sql`...`) o driver não converte Date: passar sempre ISO string + cast.
-const { boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, snapshotsBolao } = schema;
+const { aberturas, aberturaParticipacoes, boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, snapshotsBolao } = schema;
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
@@ -78,8 +80,16 @@ export class RepositorioPostgres implements Repositorio {
     await this.carregarModalidades();
     const limitePrevisao = new Date(agora.getTime() - 3 * 3_600_000);
     const linhas = await this.db
-      .select({ id: concursos.id, modalidadeId: concursos.modalidadeId, numero: concursos.numero, abreEm: concursos.abreEm, fechaEm: concursos.fechaEm })
+      .select({
+        id: concursos.id,
+        modalidadeId: concursos.modalidadeId,
+        numero: concursos.numero,
+        abreEm: concursos.abreEm,
+        fechaEm: concursos.fechaEm,
+        processadaEm: aberturas.processadaEm,
+      })
       .from(concursos)
+      .leftJoin(aberturas, eq(aberturas.concursoId, concursos.id))
       .where(
         and(
           sql`${concursos.encerradoEm} is null`,
@@ -91,7 +101,7 @@ export class RepositorioPostgres implements Repositorio {
       const modalidade = this.modalidadeSlugs.get(l.modalidadeId);
       if (!modalidade) continue;
       this.concursoIds.set(chaveConcurso({ modalidade, concurso: l.numero }), l.id);
-      r.push({ modalidade, concurso: l.numero, abreEm: l.abreEm, fechaEm: l.fechaEm });
+      r.push({ modalidade, concurso: l.numero, abreEm: l.abreEm, fechaEm: l.fechaEm, aberturaProcessada: l.processadaEm !== null });
     }
     return r;
   }
@@ -153,6 +163,9 @@ export class RepositorioPostgres implements Repositorio {
         firstSeenAt: b.firstSeenAt,
         lastSeenAt: b.lastSeenAt,
         fila: b.fila,
+        filaCalculada: b.filaCalculada,
+        filaObservada: b.filaObservada,
+        filaObservadaEntrada: b.filaObservadaEntrada,
         ordemPrimeiraLeitura: b.ordemPrimeiraLeitura ?? 0,
         cotasDisponiveis: b.cotasDisponiveis,
         status: b.status,
@@ -166,6 +179,10 @@ export class RepositorioPostgres implements Repositorio {
         estornado: b.estornado,
       };
       if (b.valorCotaExibido !== null) reg.valorCotaExibido = Number(b.valorCotaExibido);
+      if (b.cotasDigitais !== null) reg.cotasDigitais = b.cotasDigitais;
+      if (b.contemResiduo) reg.contemResiduo = true;
+      if (b.valorUltimaCota !== null) reg.valorUltimaCotaBase = Number(b.valorUltimaCota);
+      if (b.tarifaCota !== null) reg.tarifaPorCotaFonte = Number(b.tarifaCota);
       return reg;
     });
   }
@@ -197,6 +214,7 @@ export class RepositorioPostgres implements Repositorio {
         novos: fim.novos ?? null,
         eventos: fim.eventos ?? null,
         erro: fim.erro ?? null,
+        desvioServidorMs: fim.desvioServidorMs ?? null,
       })
       .where(eq(coletas.id, id));
   }
@@ -250,11 +268,18 @@ export class RepositorioPostgres implements Repositorio {
                 cotasTotal: b.cotasTotal,
                 valorCota: b.valorCotaBase.toFixed(2),
                 valorCotaExibido: b.valorCotaExibido !== undefined ? b.valorCotaExibido.toFixed(2) : null,
-                valorAposta: (b.cotasTotal * b.valorCotaBase).toFixed(2),
+                valorAposta: valorDasApostas(b).toFixed(2),
+                cotasDigitais: b.cotasDigitais ?? null,
+                contemResiduo: b.contemResiduo ?? false,
+                valorUltimaCota: b.valorUltimaCotaBase !== undefined ? b.valorUltimaCotaBase.toFixed(2) : null,
+                tarifaCota: b.tarifaPorCotaFonte !== undefined ? b.tarifaPorCotaFonte.toFixed(2) : null,
                 cotasDisponiveis: b.cotasDisponiveis,
                 firstSeenAt: b.firstSeenAt,
                 lastSeenAt: b.lastSeenAt,
                 fila: b.fila,
+                filaCalculada: b.filaCalculada,
+                filaObservada: b.filaObservada,
+                filaObservadaEntrada: b.filaObservadaEntrada,
                 ordemPrimeiraLeitura: b.ordemPrimeiraLeitura,
                 posEntradaBrasil: b.posEntradaObservada?.brasil.posicao ?? null,
                 posEntradaUf: b.posEntradaObservada?.uf.posicao ?? null,
@@ -285,15 +310,15 @@ export class RepositorioPostgres implements Repositorio {
           const valores = sql.join(
             lote.map(
               (b) =>
-                sql`(${this.bolaoIds.get(b.idCaixa)!}::bigint, ${b.cotasDisponiveis}::int, ${b.status}::text, ${b.esgotouEm?.toISOString() ?? null}::timestamptz, ${b.sobraFinal}::int, ${b.estornado}::boolean)`,
+                sql`(${this.bolaoIds.get(b.idCaixa)!}::bigint, ${b.cotasDisponiveis}::int, ${b.status}::text, ${b.esgotouEm?.toISOString() ?? null}::timestamptz, ${b.sobraFinal}::int, ${b.estornado}::boolean, ${b.fila}::int, ${b.filaObservada}::int)`,
             ),
             sql`, `,
           );
           await tx.execute(sql`
             update boloes as b set
               cotas_disponiveis = v.disp, status = v.status, esgotou_em = v.esgotou_em,
-              sobra_final = v.sobra, estornado = v.estornado
-            from (values ${valores}) as v(id, disp, status, esgotou_em, sobra, estornado)
+              sobra_final = v.sobra, estornado = v.estornado, fila = v.fila, fila_observada = v.fila_obs
+            from (values ${valores}) as v(id, disp, status, esgotou_em, sobra, estornado, fila, fila_obs)
             where b.id = v.id`);
         }
 
@@ -351,6 +376,46 @@ export class RepositorioPostgres implements Repositorio {
         target: [mercadoMinuto.concursoId, mercadoMinuto.uf, mercadoMinuto.minuto],
         set: { boloes: sql`excluded.boloes`, cotas: sql`excluded.cotas`, lotericas: sql`excluded.lotericas`, valor: sql`excluded.valor` },
       });
+  }
+
+  async salvarAbertura(ref: ConcursoRef, a: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void> {
+    const concursoId = await this.concursoId(ref);
+    await this.db.transaction(async (tx) => {
+      const [ab] = await tx
+        .insert(aberturas)
+        .values({ concursoId, t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm })
+        .onConflictDoUpdate({
+          target: aberturas.concursoId,
+          set: { t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm },
+        })
+        .returning({ id: aberturas.id });
+      await tx.delete(aberturaParticipacoes).where(eq(aberturaParticipacoes.aberturaId, ab!.id));
+      if (!participacoes.length) return;
+      await this.garantirLotericas(tx, participacoes.map((p) => p.loterica));
+      await this.idsDosBoloes(tx, participacoes.map((p) => p.primeiroBolaoId));
+      for (const lote of emLotes(participacoes, 2000)) {
+        await tx.insert(aberturaParticipacoes).values(
+          lote.map((p) => ({
+            aberturaId: ab!.id,
+            lotericaId: this.lotericaIds.get(p.loterica.codigoCaixa)!,
+            primeiroBolaoId: this.bolaoIds.get(p.primeiroBolaoId)!,
+            primeiroEm: p.primeiroEm,
+            atrasoS: p.atrasoS.toFixed(3),
+            nBoloes1h: p.nBoloes1h,
+            posCidade: p.posCidade,
+            posUf: p.posUf,
+            posBrasil: p.posBrasil,
+            paginaCidade: p.paginaCidade,
+            paginaUf: p.paginaUf,
+            paginaBrasil: p.paginaBrasil,
+            valor1h: p.valor1h.toFixed(2),
+            pctVendido: p.pctVendido.toFixed(5),
+            sobra: p.sobra === null ? null : p.sobra.toFixed(2),
+            empate: p.empate,
+          })),
+        );
+      }
+    });
   }
 
   async marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void> {

@@ -68,7 +68,7 @@ export class Agendador {
       this.estatisticas.despachadas++;
       await this.d.despachar(t);
       despachadas.push(t);
-      if (t.tipo === 'contagens' || t.tipo === 'encerrar') this.invalidarConcursos();
+      if (t.tipo !== 'varredura') this.invalidarConcursos();
     }
     return despachadas;
   }

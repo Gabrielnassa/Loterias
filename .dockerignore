@@ -4,3 +4,4 @@
 *.har
 docs/har
 .env
+.sessao-caixa

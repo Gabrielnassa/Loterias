@@ -9,3 +9,6 @@ coverage/
 *.har
 docs/har/
 .DS_Store
+
+# Sessão de navegador preparada por uma pessoa (cookies): nunca versionar
+.sessao-caixa/

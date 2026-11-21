@@ -28,6 +28,17 @@ export interface BolaoFonte {
   numeros?: number[][];
   /** Horário de inserção informado pela própria fonte, se existir (dispensaria a inferência). */
   inseridoEmFonte?: Date;
+  /** Fila informada pela fonte (campo `index` da CAIXA), quando vier. */
+  filaFonte?: number;
+  /** Cotas oferecidas na internet (qtdCotaDigital); o restante do total fica no balcão. */
+  cotasDigitais?: number;
+  /** Bolão com resíduo: a última cota tem valor diferente. */
+  contemResiduo?: boolean;
+  valorUltimaCotaBase?: number;
+  /** Tarifa por cota informada pela fonte (valorTarifaServico). */
+  tarifaPorCotaFonte?: number;
+  /** Trevos (+Milionária). */
+  trevos?: number;
 }
 
 export interface ConsultaBoloes {
@@ -51,6 +62,8 @@ export interface PaginaBoloes {
   ordemDaVitrine: boolean;
   /** Instante da resposta (relógio do coletor). */
   obtidaEm: Date;
+  /** Hora informada pelo servidor da fonte (dataHoraServidor), para medir o desvio de relógio. */
+  horaServidor?: Date;
 }
 
 export interface ConcursoAbertoFonte {
@@ -81,4 +94,6 @@ export interface FonteBoloes {
   contagens(sinal?: AbortSignal): Promise<ContagemFonte[]>;
   /** Uma página da lista de bolões. */
   pagina(consulta: ConsultaBoloes, sinal?: AbortSignal): Promise<PaginaBoloes>;
+  /** Libera recursos (ex.: navegador). */
+  fechar?(): Promise<void>;
 }

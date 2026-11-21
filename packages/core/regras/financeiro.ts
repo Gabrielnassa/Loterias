@@ -3,7 +3,7 @@ import { centavos } from '../util/estatistica';
 
 /**
  * Financeiro de um bolão (SPEC, Glossário e Motor de dados):
- *   tarifa   = 35% x valor base x cotas vendidas pela internet
+ *   tarifa   = 35% x valor base x cotas vendidas pela internet (por cota, truncada em centavos)
  *   comissão = 8,61% x apostas (valor total do bolão) se vendeu ao menos 1 cota
  *   sobra    = cotas sobradas x valor da aposta por cota (valor base)
  *   lucro    = tarifa - sobra + comissão
@@ -22,6 +22,11 @@ export interface BolaoFinanceiro {
   cotasTotal: number;
   /** Valor base da cota (sem tarifa) = valor da aposta por cota. */
   valorCotaBase: number;
+  /** Tarifa por cota informada pela fonte (valorTarifaServico); se ausente, calcula truncando. */
+  tarifaPorCotaFonte?: number;
+  /** Bolão com resíduo: a última cota tem valor diferente (vrUltimaCotaSemTarifa). */
+  contemResiduo?: boolean;
+  valorUltimaCotaBase?: number;
   cotasVendidasInternet: number;
   cotasVendidasBalcao?: number;
   estornado?: boolean;
@@ -37,6 +42,22 @@ export interface ResultadoFinanceiro {
   comissao: number;
   sobra: number;
   lucro: number;
+}
+
+/**
+ * Tarifa por cota, TRUNCADA em centavos. Observado no portal (21/11/2026): cota de R$ 20,16 tem
+ * tarifa R$ 7,05 (35% = 7,056). Um exemplo só: confirmar com o extrato da lotérica.
+ */
+export function tarifaPorCota(valorCotaBase: number, taxa = TAXA_TARIFA): number {
+  return Math.floor(valorCotaBase * taxa * 100 + 1e-6) / 100;
+}
+
+/** Valor total das apostas do bolão (= soma das cotas sem tarifa), considerando o resíduo. */
+export function valorDasApostas(b: { cotasTotal: number; valorCotaBase: number; contemResiduo?: boolean; valorUltimaCotaBase?: number }): number {
+  if (b.contemResiduo && b.valorUltimaCotaBase !== undefined && b.cotasTotal > 1) {
+    return centavos((b.cotasTotal - 1) * b.valorCotaBase + b.valorUltimaCotaBase);
+  }
+  return centavos(b.cotasTotal * b.valorCotaBase);
 }
 
 function validar(b: BolaoFinanceiro) {
@@ -56,12 +77,13 @@ export function resultadoBolao(b: BolaoFinanceiro, taxas: TaxasFinanceiras = TAX
   if (b.estornado) {
     return { apostas: 0, cotasVendidas: 0, cotasSobradas: 0, recebidoInternet: 0, tarifa: 0, comissao: 0, sobra: 0, lucro: 0 };
   }
-  const apostas = centavos(b.cotasTotal * b.valorCotaBase);
-  const tarifa = centavos(taxas.tarifa * b.valorCotaBase * b.cotasVendidasInternet);
+  const apostas = valorDasApostas(b);
+  const tarifaCota = b.tarifaPorCotaFonte ?? tarifaPorCota(b.valorCotaBase, taxas.tarifa);
+  const tarifa = centavos(tarifaCota * b.cotasVendidasInternet);
   const comissao = vendidas >= 1 ? centavos(taxas.comissao * apostas) : 0;
   const cotasSobradas = b.cotasTotal - vendidas;
   const sobra = centavos(cotasSobradas * b.valorCotaBase);
-  const recebidoInternet = centavos(b.cotasVendidasInternet * b.valorCotaBase * (1 + taxas.tarifa));
+  const recebidoInternet = centavos(b.cotasVendidasInternet * (b.valorCotaBase + tarifaCota));
   return {
     apostas,
     cotasVendidas: vendidas,
