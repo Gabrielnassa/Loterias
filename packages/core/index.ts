@@ -43,3 +43,4 @@ export * from './conferencia/probabilidade';
 // Minha lotérica (Fase 3)
 export * from './minha/financeiro-mkp';
 export * from './minha/posicao';
+export * from './sugestoes/otimizador';

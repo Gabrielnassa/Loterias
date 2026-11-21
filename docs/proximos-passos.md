@@ -64,7 +64,10 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
 - [x] 3. Previsão de fechamento por concursos parecidos (`core/mercado/previsao.ts`): sobra de cotas, bolões e R$
       com faixa de 80%, pico, mínimo para zerar x ritmo atual, sobra por faixa de preço, os parecidos e o backtest
       dos últimos 16 ao lado (Monitoramento e `/api/mercado/previsao`). Testes com o histórico simulado.
-- [ ] 4. Sugestões: franquia de amanhã + otimizador de formato/cota/cotas (lucro esperado e risco).
+- [x] 4. Sugestões (`/minha/sugestoes`, `core/sugestoes/otimizador.ts`): divisão da franquia de amanhã entre as
+      loterias (procura da UF no mesmo dia da semana, concorrência, prêmio quando houver, lucro por R$) e otimizador
+      de formato, cota e nº de cotas com lucro esperado, chance de prejuízo e P10/P90. No simulado quase tudo tem
+      risco alto (vendem ~70%, perto do break-even de 67,7%): a tela avisa.
 - [ ] 5. Simulador de posição + Cronômetro de abertura.
 - [ ] 6. Fase 5: site público /{slug} (SSR, SEO, filtros, jogos, chance, WhatsApp, CAIXA, 3 temas, métricas) + artes (Satori).
 - [ ] 7. Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (probabilidades e marcação).

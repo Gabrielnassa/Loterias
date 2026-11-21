@@ -141,3 +141,17 @@ describe('previsão de fechamento na web (simulada)', () => {
     expect(j.dados.previsao.parecidos.length).toBeGreaterThan(2);
   });
 });
+
+describe('Sugestões (simulada)', () => {
+  it('franquia de amanhã para a loja de demonstração, otimizador e API', async () => {
+    const { sugestoesParaLoja } = await import('../lib/sugestoes');
+    const { GET } = await import('../app/api/minha/sugestoes/route');
+    const d = await sugestoesParaLoja(fonte, { limite: 8000 });
+    expect(d.dia).toBe('2026-11-21');
+    expect(d.franquia.usado).toBeLessThanOrEqual(8000);
+    expect(d.franquia.linhas.length).toBeGreaterThan(0);
+    expect(d.otimizador[0]!.opcoes.length).toBeGreaterThan(0);
+    const csv = await (await GET(req('/api/minha/sugestoes?formato=csv'))).text();
+    expect(csv.split('\r\n')[0]).toContain('Loteria;Sugerido (R$);Formato');
+  });
+});
