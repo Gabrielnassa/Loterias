@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AvisoDados } from '@/components/Aviso';
 import { BuscaLoterica } from '@/components/BuscaLoterica';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,8 +18,8 @@ const NAV: [string, string][] = [
   ['/ao-vivo', 'Ao vivo'],
 ];
 
-export default function Layout({ children }: { children: ReactNode }) {
-  const simulado = fonteDeDados().tipo === 'simulada';
+export default async function Layout({ children }: { children: ReactNode }) {
+  const simulado = await fonteDeDados().simulado();
   return (
     <html lang="pt-BR">
       <body className="min-h-screen">

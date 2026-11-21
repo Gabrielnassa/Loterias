@@ -120,6 +120,7 @@ export async function detalheAbertura(fonte: FonteDadosRaioX, id: string, filtro
     });
   return {
     abertura,
+    colocacaoDisponivel: abertura.escopoColocacao !== 'monitoradas',
     resumo: {
       boloes: linhas.length,
       lotericas: new Set(linhas.map((l) => l.loterica.codigoCaixa)).size,
@@ -238,6 +239,7 @@ export async function aoVivo(fonte: FonteDadosRaioX, o: { uf?: string; cidade?: 
   const ordem = ordemDeChegada(av.participacoes, { ...(o.uf ? { uf: o.uf } : {}), ...(o.cidade ? { cidade: o.cidade } : {}) });
   return {
     agora,
+    emAndamento: av.emAndamento,
     t0: av.t0,
     modalidade: av.modalidade,
     ultimaLeitura: av.ultimaLeitura,

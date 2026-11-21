@@ -72,9 +72,16 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
     environment:
+      DATABASE_URL: postgres://radar:${POSTGRES_PASSWORD:-radar}@postgres:5432/radar
+      RADAR_FONTE_WEB: postgres
+      # código da sua lotérica (Fase 3: Minha lotérica). Com o seed de demonstração: 980011
+      RADAR_MINHA_LOTERICA: ${RADAR_MINHA_LOTERICA:-}
       TZ: UTC
 
 volumes:

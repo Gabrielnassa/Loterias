@@ -18,6 +18,7 @@ interface Linha {
 }
 export interface DadosAoVivo {
   agora: string;
+  emAndamento: boolean;
   t0: string;
   modalidade: string;
   ultimaLeitura: string | null;
@@ -45,9 +46,9 @@ export function AoVivoPainel({ uf, destaque, inicial }: { uf: string; destaque: 
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <div className="cartao">
-          <div className="rotulo">Abertura</div>
+          <div className="rotulo">{d.emAndamento ? 'Abertura em andamento' : 'Nenhuma abertura agora: última'}</div>
           <div className="tabular mt-1 text-lg font-semibold">T0 {fmtHora(d.t0)}</div>
-          <div className="text-xs text-zinc-500">Lotofácil (simulada)</div>
+          <div className="text-xs text-zinc-500">{d.modalidade}</div>
         </div>
         <div className="cartao">
           <div className="rotulo">Última leitura</div>

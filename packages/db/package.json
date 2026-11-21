@@ -6,14 +6,17 @@
   "description": "Schema PostgreSQL 16 (SQL + espelho Drizzle), migrações e conexão",
   "exports": {
     ".": "./index.ts",
-    "./schema": "./schema.ts"
+    "./schema": "./schema.ts",
+    "./seed": "./seed.ts"
   },
   "scripts": {
     "migrar": "tsx migrar.ts",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "seed": "tsx seed.ts"
   },
   "dependencies": {
+    "@radar/core": "workspace:*",
     "drizzle-orm": "0.44.7",
     "postgres": "3.4.7"
   },

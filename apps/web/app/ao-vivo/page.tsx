@@ -1,6 +1,6 @@
 import { AoVivoPainel } from '@/components/AoVivoPainel';
 import { FormFiltros, Seletor } from '@/components/FormFiltros';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { aoVivo, locais } from '@/lib/servico';
 
 export const dynamic = 'force-dynamic';

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FormFiltros, Seletor } from '@/components/FormFiltros';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { DIAS_SEMANA, fmtDataCurta, NOME_ESCOPO } from '@/lib/formato';
 import { compararGrade, concorrentesSugeridos, lerEscopo, lerModalidade, lerSemanas } from '@/lib/servico';
 

@@ -1,5 +1,5 @@
 import { erro, json } from '@/lib/api';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { compararGrade, lerEscopo, lerModalidade, lerSemanas } from '@/lib/servico';
 
 export const dynamic = 'force-dynamic';

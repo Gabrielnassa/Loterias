@@ -1,4 +1,4 @@
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { aoVivo } from '@/lib/servico';
 
 export const dynamic = 'force-dynamic';

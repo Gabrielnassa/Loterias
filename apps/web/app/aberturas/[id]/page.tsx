@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { FormFiltros, Seletor } from '@/components/FormFiltros';
 import { Kpi } from '@/components/Kpi';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { fmtAtraso, fmtDataLonga, fmtHora, fmtMoeda, NOME_MODALIDADE } from '@/lib/formato';
 import { detalheAbertura, locais } from '@/lib/servico';
 
@@ -114,6 +114,11 @@ export default async function DetalheAbertura({ params, searchParams }: Props) {
             </tbody>
           </table>
         </div>
+        {!d.colocacaoDisponivel ? (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Coleta pelos links públicos das lotéricas monitoradas: a colocação na vitrine não está disponível nesta abertura (as posições mostradas são só entre as monitoradas).
+          </p>
+        ) : null}
         <p className="text-xs text-zinc-500">
           Colocação no momento em que o bolão entrou (não a atual). Hora ao segundo = leitura em que o bolão apareceu pela 1ª vez.
         </p>

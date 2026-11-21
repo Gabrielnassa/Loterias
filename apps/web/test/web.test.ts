@@ -8,7 +8,8 @@ import { GET as getRankingAbertura } from '../app/api/aberturas/[id]/ranking/rou
 import { GET as getAoVivo } from '../app/api/aberturas/ao-vivo/route';
 import { GET as getRanking } from '../app/api/ranking/route';
 import { GET as getComparar } from '../app/api/comparar/route';
-import { definirFonteDeDados, FonteSimuladaRaioX } from '../lib/dados';
+import { FonteSimuladaRaioX } from '../lib/dados';
+import { definirFonteDeDados } from '../lib/fonte-dados';
 import { paraCsv } from '../lib/exportar';
 import { aoVivo, compararGrade, detalheAbertura, fichaAberturas, rankingPeriodo } from '../lib/servico';
 

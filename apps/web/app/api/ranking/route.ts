@@ -1,5 +1,5 @@
 import { arquivo, json, TIPO_CSV, TIPO_XLSX } from '@/lib/api';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { AVISO_ESTIMATIVA, paraCsv, paraXlsx, type Coluna } from '@/lib/exportar';
 import { lerCriterio, lerEscopo, lerModalidade, lerSemanas, rankingPeriodo } from '@/lib/servico';
 

@@ -14,7 +14,8 @@ os textos, as artes ou o código do oLoterico.
 | `packages/core/simulacao` | Simulador de abertura com "verdade" conhecida, `FonteSimulada`, coletor rápido, histórico simulado (800 lotéricas, 13 semanas) e JSON no formato bruto da CAIXA |
 | `packages/db` | DDL em SQL (`migrations/`, fonte da verdade), espelho Drizzle (`schema.ts`), migrador, partições |
 | `apps/worker` | Coletor contínuo: relógio NTP, agendador ao segundo, fila BullMQ (ou memória), coletor, job de fim de janela, repositórios Postgres/memória, adaptador `caixa-navegador` (Playwright) |
-| `apps/web` | Next.js 15 + Tailwind: telas 1 a 5 do Raio-X, API, busca, CSV/Excel, SSE ao vivo. Fonte de dados simulada (`lib/dados.ts`) |
+| `apps/web` | Next.js 15 + Tailwind: telas do Raio-X e da Minha lotérica, API, busca, CSV/Excel, SSE ao vivo. Lê do Postgres (`lib/dados-postgres.ts`) ou da simulação (`lib/dados.ts`); escolha em `lib/fonte-dados.ts` |
+| `packages/db/seed.ts` | Seed de demonstração: grava o histórico simulado no banco com `concursos.origem = 'seed'` (a web avisa "dados simulados") |
 | `docs/fonte-caixa.md` | Fase 0: API observada no portal, respostas e o que falta descobrir |
 | `docs/proximos-passos.md` | Ponto de retomada entre sessões |
 
@@ -28,7 +29,8 @@ DATABASE_URL_TESTE=postgres://postgres@localhost:5432/postgres pnpm test   # inc
 pnpm --filter @radar/core test                                            # só as regras
 FONTE=fixture pnpm poc:fonte                                              # PoC: baixa 3 páginas da fonte
 FILA=memoria REPOSITORIO=memoria FONTE=simulada pnpm worker:dev           # worker sem Redis/Postgres
-pnpm web:dev                                                              # web em http://localhost:3000 (dados simulados)
+pnpm web:dev                                                              # web em http://localhost:3000 (simulação; com DATABASE_URL lê do banco)
+DATABASE_URL=... pnpm db:seed                                             # grava o histórico simulado no banco (apaga só o seed com -- --limpar)
 pnpm caixa:preparar-sessao                                                # UMA PESSOA prepara a sessão do navegador
 FONTE=caixa-navegador CAIXA_MODALIDADES=mega-sena pnpm poc:fonte          # adaptador real (exige a sessão)
 docker compose up -d postgres redis && docker compose up -d --build worker

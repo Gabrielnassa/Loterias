@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { FormFiltros, Seletor } from '@/components/FormFiltros';
 import { GradeAberturas, LegendaFaixas } from '@/components/GradeAberturas';
 import { Kpi } from '@/components/Kpi';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { DIAS_SEMANA, fmtAtraso, fmtPct, NOME_ESCOPO, NOME_MODALIDADE } from '@/lib/formato';
 import { concorrentesSugeridos, fichaAberturas, lerEscopo, lerModalidade, lerSemanas } from '@/lib/servico';
 

@@ -29,6 +29,6 @@ Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
       sessão é renovada) + modo `caixa-links`; break-even em cotas e % (`breakEvenGrupo`); 5 s até
       T0 + 30 min e leitura da borda da 1ª fila; balcão gera tarifa; estornado não conta na franquia
       (dúvida aberta); T0 por concurso (`regras_abertura`, `preverAbertura`, `ajustarT0`). Migração 0003.
-- [ ] B. Web lendo do Postgres + seed do histórico simulado (aviso de dados simulados enquanto a origem for o seed).
+- [x] B. Web lendo do Postgres (`lib/dados-postgres.ts`) + seed (`pnpm db:seed`); teste prova que dá o mesmo que a simulação.
 - [ ] C. Script `observar-abertura` (registra cada página lida, total de páginas e tempo de leitura num arquivo).
 - [ ] D. Fase 3 (Minha lotérica): Bolões MKP, Financeiro MKP, Conferência MKP, Posição na abertura, CSV/Excel.

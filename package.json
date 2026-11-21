@@ -15,7 +15,8 @@
     "poc:fonte": "pnpm --filter @radar/worker poc:fonte",
     "web:dev": "pnpm --filter @radar/web dev",
     "web:build": "pnpm --filter @radar/web build",
-    "caixa:preparar-sessao": "pnpm --filter @radar/worker caixa:preparar-sessao"
+    "caixa:preparar-sessao": "pnpm --filter @radar/worker caixa:preparar-sessao",
+    "db:seed": "pnpm --filter @radar/db seed"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

@@ -16,6 +16,8 @@ import { aberturaAoVivoSimulada, gerarHistoricoSimulado, type HistoricoSimulado 
  */
 export interface AberturaDetalhada extends AberturaInfo {
   concurso: number;
+  /** 'monitoradas' quando a coleta só via as lotéricas monitoradas (colocação indisponível). */
+  escopoColocacao?: 'vitrine' | 'monitoradas';
 }
 
 export interface BolaoDaJanela {
@@ -35,6 +37,8 @@ export interface BolaoDaJanela {
 }
 
 export interface AoVivo {
+  /** false = não há abertura em andamento; mostra o estado final da última. */
+  emAndamento: boolean;
   t0: Date;
   modalidade: ModalidadeSlug;
   ultimaLeitura: Date | null;
@@ -44,6 +48,8 @@ export interface AoVivo {
 export interface FonteDadosRaioX {
   readonly tipo: 'simulada' | 'postgres';
   agora(): Date;
+  /** Os dados exibidos são simulados (fonte simulada ou banco com o seed de demonstração). */
+  simulado(): Promise<boolean>;
   lotericas(): Promise<LotericaRef[]>;
   loterica(codigo: string): Promise<LotericaRef | null>;
   buscar(termo: string, limite?: number): Promise<LotericaRef[]>;
@@ -62,16 +68,24 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
   private geradoEm = 0;
   private porCodigo = new Map<string, LotericaRef>();
 
-  constructor(private readonly relogio: () => Date = () => new Date(), private readonly validadeMs = 60 * 60_000) {}
+  constructor(
+    private readonly relogio: () => Date = () => new Date(),
+    private readonly validadeMs = 60 * 60_000,
+    private readonly opcoes: { semanas?: number; nLotericas?: number } = {},
+  ) {}
 
   agora(): Date {
     return this.relogio();
   }
 
+  async simulado() {
+    return true;
+  }
+
   private historico(): HistoricoSimulado {
     const agora = this.relogio();
     if (!this.h || agora.getTime() - this.geradoEm > this.validadeMs) {
-      this.h = gerarHistoricoSimulado({ ate: agora, semanas: 13 });
+      this.h = gerarHistoricoSimulado({ ate: agora, semanas: this.opcoes.semanas ?? 13, ...(this.opcoes.nLotericas ? { nLotericas: this.opcoes.nLotericas } : {}) });
       this.geradoEm = agora.getTime();
       this.porCodigo = new Map(this.h.lotericas.map((l) => [l.codigoCaixa, l]));
     }
@@ -117,23 +131,11 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
       empate: x.empate ?? false,
     }));
   }
-  async aoVivo(agora: Date) {
-    return aberturaAoVivoSimulada(this.historico(), agora);
+  async aoVivo(agora: Date): Promise<AoVivo> {
+    return { emAndamento: true, ...aberturaAoVivoSimulada(this.historico(), agora) };
   }
   async minhaLoterica() {
     return this.historico().lotericas[0] ?? null;
   }
 }
 
-const GLOBAL = globalThis as unknown as { __radarFonteWeb?: FonteDadosRaioX };
-
-/** Fonte única do processo (sobrevive ao hot reload do Next em dev). */
-export function fonteDeDados(): FonteDadosRaioX {
-  GLOBAL.__radarFonteWeb ??= new FonteSimuladaRaioX();
-  return GLOBAL.__radarFonteWeb;
-}
-
-/** Para testes: injeta uma fonte. */
-export function definirFonteDeDados(f: FonteDadosRaioX | undefined) {
-  GLOBAL.__radarFonteWeb = f;
-}

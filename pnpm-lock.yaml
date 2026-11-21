@@ -29,6 +29,9 @@ importers:
       '@radar/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@radar/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       exceljs:
         specifier: 4.4.0
         version: 4.4.0
@@ -122,6 +125,9 @@ importers:
 
   packages/db:
     dependencies:
+      '@radar/core':
+        specifier: workspace:*
+        version: link:../core
       drizzle-orm:
         specifier: 0.44.7
         version: 0.44.7(postgres@3.4.7)

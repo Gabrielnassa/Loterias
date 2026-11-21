@@ -1,7 +1,7 @@
 /** Pré-aquece a fonte de dados na partida do servidor (o histórico simulado leva ~2 s para gerar). */
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    const { fonteDeDados } = await import('./lib/dados');
+    const { fonteDeDados } = await import('./lib/fonte-dados');
     await fonteDeDados().aberturas();
   }
 }

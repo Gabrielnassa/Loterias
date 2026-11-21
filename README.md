@@ -30,11 +30,19 @@ Worker sem Redis/Postgres (abertura simulada daqui a ~90 s, em memória):
 FILA=memoria REPOSITORIO=memoria FONTE=simulada pnpm worker:dev
 ```
 
-Web (telas do Raio-X com dados simulados) em http://localhost:3000:
+Web (telas do Raio-X) em http://localhost:3000. Sem banco, usa a simulação em memória; com
+`DATABASE_URL`, lê do Postgres. Para ter dados no banco antes do coletor real, grave o seed de
+demonstração (lotéricas fictícias; a web mostra o aviso de dados simulados enquanto ele existir):
 
 ```bash
-pnpm web:dev
+DATABASE_URL=postgres://radar:radar@localhost:5432/radar pnpm db:seed
 ```
+
+```bash
+DATABASE_URL=postgres://radar:radar@localhost:5432/radar pnpm web:dev
+```
+
+Para apagar só o seed: `pnpm db:seed -- --limpar`.
 
 Com Docker Compose (Postgres 16 + Redis + worker + web):
 

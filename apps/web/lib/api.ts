@@ -1,5 +1,5 @@
 import { AVISO_ESTIMATIVA } from './exportar';
-import { fonteDeDados } from './dados';
+import { fonteDeDados } from './fonte-dados';
 
 /** Resposta JSON da API com o aviso de que os números são estimativas. */
 export function json(dados: unknown, status = 200): Response {

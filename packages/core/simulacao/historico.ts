@@ -38,7 +38,9 @@ export interface HistoricoSimulado {
   lotericas: LotericaRef[];
   perfis: PerfilLoterica[];
   aberturas: PlanoAbertura[];
-  participacoes: (ParticipacaoInfo & { loterica: LotericaRef })[];
+  participacoes: (ParticipacaoInfo & { loterica: LotericaRef; primeiroBolaoId: string })[];
+  /** Fechamento das vendas de cada concurso simulado (T0 + 22 h). */
+  fechaEm(aberturaId: string): Date | null;
   /** Todos os bolões da abertura na janela (tela 2), regenerados de forma determinística. */
   detalhar(aberturaId: string): BolaoColetadoSimulado[] | null;
 }
@@ -165,6 +167,7 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
         aberturaId: plano.id,
         lotericaCodigo: p.loterica.codigoCaixa,
         loterica: p.loterica,
+        primeiroBolaoId: p.primeiroBolaoId,
         primeiroEm: p.primeiroEm,
         atrasoS: p.atrasoS,
         posCidade: p.posCidade,
@@ -185,6 +188,10 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
     perfis,
     aberturas,
     participacoes,
+    fechaEm: (id) => {
+      const plano = porId.get(id);
+      return plano ? new Date(plano.t0.getTime() + 22 * 3_600_000) : null;
+    },
     detalhar: (id) => {
       const plano = porId.get(id);
       return plano ? executar(plano) : null;

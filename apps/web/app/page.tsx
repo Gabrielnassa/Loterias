@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BuscaLoterica } from '@/components/BuscaLoterica';
-import { fonteDeDados } from '@/lib/dados';
+import { fonteDeDados } from '@/lib/fonte-dados';
 import { fmtAtraso, fmtDataLonga, fmtHora, fmtPct, NOME_MODALIDADE } from '@/lib/formato';
 import { rankingPeriodo } from '@/lib/servico';
 
