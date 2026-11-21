@@ -17,6 +17,8 @@ export * from './mercado/agregar';
 // Motor de dados
 export * from './eventos/estado';
 export * from './coleta/plano';
+export * from './coleta/estrategia';
+export * from './coleta/calendario';
 
 // Abertura e Raio-X
 export * from './abertura/participacao';

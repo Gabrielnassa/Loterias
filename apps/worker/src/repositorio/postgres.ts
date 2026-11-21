@@ -10,7 +10,9 @@ import {
   type LinhaMercado,
   type LotericaRef,
   type ModalidadeSlug,
+  type OrigemT0,
   type Participacao,
+  type RegraAbertura,
   type ResultadoLeitura,
 } from '@radar/core';
 import { schema, type Db } from '@radar/db';
@@ -18,7 +20,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
 // Em SQL cru (sql`...`) o driver não converte Date: passar sempre ISO string + cast.
-const { aberturas, aberturaParticipacoes, boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, snapshotsBolao } = schema;
+const { aberturas, aberturaParticipacoes, boloes, bolaoJogos, coletas, concursos, eventosBolao, lotericas, mercadoMinuto, modalidades, regrasAbertura, snapshotsBolao } = schema;
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 
@@ -85,6 +87,7 @@ export class RepositorioPostgres implements Repositorio {
         modalidadeId: concursos.modalidadeId,
         numero: concursos.numero,
         abreEm: concursos.abreEm,
+        abreEmOrigem: concursos.abreEmOrigem,
         fechaEm: concursos.fechaEm,
         processadaEm: aberturas.processadaEm,
       })
@@ -101,7 +104,7 @@ export class RepositorioPostgres implements Repositorio {
       const modalidade = this.modalidadeSlugs.get(l.modalidadeId);
       if (!modalidade) continue;
       this.concursoIds.set(chaveConcurso({ modalidade, concurso: l.numero }), l.id);
-      r.push({ modalidade, concurso: l.numero, abreEm: l.abreEm, fechaEm: l.fechaEm, aberturaProcessada: l.processadaEm !== null });
+      r.push({ modalidade, concurso: l.numero, abreEm: l.abreEm, abreEmOrigem: l.abreEmOrigem, fechaEm: l.fechaEm, aberturaProcessada: l.processadaEm !== null });
     }
     return r;
   }
@@ -115,7 +118,11 @@ export class RepositorioPostgres implements Repositorio {
           modalidadeId,
           numero: c.concurso,
           dataSorteio: c.dataSorteio ?? null,
+          sorteioEm: c.sorteioEm ?? null,
           abreEm: c.abreEm ?? null,
+          abreEmPrevisto: c.abreEm ?? null,
+          abreEmOrigem: c.abreEmOrigem ?? (c.origem === 'manual' ? 'manual' : 'regra'),
+          abreEmRegra: c.abreEmRegra ?? null,
           fechaEm: c.fechaEm ?? null,
           premioEstimado: c.premioEstimado !== undefined ? String(c.premioEstimado) : null,
           acumulado: c.acumulado ?? null,
@@ -127,6 +134,10 @@ export class RepositorioPostgres implements Repositorio {
           set: {
             // abre_em existente nunca é sobrescrito (pode ter ajuste manual)
             abreEm: sql`coalesce(${concursos.abreEm}, excluded.abre_em)`,
+            abreEmPrevisto: sql`coalesce(${concursos.abreEmPrevisto}, excluded.abre_em_previsto)`,
+            abreEmOrigem: sql`case when ${concursos.abreEm} is null then excluded.abre_em_origem else ${concursos.abreEmOrigem} end`,
+            abreEmRegra: sql`case when ${concursos.abreEm} is null then excluded.abre_em_regra else ${concursos.abreEmRegra} end`,
+            sorteioEm: sql`coalesce(excluded.sorteio_em, ${concursos.sorteioEm})`,
             fechaEm: sql`coalesce(excluded.fecha_em, ${concursos.fechaEm})`,
             dataSorteio: sql`coalesce(excluded.data_sorteio, ${concursos.dataSorteio})`,
             premioEstimado: sql`coalesce(excluded.premio_estimado, ${concursos.premioEstimado})`,
@@ -215,6 +226,7 @@ export class RepositorioPostgres implements Repositorio {
         eventos: fim.eventos ?? null,
         erro: fim.erro ?? null,
         desvioServidorMs: fim.desvioServidorMs ?? null,
+        estrategia: fim.estrategia ?? null,
       })
       .where(eq(coletas.id, id));
   }
@@ -383,10 +395,10 @@ export class RepositorioPostgres implements Repositorio {
     await this.db.transaction(async (tx) => {
       const [ab] = await tx
         .insert(aberturas)
-        .values({ concursoId, t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm })
+        .values({ concursoId, t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm, escopoColocacao: a.escopoColocacao })
         .onConflictDoUpdate({
           target: aberturas.concursoId,
-          set: { t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm },
+          set: { t0: a.t0, janelaMin: a.janelaMin, participacaoMin: a.participacaoMin, processadaEm: a.processadaEm, escopoColocacao: a.escopoColocacao },
         })
         .returning({ id: aberturas.id });
       await tx.delete(aberturaParticipacoes).where(eq(aberturaParticipacoes.aberturaId, ab!.id));
@@ -416,6 +428,32 @@ export class RepositorioPostgres implements Repositorio {
         );
       }
     });
+  }
+
+  async regrasAbertura(): Promise<RegraAbertura[]> {
+    await this.carregarModalidades();
+    const linhas = await this.db.select().from(regrasAbertura);
+    return linhas.map((r) => {
+      const h = r.horaPadrao ? /^(\d{2}):(\d{2})/.exec(r.horaPadrao) : null;
+      return {
+        id: r.chave,
+        modalidade: r.modalidadeId !== null ? (this.modalidadeSlugs.get(r.modalidadeId) ?? null) : null,
+        diaSemana: r.diaSemana,
+        minutosAposSorteio: r.minutosAposSorteio,
+        horaPadrao: h ? { hora: Number(h[1]), minuto: Number(h[2]) } : null,
+        prioridade: r.prioridade,
+        ativo: r.ativo,
+        ...(r.observacao ? { observacao: r.observacao } : {}),
+      };
+    });
+  }
+
+  async ajustarAbreEm(ref: ConcursoRef, abreEm: Date, origem: OrigemT0): Promise<void> {
+    const concursoId = await this.concursoId(ref);
+    await this.db
+      .update(concursos)
+      .set({ abreEmPrevisto: sql`coalesce(${concursos.abreEmPrevisto}, ${concursos.abreEm})`, abreEm, abreEmOrigem: origem })
+      .where(and(eq(concursos.id, concursoId), sql`${concursos.abreEmOrigem} <> 'manual'`));
   }
 
   async marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void> {

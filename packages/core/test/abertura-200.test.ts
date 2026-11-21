@@ -16,7 +16,7 @@ import { horarioSP } from '../tempo/fuso';
 
 /**
  * Abertura simulada de 200 bolões passando pelo pipeline real: leituras no cronograma do modo
- * abertura (5 s até T0+15 min, depois 15 s) -> eventos -> fila/posição -> participações.
+ * abertura (5 s até T0+30 min, depois 15 s) -> eventos -> fila/posição -> participações.
  * A simulação conhece a VERDADE (horário exato de chegada, fila real, vendas), então dá para
  * medir o erro do coletor.
  */
@@ -29,7 +29,7 @@ let estado: EstadoConcurso;
 let leituras: Date[];
 let participacoes: Participacao[];
 
-/** Intervalo de leitura vigente no instante t (5 s nos primeiros 15 min, depois 15 s). */
+/** Intervalo de leitura vigente no instante t (5 s nos primeiros 30 min, depois 15 s). */
 function intervaloEm(t: number): number {
   return t < T0.getTime() + CONFIG_COLETA_PADRAO.aberturaRapidaMs ? CONFIG_COLETA_PADRAO.intervaloRapidoMs : CONFIG_COLETA_PADRAO.intervaloLentoMs;
 }
@@ -62,7 +62,7 @@ describe('abertura simulada de 200 bolões', () => {
     expect(sim.boloes).toHaveLength(200);
     expect(new Set(sim.boloes.map((b) => b.bolao.loterica.uf)).size).toBeGreaterThanOrEqual(5);
     expect(Math.max(...sim.boloes.map((b) => b.fila))).toBeGreaterThanOrEqual(4);
-    expect(leituras).toHaveLength(372);
+    expect(leituras).toHaveLength(492);
   });
 
   it('nenhum bolão aparece antes de T0 (leituras de T0 − 1 min vêm vazias)', () => {
@@ -83,7 +83,7 @@ describe('abertura simulada de 200 bolões', () => {
     expect(estado.boloes.size).toBe(deveriamSerVistos.length);
   });
 
-  it('precisão do first_seen_at: erro em [0, 5 s] até T0 + 15 min e [0, 15 s] depois', () => {
+  it('precisão do first_seen_at: erro em [0, 5 s] até T0 + 30 min (participação) e [0, 15 s] depois', () => {
     let maxRapido = 0;
     for (const b of sim.boloes) {
       const reg = estado.boloes.get(b.bolao.idCaixa);
@@ -138,8 +138,8 @@ describe('abertura simulada de 200 bolões', () => {
     const obtidas = new Set(participacoes.map((p) => p.loterica.codigoCaixa));
     const diferenca = [...esperadas].filter((c) => !obtidas.has(c)).concat([...obtidas].filter((c) => !esperadas.has(c)));
     for (const c of diferenca) {
-      // só pode errar quem chegou a menos de 15 s (1 leitura) do limite de 30 min
-      expect(Math.abs(verdadeiras.get(c)! - (T0.getTime() + PARTICIPACAO_MS))).toBeLessThanOrEqual(15_000);
+      // só pode errar quem chegou a menos de 5 s (1 leitura) do limite de 30 min
+      expect(Math.abs(verdadeiras.get(c)! - (T0.getTime() + PARTICIPACAO_MS))).toBeLessThanOrEqual(5_000);
     }
     expect(participacoes.length).toBeGreaterThan(30);
   });

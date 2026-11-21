@@ -3,11 +3,12 @@ import { centavos } from '../util/estatistica';
 
 /**
  * Financeiro de um bolão (SPEC, Glossário e Motor de dados):
- *   tarifa   = 35% x valor base x cotas vendidas pela internet (por cota, truncada em centavos)
+ *   tarifa   = 35% x valor base x cotas vendidas (internet E balcão; por cota, truncada em centavos)
  *   comissão = 8,61% x apostas (valor total do bolão) se vendeu ao menos 1 cota
  *   sobra    = cotas sobradas x valor da aposta por cota (valor base)
  *   lucro    = tarifa - sobra + comissão
- * Cotas de balcão (TFL) contam como vendidas (não viram sobra) mas não geram tarifa de internet.
+ * Cotas de balcão (impressas no TFL) contam como vendidas (nunca viram sobra) e geram tarifa de 35%
+ * (confirmado no oLoterico: impressos de R$ 29,15 geraram R$ 7,55 = 5 cotas de R$ 4,32 + R$ 1,51).
  * Bolão estornado (cancelado) não gera receita nem custo.
  * Prêmios NÃO entram no resultado.
  */
@@ -38,6 +39,8 @@ export interface ResultadoFinanceiro {
   cotasSobradas: number;
   /** Quanto os clientes pagaram pela internet (base + tarifa). */
   recebidoInternet: number;
+  /** Quanto foi pago no balcão (base + tarifa). */
+  recebidoBalcao: number;
   tarifa: number;
   comissao: number;
   sobra: number;
@@ -75,20 +78,22 @@ export function resultadoBolao(b: BolaoFinanceiro, taxas: TaxasFinanceiras = TAX
   const balcao = b.cotasVendidasBalcao ?? 0;
   const vendidas = b.cotasVendidasInternet + balcao;
   if (b.estornado) {
-    return { apostas: 0, cotasVendidas: 0, cotasSobradas: 0, recebidoInternet: 0, tarifa: 0, comissao: 0, sobra: 0, lucro: 0 };
+    return { apostas: 0, cotasVendidas: 0, cotasSobradas: 0, recebidoInternet: 0, recebidoBalcao: 0, tarifa: 0, comissao: 0, sobra: 0, lucro: 0 };
   }
   const apostas = valorDasApostas(b);
   const tarifaCota = b.tarifaPorCotaFonte ?? tarifaPorCota(b.valorCotaBase, taxas.tarifa);
-  const tarifa = centavos(tarifaCota * b.cotasVendidasInternet);
+  const tarifa = centavos(tarifaCota * vendidas);
   const comissao = vendidas >= 1 ? centavos(taxas.comissao * apostas) : 0;
   const cotasSobradas = b.cotasTotal - vendidas;
   const sobra = centavos(cotasSobradas * b.valorCotaBase);
   const recebidoInternet = centavos(b.cotasVendidasInternet * (b.valorCotaBase + tarifaCota));
+  const recebidoBalcao = centavos(balcao * (b.valorCotaBase + tarifaCota));
   return {
     apostas,
     cotasVendidas: vendidas,
     cotasSobradas,
     recebidoInternet,
+    recebidoBalcao,
     tarifa,
     comissao,
     sobra,
@@ -97,16 +102,15 @@ export function resultadoBolao(b: BolaoFinanceiro, taxas: TaxasFinanceiras = TAX
 }
 
 /**
- * Break-even: fração das cotas que precisa vender (pela internet) para o lucro chegar a zero.
- *   t·v − (N − v) + c·N = 0  =>  v/N = (1 − c) / (1 + t)
- * Com as taxas padrão: (1 − 0,0861) / 1,35 ≈ 67,70%.
- * (O exemplo "8,6%" do glossário da SPEC não fecha com a fórmula de lucro; ver CLAUDE.md.)
+ * Break-even de UM bolão: fração das cotas que precisa vender para o lucro chegar a zero.
+ *   t·v − (N − v) + c·N = 0  =>  v/N = (1 − c) / (1 + t)  ≈ 67,70% com as taxas padrão.
+ * (O "8,6%" que aparecia no glossário era a comissão de 8,61%, não o break-even.)
  */
 export function breakEvenFracao(taxas: TaxasFinanceiras = TAXAS_PADRAO): number {
   return (1 - taxas.comissao) / (1 + taxas.tarifa);
 }
 
-/** Menor número de cotas vendidas pela internet com lucro >= 0. */
+/** Menor número de cotas vendidas (de um bolão vazio) com lucro >= 0. */
 export function cotasParaEmpatar(cotasTotal: number, valorCotaBase: number, taxas: TaxasFinanceiras = TAXAS_PADRAO): number {
   for (let v = 0; v <= cotasTotal; v++) {
     const r = resultadoBolao({ cotasTotal, valorCotaBase, cotasVendidasInternet: v }, taxas);
@@ -115,19 +119,67 @@ export function cotasParaEmpatar(cotasTotal: number, valorCotaBase: number, taxa
   return cotasTotal;
 }
 
+export interface BreakEven {
+  /** Lucro hoje (tarifa − sobra + comissão), contando o que ainda está à venda como sobra. */
+  lucroAtual: number;
+  /** Quantas cotas AINDA faltam vender para empatar (0 = já empatou; null = nem vendendo tudo). */
+  cotasFaltando: number | null;
+  /** % do total de cotas que precisa estar vendido para empatar ((vendidas + faltando) / total). */
+  pctNecessario: number | null;
+  cotasVendidas: number;
+  cotasTotal: number;
+}
+
+/**
+ * Break-even de um GRUPO de bolões (como o oLoterico mostra: "N cotas pro break-even").
+ * Cada cota a mais vendida ganha (base + tarifa) — deixa de ser sobra e gera tarifa — e a 1ª cota
+ * de um bolão sem vendas ainda libera a comissão do bolão inteiro. Guloso pelas cotas de maior ganho.
+ * Caso real conferido: 2 bolões de Timemania de 8 cotas, um esgotado e outro 0/8 => 3 cotas.
+ */
+export function breakEvenGrupo(boloes: readonly BolaoFinanceiro[], taxas: TaxasFinanceiras = TAXAS_PADRAO): BreakEven {
+  const ativos = boloes.filter((b) => !b.estornado);
+  const resultados = ativos.map((b) => resultadoBolao(b, taxas));
+  let lucro = resultados.reduce((s, r) => s + r.lucro, 0);
+  const cotasTotal = ativos.reduce((s, b) => s + b.cotasTotal, 0);
+  const cotasVendidas = resultados.reduce((s, r) => s + r.cotasVendidas, 0);
+  const base = { lucroAtual: centavos(lucro), cotasVendidas, cotasTotal };
+  if (lucro >= -1e-9) return { ...base, cotasFaltando: 0, pctNecessario: cotasTotal ? cotasVendidas / cotasTotal : null };
+
+  const ganhos: number[] = [];
+  ativos.forEach((b, i) => {
+    const r = resultados[i]!;
+    const restantes = b.cotasTotal - r.cotasVendidas;
+    if (restantes <= 0) return;
+    const porCota = b.valorCotaBase + (b.tarifaPorCotaFonte ?? tarifaPorCota(b.valorCotaBase, taxas.tarifa));
+    const liberaComissao = r.cotasVendidas === 0 ? taxas.comissao * r.apostas : 0;
+    ganhos.push(porCota + liberaComissao);
+    for (let k = 1; k < restantes; k++) ganhos.push(porCota);
+  });
+  ganhos.sort((a, b) => b - a);
+  for (let n = 0; n < ganhos.length; n++) {
+    lucro += ganhos[n]!;
+    if (lucro >= -1e-9) {
+      const faltando = n + 1;
+      return { ...base, cotasFaltando: faltando, pctNecessario: (cotasVendidas + faltando) / cotasTotal };
+    }
+  }
+  return { ...base, cotasFaltando: null, pctNecessario: null };
+}
+
 /** Soma resultados de vários bolões (resumo do Financeiro MKP). */
 export function somarResultados(rs: readonly ResultadoFinanceiro[]): ResultadoFinanceiro {
-  const z: ResultadoFinanceiro = { apostas: 0, cotasVendidas: 0, cotasSobradas: 0, recebidoInternet: 0, tarifa: 0, comissao: 0, sobra: 0, lucro: 0 };
+  const z: ResultadoFinanceiro = { apostas: 0, cotasVendidas: 0, cotasSobradas: 0, recebidoInternet: 0, recebidoBalcao: 0, tarifa: 0, comissao: 0, sobra: 0, lucro: 0 };
   for (const r of rs) {
     z.apostas += r.apostas;
     z.cotasVendidas += r.cotasVendidas;
     z.cotasSobradas += r.cotasSobradas;
     z.recebidoInternet += r.recebidoInternet;
+    z.recebidoBalcao += r.recebidoBalcao;
     z.tarifa += r.tarifa;
     z.comissao += r.comissao;
     z.sobra += r.sobra;
     z.lucro += r.lucro;
   }
-  for (const k of ['apostas', 'recebidoInternet', 'tarifa', 'comissao', 'sobra', 'lucro'] as const) z[k] = centavos(z[k]);
+  for (const k of ['apostas', 'recebidoInternet', 'recebidoBalcao', 'tarifa', 'comissao', 'sobra', 'lucro'] as const) z[k] = centavos(z[k]);
   return z;
 }

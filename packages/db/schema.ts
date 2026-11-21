@@ -14,6 +14,7 @@ import {
   numeric,
   pgTable,
   primaryKey,
+  serial,
   smallint,
   smallserial,
   text,
@@ -59,6 +60,22 @@ export const concursos = pgTable('concursos', {
   especial: boolean('especial').notNull().default(false),
   encerradoEm: tz('encerrado_em'),
   origem: text('origem').notNull().default('fonte'),
+  sorteioEm: tz('sorteio_em'),
+  abreEmPrevisto: tz('abre_em_previsto'),
+  abreEmOrigem: text('abre_em_origem', { enum: ['regra', 'fonte', 'primeiro_bolao', 'manual'] }).notNull().default('regra'),
+  abreEmRegra: text('abre_em_regra'),
+});
+
+export const regrasAbertura = pgTable('regras_abertura', {
+  id: serial('id').primaryKey(),
+  chave: text('chave').notNull().unique(),
+  modalidadeId: smallint('modalidade_id'),
+  diaSemana: smallint('dia_semana'),
+  minutosAposSorteio: integer('minutos_apos_sorteio'),
+  horaPadrao: time('hora_padrao'),
+  prioridade: integer('prioridade').notNull().default(50),
+  ativo: boolean('ativo').notNull().default(true),
+  observacao: text('observacao'),
 });
 
 export const boloes = pgTable('boloes', {
@@ -150,6 +167,7 @@ export const coletas = pgTable('coletas', {
   eventos: integer('eventos'),
   erro: text('erro'),
   desvioServidorMs: integer('desvio_servidor_ms'),
+  estrategia: text('estrategia', { enum: ['completa', 'borda'] }),
 });
 
 export const mercadoMinuto = pgTable(
@@ -174,6 +192,7 @@ export const aberturas = pgTable('aberturas', {
   janelaMin: smallint('janela_min').notNull().default(60),
   participacaoMin: smallint('participacao_min').notNull().default(30),
   processadaEm: tz('processada_em'),
+  escopoColocacao: text('escopo_colocacao', { enum: ['vitrine', 'monitoradas'] }).notNull().default('vitrine'),
 });
 
 export const aberturaParticipacoes = pgTable(
@@ -223,4 +242,5 @@ export const todasAsTabelas = {
   aberturas,
   aberturaParticipacoes,
   franquiaDiaria,
+  regrasAbertura,
 };

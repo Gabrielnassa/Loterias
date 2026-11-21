@@ -52,9 +52,12 @@ async function carregar() {
   const j = await r.json();
   estado.ultima = j.payload.ultimaPagina;
   render('<ul>' + j.payload.cotas.map((c) => '<li>' + c.nomeFantasia + '</li>').join('') + '</ul>' +
+    (estado.pagina > 1 ? '<button id="ant">Anterior</button>' : '') +
     (estado.pagina < estado.ultima ? '<button id="seg">Seguinte</button>' : ''));
   const s = document.getElementById('seg');
   if (s) s.onclick = () => { estado.pagina++; carregar(); };
+  const a = document.getElementById('ant');
+  if (a) a.onclick = () => { estado.pagina--; carregar(); };
 }
 window.addEventListener('hashchange', rota);
 rota();

@@ -1,7 +1,14 @@
 import {
   agregarMercado,
+  ajustarT0,
   aplicarLeitura,
   BloqueadoPelaFonteError,
+  ConfirmacaoHumanaNecessariaError,
+  lerPaginas,
+  planejarLeitura,
+  preverAbertura,
+  REGRAS_ABERTURA_PADRAO,
+  resumoFilas,
   bolaoDaAbertura,
   calcularParticipacoes,
   chaveConcurso,
@@ -9,8 +16,8 @@ import {
   minutoDe,
   MonitorSaudeFonte,
   novoEstadoConcurso,
-  preverProximaAbertura,
   varrerConcurso,
+  type RegraAbertura,
   type Alerta,
   type ConcursoRef,
   type EstadoConcurso,
@@ -52,6 +59,9 @@ export class Coletor {
   private readonly saude = new MonitorSaudeFonte(3);
   private readonly cfg: ConfigColetor;
   pausadoAte = 0;
+  private regras: { em: number; regras: readonly RegraAbertura[] } | null = null;
+  /** Última leitura completa por concurso (base da estratégia de leitura na abertura). */
+  private readonly ultimaCompleta = new Map<string, { em: number; duracaoMs: number }>();
 
   constructor(private readonly d: DepsColetor) {
     this.cfg = d.config ?? CONFIG_COLETOR_PADRAO;
@@ -74,6 +84,16 @@ export class Coletor {
     }
   }
 
+  /** Regras de abertura (tabela editável no banco), com cache de 10 min. */
+  private async regrasAbertura(): Promise<readonly RegraAbertura[]> {
+    const agora = this.d.relogio.agora().getTime();
+    if (!this.regras || agora - this.regras.em > 10 * 60_000) {
+      const r = await this.d.repo.regrasAbertura().catch(() => [] as RegraAbertura[]);
+      this.regras = { em: agora, regras: r.length ? r : REGRAS_ABERTURA_PADRAO };
+    }
+    return this.regras.regras;
+  }
+
   /** Calcula as participações da abertura a partir do estado e grava (substitui as anteriores). */
   private async gravarParticipacoes(estado: EstadoConcurso, t0: Date): Promise<number> {
     const participacoes = calcularParticipacoes(
@@ -82,7 +102,13 @@ export class Coletor {
     );
     await this.d.repo.salvarAbertura(
       estado,
-      { t0, janelaMin: this.cfg.janelaMin, participacaoMin: this.cfg.participacaoMin, processadaEm: this.d.relogio.agora() },
+      {
+        t0,
+        janelaMin: this.cfg.janelaMin,
+        participacaoMin: this.cfg.participacaoMin,
+        processadaEm: this.d.relogio.agora(),
+        escopoColocacao: this.d.fonte.escopoColocacao ?? 'vitrine',
+      },
       participacoes,
     );
     return participacoes.length;
@@ -126,7 +152,11 @@ export class Coletor {
       this.d.log.error({ tarefa: t.chave, alerta }, 'ALERTA da fonte');
       this.d.alertar?.({ ...alerta, tarefa: t.chave });
     }
-    if (erro instanceof BloqueadoPelaFonteError) {
+    if (erro instanceof ConfirmacaoHumanaNecessariaError) {
+      // idade/termos/login/sessão expirada: só uma pessoa resolve; tenta de novo de tempos em tempos
+      // (o adaptador recarrega sozinho quando o arquivo de sessão for renovado)
+      this.pausadoAte = this.d.relogio.agora().getTime() + this.cfg.pausaAcaoHumanaMs;
+    } else if (erro instanceof BloqueadoPelaFonteError) {
       // não burlar: para tudo por um tempo e espera um humano olhar
       this.pausadoAte = this.d.relogio.agora().getTime() + this.cfg.pausaBloqueioMs;
     }
@@ -148,10 +178,26 @@ export class Coletor {
     });
     try {
       const estado = await this.estado(ref);
-      const leitura = await varrerConcurso(this.d.fonte, ref, {
-        maxPaginas: this.cfg.maxPaginas[t.modo],
-        agora: () => relogio.agora(),
-      });
+      const vazioAntes = estado.boloes.size === 0;
+      // modo abertura: leitura completa enquanto couber no intervalo; senão só a borda da 1ª fila
+      const plano =
+        t.modo === 'abertura'
+          ? planejarLeitura({
+              agora: relogio.agora().getTime(),
+              intervaloMs: this.cfg.intervaloAberturaMs,
+              duracaoUltimaCompletaMs: this.ultimaCompleta.get(k)?.duracaoMs ?? null,
+              ultimaCompletaEm: this.ultimaCompleta.get(k)?.em ?? null,
+              completaACadaMs: this.cfg.completaACadaMs,
+              ...resumoFilas(estado),
+            })
+          : ({ tipo: 'completa' } as const);
+      const leitura =
+        plano.tipo === 'borda'
+          ? await lerPaginas(this.d.fonte, ref, plano.paginas, { agora: () => relogio.agora() })
+          : await varrerConcurso(this.d.fonte, ref, { maxPaginas: this.cfg.maxPaginas[t.modo], agora: () => relogio.agora() });
+      if (plano.tipo === 'completa' && leitura.completa) {
+        this.ultimaCompleta.set(k, { em: leitura.iniciouEm.getTime(), duracaoMs: leitura.terminouEm.getTime() - leitura.iniciouEm.getTime() });
+      }
       const agora = relogio.agora().getTime();
       const keyframe = agora - (this.ultimoKeyframe.get(k) ?? 0) >= this.cfg.keyframeMs;
       const r = aplicarLeitura(estado, leitura, { keyframe, leiturasParaSumico: this.cfg.leiturasParaSumico });
@@ -163,6 +209,20 @@ export class Coletor {
         throw e;
       }
       if (keyframe) this.ultimoKeyframe.set(k, agora);
+      // 1º bolão do concurso: confere o T0 previsto e ajusta se a abertura foi em outro horário
+      if (vazioAntes && r.novos.length && t.t0) {
+        const primeiro = r.novos.reduce((m, b) => (b.firstSeenAt < m ? b.firstSeenAt : m), r.novos[0]!.firstSeenAt);
+        const ajuste = ajustarT0({
+          previsto: t.t0,
+          origem: t.t0Origem ?? 'regra',
+          ultimaLeituraVaziaEm: estado.ultimaLeituraVaziaEm,
+          primeiroVistoEm: primeiro,
+        });
+        if (ajuste) {
+          await repo.ajustarAbreEm(ref, ajuste.abreEm, ajuste.origem);
+          this.d.log.warn({ concurso: k, previsto: t.t0.toISOString(), ajustado: ajuste.abreEm.toISOString() }, 'T0 ajustado pelo 1º bolão');
+        }
+      }
       if (leitura.erro) this.falha(t, leitura.erro);
       else this.saude.registrarSucesso();
       await repo.finalizarColeta(coletaId, {
@@ -172,6 +232,7 @@ export class Coletor {
         completa: leitura.completa,
         novos: r.novos.length,
         eventos: r.eventos.length,
+        estrategia: plano.tipo,
         ...(leitura.erro ? { erro: `leitura parcial: ${leitura.erro.message}` } : {}),
         ...(leitura.desvioServidorMs !== undefined ? { desvioServidorMs: Math.round(leitura.desvioServidorMs) } : {}),
       });
@@ -190,6 +251,7 @@ export class Coletor {
     const coletaId = await repo.iniciarColeta({ tipo: 'contagens', modo: 'normal', slot: t.slot, agendadaPara: t.agendadaPara, iniciouEm: relogio.agora() });
     try {
       const [abertos, contagens] = await Promise.all([fonte.concursosAbertos(), fonte.contagens()]);
+      const regras = await this.regrasAbertura();
       const salvar: ConcursoParaSalvar[] = [];
       for (const c of abertos) {
         salvar.push({
@@ -197,14 +259,15 @@ export class Coletor {
           concurso: c.concurso,
           origem: 'fonte',
           ...(c.dataSorteio ? { dataSorteio: c.dataSorteio } : {}),
+          ...(c.sorteioEm ? { sorteioEm: c.sorteioEm } : {}),
           ...(c.fechaEm ? { fechaEm: c.fechaEm } : {}),
           ...(c.premioEstimado !== undefined ? { premioEstimado: c.premioEstimado } : {}),
           ...(c.acumulado !== undefined ? { acumulado: c.acumulado } : {}),
           ...(c.especial !== undefined ? { especial: c.especial } : {}),
         });
-        if (c.dataSorteio && !c.especial) {
-          const prox = preverProximaAbertura({ modalidade: c.modalidade, concurso: c.concurso, dataSorteio: c.dataSorteio });
-          salvar.push({ modalidade: prox.modalidade, concurso: prox.concurso, abreEm: prox.abreEm, origem: 'previsao' });
+        const prox = c.especial ? null : preverAbertura(c, regras);
+        if (prox) {
+          salvar.push({ modalidade: prox.modalidade, concurso: prox.concurso, abreEm: prox.abreEm, abreEmOrigem: 'regra', abreEmRegra: prox.regra, origem: 'previsao' });
         }
       }
       await repo.salvarConcursos(salvar);

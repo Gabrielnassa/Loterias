@@ -78,6 +78,8 @@ export interface EstadoConcurso extends ConcursoRef {
   /** Quantos bolões cada lotérica já tem no concurso (para atribuir a próxima fila). */
   boloesPorLoterica: Map<string, number>;
   ultimaLeituraEm: Date | null;
+  /** Última leitura COMPLETA em que o concurso estava vazio (base do ajuste do T0). */
+  ultimaLeituraVaziaEm: Date | null;
   encerradoEm: Date | null;
 }
 
@@ -88,6 +90,7 @@ export function novoEstadoConcurso(ref: ConcursoRef, boloes: readonly BolaoRegis
     boloes: new Map(),
     boloesPorLoterica: new Map(),
     ultimaLeituraEm: null,
+    ultimaLeituraVaziaEm: null,
     encerradoEm: null,
   };
   for (const b of boloes) {
@@ -312,6 +315,7 @@ export function aplicarLeitura(
 
   res.alterados = [...alterados].filter((id) => !novosIds.has(id)).map((id) => estado.boloes.get(id)!);
   estado.ultimaLeituraEm = leitura.iniciouEm;
+  if (leitura.completa && leitura.itens.length === 0) estado.ultimaLeituraVaziaEm = leitura.iniciouEm;
   return res;
 }
 

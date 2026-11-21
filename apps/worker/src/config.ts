@@ -8,7 +8,7 @@ const bool = z
 const esquema = z.object({
   DATABASE_URL: z.string().optional(),
   REDIS_URL: z.string().optional(),
-  FONTE: z.enum(['simulada', 'fixture', 'caixa', 'caixa-navegador']).default('simulada'),
+  FONTE: z.enum(['simulada', 'fixture', 'caixa', 'caixa-navegador', 'caixa-links']).default('simulada'),
   FILA: z.enum(['bullmq', 'memoria']).default('bullmq'),
   REPOSITORIO: z.enum(['postgres', 'memoria']).default('postgres'),
   MIGRAR_NA_PARTIDA: bool.default('true'),
@@ -19,7 +19,7 @@ const esquema = z.object({
   COLETA_CONCORRENCIA: z.coerce.number().int().positive().default(4),
   COLETA_INTERVALO_RAPIDO_MS: z.coerce.number().int().positive().default(CONFIG_COLETA_PADRAO.intervaloRapidoMs),
   COLETA_INTERVALO_LENTO_MS: z.coerce.number().int().positive().default(CONFIG_COLETA_PADRAO.intervaloLentoMs),
-  COLETA_ABERTURA_RAPIDA_MIN: z.coerce.number().positive().default(15),
+  COLETA_ABERTURA_RAPIDA_MIN: z.coerce.number().positive().default(30),
   COLETA_ABERTURA_DURACAO_MIN: z.coerce.number().positive().default(60),
   COLETA_ABERTURA_ANTES_S: z.coerce.number().nonnegative().default(60),
   COLETA_VARREDURA_NORMAL_MIN: z.coerce.number().positive().default(5),
@@ -30,12 +30,20 @@ const esquema = z.object({
   COLETA_LEITURAS_PARA_SUMICO: z.coerce.number().int().positive().default(2),
   COLETA_PAUSA_BLOQUEIO_MIN: z.coerce.number().positive().default(30),
   COLETA_PARTICIPACAO_MIN: z.coerce.number().positive().default(30),
+  COLETA_PAUSA_ACAO_HUMANA_MIN: z.coerce.number().positive().default(10),
+  COLETA_COMPLETA_A_CADA_S: z.coerce.number().positive().default(60),
   FONTE_INTERVALO_MIN_MS: z.coerce.number().int().nonnegative().default(250),
   FONTE_FIXTURES_DIR: z.string().optional(),
   CAIXA_BASE_URL: z.string().optional(),
   // adaptador caixa-navegador (Playwright)
   CAIXA_BASE_URL_NAVEGADOR: z.string().default('https://www.loteriasonline.caixa.gov.br/silce-web/'),
   CAIXA_SESSAO: z.string().default('.sessao-caixa/estado.json'),
+  /** Alternativa ao arquivo: o storageState em base64 numa variável de ambiente (nunca no repositório). */
+  CAIXA_SESSAO_JSON: z.string().optional(),
+  /** true = a sessão é de uma conta DEDICADA logada (voltar para a home = sessão expirada). */
+  CAIXA_CONTA_DEDICADA: bool.default('false'),
+  /** Modo caixa-links: códigos das lotéricas monitoradas, separados por vírgula. */
+  CAIXA_LOTERICAS: z.string().default(''),
   CAIXA_HEADLESS: bool.default('true'),
   CAIXA_INTERVALO_MS: z.coerce.number().int().positive().default(3000),
   CAIXA_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
@@ -62,6 +70,12 @@ export interface ConfigColetor {
   /** Janela da abertura e limite de participação (minutos após T0). */
   janelaMin: number;
   participacaoMin: number;
+  /** Pausa quando o portal pede uma pessoa (idade, login, sessão expirada). */
+  pausaAcaoHumanaMs: number;
+  /** Intervalo de leitura no início da abertura (decide entre leitura completa e borda da 1ª fila). */
+  intervaloAberturaMs: number;
+  /** Leitura completa forçada a cada X ms no modo borda. */
+  completaACadaMs: number;
 }
 
 export const CONFIG_COLETOR_PADRAO: ConfigColetor = {
@@ -71,6 +85,9 @@ export const CONFIG_COLETOR_PADRAO: ConfigColetor = {
   pausaBloqueioMs: 30 * 60_000,
   janelaMin: 60,
   participacaoMin: 30,
+  pausaAcaoHumanaMs: 10 * 60_000,
+  intervaloAberturaMs: 5_000,
+  completaACadaMs: 60_000,
 };
 
 export function lerConfig(env: NodeJS.ProcessEnv = process.env): ConfigWorker {
@@ -95,6 +112,9 @@ export function lerConfig(env: NodeJS.ProcessEnv = process.env): ConfigWorker {
       pausaBloqueioMs: amb.COLETA_PAUSA_BLOQUEIO_MIN * 60_000,
       janelaMin: amb.COLETA_ABERTURA_DURACAO_MIN,
       participacaoMin: amb.COLETA_PARTICIPACAO_MIN,
+      pausaAcaoHumanaMs: amb.COLETA_PAUSA_ACAO_HUMANA_MIN * 60_000,
+      intervaloAberturaMs: amb.COLETA_INTERVALO_RAPIDO_MS,
+      completaACadaMs: amb.COLETA_COMPLETA_A_CADA_S * 1000,
     },
   };
 }

@@ -109,3 +109,62 @@ export async function varrerConcurso(
     ...(desvioServidorMs !== undefined ? { desvioServidorMs } : {}),
   };
 }
+
+/**
+ * Lê só algumas páginas (ex.: as da borda da 1ª fila). A posição observada vem da página
+ * ((página − 1) x tamanho + índice + 1). Nunca é leitura completa: não serve para inferir "sumiu".
+ */
+export async function lerPaginas(
+  fonte: FonteBoloes,
+  alvo: ConcursoRef,
+  paginas: readonly number[],
+  opcoes: Omit<OpcoesVarredura, 'maxPaginas'> = {},
+): Promise<LeituraVitrine> {
+  const agora = opcoes.agora ?? (() => new Date());
+  const iniciouEm = agora();
+  const itens: ItemLeitura[] = [];
+  const vistos = new Set<string>();
+  let duplicados = 0;
+  let paginasLidas = 0;
+  let ordemDaVitrine = true;
+  let totalPaginasFonte: number | undefined;
+  let desvioServidorMs: number | undefined;
+  let erro: Error | undefined;
+  for (const p of [...new Set(paginas)].sort((a, b) => a - b)) {
+    let pagina;
+    try {
+      pagina = validarPagina(await fonte.pagina({ modalidade: alvo.modalidade, concurso: alvo.concurso, pagina: p }, opcoes.sinal));
+    } catch (e) {
+      if (paginasLidas === 0) throw e;
+      erro = e instanceof Error ? e : new Error(String(e));
+      break;
+    }
+    paginasLidas++;
+    ordemDaVitrine &&= pagina.ordemDaVitrine;
+    if (pagina.totalPaginas !== undefined) totalPaginasFonte = pagina.totalPaginas;
+    if (desvioServidorMs === undefined && pagina.horaServidor) desvioServidorMs = pagina.horaServidor.getTime() - pagina.obtidaEm.getTime();
+    pagina.itens.forEach((b, i) => {
+      if (vistos.has(b.idCaixa)) {
+        duplicados++;
+        return;
+      }
+      vistos.add(b.idCaixa);
+      itens.push({ ...b, posicaoObservada: (p - 1) * pagina.tamanhoPagina + i + 1, vistoEm: pagina.obtidaEm });
+    });
+    if (pagina.itens.length === 0) break;
+  }
+  return {
+    modalidade: alvo.modalidade,
+    concurso: alvo.concurso,
+    iniciouEm,
+    terminouEm: agora(),
+    paginasLidas,
+    totalPaginasFonte,
+    completa: false,
+    ordemDaVitrine,
+    duplicados,
+    itens,
+    ...(erro ? { erro } : {}),
+    ...(desvioServidorMs !== undefined ? { desvioServidorMs } : {}),
+  };
+}

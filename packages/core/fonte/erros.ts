@@ -45,4 +45,10 @@ export class FonteNaoMapeadaError extends ErroFonte {}
 export class ConfirmacaoHumanaNecessariaError extends BloqueadoPelaFonteError {}
 
 /** A tela exige login. O coletor não faz login sozinho nem usa conta pessoal. */
-export class LoginNecessarioError extends BloqueadoPelaFonteError {}
+export class LoginNecessarioError extends ConfirmacaoHumanaNecessariaError {}
+
+/**
+ * A sessão da conta DEDICADA expirou (a lista geral voltou para a home). O robô para e avisa; uma
+ * pessoa refaz o login com `pnpm caixa:preparar-sessao` e a coleta volta sozinha.
+ */
+export class SessaoExpiradaError extends LoginNecessarioError {}

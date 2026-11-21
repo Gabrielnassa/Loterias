@@ -22,3 +22,13 @@ Sessão 2 concluída (commit e push feitos). Itens que ficam para depois:
 3. Estratégia de leitura na abertura com navegador (a meta de 5 s não cabe lendo todas as páginas).
 4. Fonte Postgres para a web (ler `aberturas`/`abertura_participacoes`), watchlist e alertas (dependem de contas, Fase 6).
 5. Testar as imagens Docker num ambiente com Docker (aqui não há daemon).
+
+## Sessão 3 (21/11/2026, tarde) — respostas do Gabriel + etapas A a D
+
+- [x] A. Respostas aplicadas: conta dedicada (sessão expirada para e avisa; volta sozinha quando a
+      sessão é renovada) + modo `caixa-links`; break-even em cotas e % (`breakEvenGrupo`); 5 s até
+      T0 + 30 min e leitura da borda da 1ª fila; balcão gera tarifa; estornado não conta na franquia
+      (dúvida aberta); T0 por concurso (`regras_abertura`, `preverAbertura`, `ajustarT0`). Migração 0003.
+- [ ] B. Web lendo do Postgres + seed do histórico simulado (aviso de dados simulados enquanto a origem for o seed).
+- [ ] C. Script `observar-abertura` (registra cada página lida, total de páginas e tempo de leitura num arquivo).
+- [ ] D. Fase 3 (Minha lotérica): Bolões MKP, Financeiro MKP, Conferência MKP, Posição na abertura, CSV/Excel.

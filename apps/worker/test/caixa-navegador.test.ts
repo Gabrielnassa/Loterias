@@ -1,4 +1,15 @@
-import { ConfirmacaoHumanaNecessariaError, BloqueadoPelaFonteError, LoginNecessarioError, varrerConcurso } from '@radar/core';
+import { mkdtempSync, utimesSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  BloqueadoPelaFonteError,
+  ConfirmacaoHumanaNecessariaError,
+  lerPaginas,
+  LoginNecessarioError,
+  SessaoExpiradaError,
+  varrerConcurso,
+} from '@radar/core';
+import { FonteCaixaLinks } from '../src/fontes/caixa-links';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FonteCaixaNavegador } from '../src/fontes/caixa-navegador';
 import { iniciarPortalFalso, sessaoFalsa, type PortalFalso } from './portal-falso';
@@ -71,7 +82,9 @@ describe('adaptador caixa-navegador (portal falso)', () => {
 
   it('concursos abertos e contagens a partir da 1ª página (com cache)', async () => {
     const f = criar({ termosDeUso: '1', logado: '1' });
-    expect(await f.concursosAbertos()).toEqual([{ modalidade: 'mega-sena', concurso: 3089, dataSorteio: '2026-11-22' }]);
+    expect(await f.concursosAbertos()).toEqual([
+      { modalidade: 'mega-sena', concurso: 3089, dataSorteio: '2026-11-22', sorteioEm: new Date('2026-11-23T00:00:00Z') },
+    ]);
     const antes = f.acoes;
     expect(await f.contagens()).toEqual([{ modalidade: 'mega-sena', concurso: 3089, boloes: 75 }]);
     expect(f.acoes).toBe(antes); // usou o cache
@@ -93,5 +106,53 @@ describe('adaptador caixa-navegador (portal falso)', () => {
     const p = await f.pagina({ modalidade: 'mega-sena', concurso: 3089, pagina: 1 });
     expect(p.itens).toHaveLength(30);
     expect(f.acoes).toBe(2);
+  });
+});
+
+describe('navegação, conta dedicada e modo links', () => {
+  it('reler a borda: Anterior + Seguinte (2 ações) sem voltar para a página 1', async () => {
+    const f = criar({ termosDeUso: '1', logado: '1' });
+    await varrerConcurso(f, { modalidade: 'mega-sena', concurso: 3089 }); // termina na pág. 3
+    const antes = f.acoes;
+    portal.requisicoesLista.length = 0;
+    const l = await lerPaginas(f, { modalidade: 'mega-sena', concurso: 3089 }, [2, 3]);
+    expect(l.itens).toHaveLength(45);
+    expect(l.itens[0]!.posicaoObservada).toBe(31);
+    expect(portal.requisicoesLista.map((r) => r.pagina)).toEqual([2, 3]);
+    expect(f.acoes - antes).toBe(2);
+    // a mesma página de novo: Anterior + Seguinte
+    portal.requisicoesLista.length = 0;
+    await f.pagina({ modalidade: 'mega-sena', concurso: 3089, pagina: 3 });
+    expect(portal.requisicoesLista.map((r) => r.pagina)).toEqual([2, 3]);
+  });
+
+  it('conta dedicada com sessão expirada: para com SessaoExpiradaError e volta sozinha quando a sessão é renovada', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'sessao-'));
+    const arq = join(dir, 'estado.json');
+    writeFileSync(arq, JSON.stringify(sessaoFalsa(portal.url, { termosDeUso: '1' }))); // login caiu
+    const f = new FonteCaixaNavegador({ baseUrl: portal.url, estadoSessao: arq, contaDedicada: true, intervaloMinimoMs: 200, timeoutMs: 8000 });
+    abertos.push(f);
+    const erro = await f.pagina({ modalidade: 'mega-sena', concurso: 3089, pagina: 1 }).catch((e) => e);
+    expect(erro).toBeInstanceOf(SessaoExpiradaError);
+    expect(erro.message).toMatch(/caixa:preparar-sessao/);
+    // uma pessoa refaz o login (arquivo de sessão novo)
+    writeFileSync(arq, JSON.stringify(sessaoFalsa(portal.url, { termosDeUso: '1', logado: '1' })));
+    const futuro = new Date(Date.now() + 5000);
+    utimesSync(arq, futuro, futuro);
+    const p = await f.pagina({ modalidade: 'mega-sena', concurso: 3089, pagina: 1 });
+    expect(p.itens).toHaveLength(30);
+  });
+
+  it('modo links (sem conta): só os bolões das lotéricas monitoradas, colocação marcada como indisponível', async () => {
+    const nav = criar({ termosDeUso: '1' }); // sem login
+    const f = new FonteCaixaLinks(nav, ['990105', '990110']);
+    expect(f.escopoColocacao).toBe('monitoradas');
+    const l = await varrerConcurso(f, { modalidade: 'mega-sena', concurso: 3089 });
+    expect(l.completa).toBe(true);
+    expect(new Set(l.itens.map((i) => i.loterica.codigoCaixa))).toEqual(new Set(['990105', '990110']));
+    expect(l.itens.every((i) => i.filaFonte !== undefined)).toBe(true);
+    expect(await f.concursosAbertos()).toEqual([expect.objectContaining({ modalidade: 'mega-sena', concurso: 3089 })]);
+    expect(await f.contagens()).toEqual([]);
+    expect(portal.requisicoesLista.at(-1)!.caminho).toBe('boloes/recuperar-boloes-disponiveis-link');
   });
 });

@@ -5,7 +5,33 @@ import { carregarFixture, ClienteHttpEducado, FonteCaixaHttp, FonteFixture, type
 import { FonteSimulada, gerarAberturaSimulada, type AberturaSimulada } from '@radar/core/simulacao';
 import { ehModalidade } from '@radar/core';
 import type { ConfigWorker } from './config';
-import { FonteCaixaNavegador } from './fontes/caixa-navegador';
+import { FonteCaixaLinks } from './fontes/caixa-links';
+import { FonteCaixaNavegador, type EstadoSessao } from './fontes/caixa-navegador';
+
+/**
+ * Sessão do navegador: arquivo (CAIXA_SESSAO) ou, sem arquivo, o storageState em base64 na variável
+ * CAIXA_SESSAO_JSON. Nunca no repositório. A senha da conta dedicada nunca é guardada: uma pessoa
+ * faz o login em `caixa:preparar-sessao` e só os cookies da sessão ficam salvos.
+ */
+export function sessaoDaConfig(amb: ConfigWorker['amb']): string | Record<string, unknown> {
+  if (amb.CAIXA_SESSAO_JSON) return JSON.parse(Buffer.from(amb.CAIXA_SESSAO_JSON, 'base64').toString('utf8')) as Record<string, unknown>;
+  return amb.CAIXA_SESSAO;
+}
+
+function criarNavegador(cfg: ConfigWorker, relogio: FonteDeTempo): FonteCaixaNavegador {
+  const { amb } = cfg;
+  return new FonteCaixaNavegador({
+    baseUrl: amb.CAIXA_BASE_URL_NAVEGADOR,
+    estadoSessao: sessaoDaConfig(amb) as EstadoSessao,
+    contaDedicada: amb.CAIXA_CONTA_DEDICADA,
+    headless: amb.CAIXA_HEADLESS,
+    intervaloMinimoMs: amb.CAIXA_INTERVALO_MS,
+    timeoutMs: amb.CAIXA_TIMEOUT_MS,
+    modalidades: amb.CAIXA_MODALIDADES.split(',').map((m) => m.trim()).filter(ehModalidade),
+    ...(amb.CAIXA_NAVEGADOR_EXECUTAVEL ? { executavel: amb.CAIXA_NAVEGADOR_EXECUTAVEL } : {}),
+    agora: () => relogio.agora(),
+  });
+}
 import type { FonteDeTempo } from './relogio';
 
 const FIXTURES_PADRAO = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'packages', 'core', 'fonte', 'fixtures');
@@ -33,19 +59,12 @@ export function criarFonte(cfg: ConfigWorker, relogio: FonteDeTempo): FonteCriad
       return { fonte: new FonteSimulada([sim], () => relogio.agora()), simulacoes: [sim] };
     }
     case 'caixa-navegador':
-      return {
-        fonte: new FonteCaixaNavegador({
-          baseUrl: amb.CAIXA_BASE_URL_NAVEGADOR,
-          estadoSessao: amb.CAIXA_SESSAO,
-          headless: amb.CAIXA_HEADLESS,
-          intervaloMinimoMs: amb.CAIXA_INTERVALO_MS,
-          timeoutMs: amb.CAIXA_TIMEOUT_MS,
-          modalidades: amb.CAIXA_MODALIDADES.split(',').map((m) => m.trim()).filter(ehModalidade),
-          ...(amb.CAIXA_NAVEGADOR_EXECUTAVEL ? { executavel: amb.CAIXA_NAVEGADOR_EXECUTAVEL } : {}),
-          agora: () => relogio.agora(),
-        }),
-        simulacoes: [],
-      };
+      return { fonte: criarNavegador(cfg, relogio), simulacoes: [] };
+    case 'caixa-links': {
+      const lotericas = amb.CAIXA_LOTERICAS.split(',').map((c) => c.trim()).filter((c) => /^\d+$/.test(c));
+      if (!lotericas.length) throw new Error('FONTE=caixa-links exige CAIXA_LOTERICAS com os códigos das lotéricas monitoradas');
+      return { fonte: new FonteCaixaLinks(criarNavegador(cfg, relogio), lotericas, () => relogio.agora()), simulacoes: [] };
+    }
     case 'caixa':
       return {
         fonte: new FonteCaixaHttp(

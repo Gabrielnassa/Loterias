@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, statSync } from 'node:fs';
 import {
   BloqueadoPelaFonteError,
   CAMINHOS_CAIXA,
@@ -10,6 +10,7 @@ import {
   LimiteDeRequisicoesError,
   LoginNecessarioError,
   normalizarPaginaCaixa,
+  SessaoExpiradaError,
   type ConcursoAbertoFonte,
   type ConsultaBoloes,
   type ContagemFonte,
@@ -29,15 +30,20 @@ import { chromium, type Browser, type BrowserContext, type Page, type Response }
  *  - NÃO monta, reproduz nem decifra o parâmetro `q` (cifrado pelo site). Só observa respostas.
  *  - NÃO responde "Você tem mais de 18 anos?" nem aceita termos: se a tela aparecer, para com
  *    ConfirmacaoHumanaNecessariaError. Uma pessoa prepara a sessão (`caixa:preparar-sessao`).
- *  - NÃO faz login. A lista geral exige login; sem ele só funciona o link público da lotérica
- *    (`#/bolao-caixa/{código}`). Nunca usar a conta pessoal de ninguém.
+ *  - NÃO faz login. A lista geral exige login: uma pessoa faz o login da conta DEDICADA da empresa
+ *    uma vez (`caixa:preparar-sessao`) e o robô reaproveita a sessão. Se ela expirar, para com
+ *    SessaoExpiradaError e avisa; quando a pessoa renova o arquivo de sessão, a coleta volta sozinha.
+ *    Sem conta, só funciona o link público da lotérica (`#/bolao-caixa/{código}`, ver caixa-links.ts).
+ *    Nunca usar a conta pessoal de ninguém.
  *  - NÃO tenta burlar proteção anti-robô: 401/403/captcha param tudo (BloqueadoPelaFonteError).
  *  - Ritmo baixo e configurável entre ações, backoff exponencial em falhas transitórias.
  */
+export type EstadoSessao = string | Exclude<Parameters<Browser['newContext']>[0], undefined>['storageState'];
+
 export interface OpcoesCaixaNavegador {
   baseUrl?: string;
   /** storageState do Playwright preparado por uma pessoa (caminho do JSON ou o objeto). */
-  estadoSessao?: string | Exclude<Parameters<Browser['newContext']>[0], undefined>['storageState'];
+  estadoSessao?: EstadoSessao;
   headless?: boolean;
   executavel?: string;
   /** Intervalo mínimo entre ações no portal (carregar página ou clicar em Seguinte). */
@@ -50,8 +56,13 @@ export interface OpcoesCaixaNavegador {
   cacheListaMs?: number;
   /** Modalidades consultadas em concursosAbertos/contagens. */
   modalidades?: ModalidadeSlug[];
-  /** Texto do botão de próxima página. */
+  /** Texto dos botões de próxima e de página anterior. */
   textoSeguinte?: string;
+  textoAnterior?: string;
+  /** A sessão é de uma conta dedicada logada: voltar para a home = sessão expirada. */
+  contaDedicada?: boolean;
+  /** Cache das páginas brutas do link de uma lotérica (modo links). */
+  cacheLinkMs?: number;
   /** Trata a ordem da lista como a ordem da vitrine (default false: lista é por cidade do comprador). */
   confiarOrdemDaFonte?: boolean;
   agora?: () => Date;
@@ -67,6 +78,8 @@ const PADRAO = {
   backoffMaxMs: 120_000,
   cacheListaMs: 10 * 60_000,
   textoSeguinte: 'Seguinte',
+  textoAnterior: 'Anterior',
+  cacheLinkMs: 20_000,
 };
 
 const CAMINHOS_LISTA = new Set<string>([CAMINHOS_CAIXA.boloesDisponiveis, CAMINHOS_CAIXA.boloesDisponiveisLink]);
@@ -92,6 +105,8 @@ export class FonteCaixaNavegador implements FonteBoloes {
   private proximaAcao = 0;
   private fila: Promise<void> = Promise.resolve();
   private readonly cacheLista = new Map<ModalidadeSlug, { em: number; json: unknown }>();
+  private readonly cacheLink = new Map<string, { em: number; jsons: unknown[] }>();
+  private sessaoCarregadaMtime = 0;
   /** Estatística: ações feitas no portal (cargas + cliques). */
   acoes = 0;
 
@@ -114,9 +129,13 @@ export class FonteCaixaNavegador implements FonteBoloes {
       ...(this.o.executavel ? { executablePath: this.o.executavel } : {}),
     });
     let storageState = this.o.estadoSessao;
-    if (typeof storageState === 'string' && !existsSync(storageState)) {
-      this.registrar('arquivo de sessão não encontrado; seguindo sem sessão', { estadoSessao: storageState });
-      storageState = undefined;
+    if (typeof storageState === 'string') {
+      if (!existsSync(storageState)) {
+        this.registrar('arquivo de sessão não encontrado; seguindo sem sessão', { estadoSessao: storageState });
+        storageState = undefined;
+      } else {
+        this.sessaoCarregadaMtime = statSync(storageState).mtimeMs;
+      }
     }
     this.contexto = await this.browser.newContext({
       locale: 'pt-BR',
@@ -124,6 +143,16 @@ export class FonteCaixaNavegador implements FonteBoloes {
       ...(storageState ? { storageState } : {}),
     });
     return this.contexto;
+  }
+
+  /** Se uma pessoa renovou o arquivo de sessão (ex.: refez o login), recomeça com a sessão nova. */
+  private async recarregarSeSessaoMudou(): Promise<void> {
+    const arq = this.o.estadoSessao;
+    if (typeof arq !== 'string' || !this.contexto || !existsSync(arq)) return;
+    const mtime = statSync(arq).mtimeMs;
+    if (mtime <= this.sessaoCarregadaMtime) return;
+    this.registrar('arquivo de sessão renovado: recarregando o navegador');
+    await this.fechar();
   }
 
   private async aba(chave: string): Promise<Aba> {
@@ -165,6 +194,11 @@ export class FonteCaixaNavegador implements FonteBoloes {
       );
     }
     if (esperadoNaRota && !hash.startsWith('#/bolao-caixa')) {
+      if (this.o.contaDedicada) {
+        return new SessaoExpiradaError(
+          'a sessão da conta dedicada expirou (o portal voltou para a home). Uma pessoa precisa refazer o login: `pnpm caixa:preparar-sessao`. A coleta volta sozinha quando o arquivo de sessão for renovado.',
+        );
+      }
       return new LoginNecessarioError(
         'o portal saiu da lista de bolões (foi para a home): a lista geral exige login. Sem login, só o link público da lotérica (#/bolao-caixa/{código}) funciona.',
       );
@@ -264,36 +298,84 @@ export class FonteCaixaNavegador implements FonteBoloes {
     return json;
   }
 
+  /** Clica num botão de paginação e devolve o JSON da lista (null se o botão não existe/está desabilitado). */
+  private async clicar(aba: Aba, texto: string): Promise<unknown | null> {
+    const botao = aba.page.getByText(texto, { exact: true }).first();
+    const disponivel = (await botao.count()) > 0 && (await botao.isVisible()) && (await botao.isEnabled());
+    if (!disponivel) return null;
+    await this.aguardarVez();
+    return this.esperarLista(aba.page, () => botao.click());
+  }
+
+  /**
+   * Vai até a página pedida pelo caminho mais curto: "Seguinte" para frente, "Anterior" para trás,
+   * e Anterior + Seguinte para reler a página atual (leitura da borda da 1ª fila com 2 ações).
+   */
+  private async irPara(aba: Aba, consulta: Pick<ConsultaBoloes, 'modalidade' | 'codigoLoterica' | 'pagina'>): Promise<unknown | null> {
+    const alvo = consulta.pagina;
+    let json: unknown = null;
+    const recarregar = aba.paginaAtual === 0 || alvo === 1 || (alvo < aba.paginaAtual && aba.paginaAtual - alvo > alvo - 1);
+    if (recarregar) json = await this.carregarPrimeira(aba, consulta);
+    else if (alvo === aba.paginaAtual) {
+      const r = await this.clicar(aba, this.o.textoAnterior);
+      if (r === null) json = await this.carregarPrimeira(aba, consulta);
+      else aba.paginaAtual--;
+    }
+    while (aba.paginaAtual > alvo) {
+      const r = await this.clicar(aba, this.o.textoAnterior);
+      if (r === null) {
+        json = await this.carregarPrimeira(aba, consulta);
+        break;
+      }
+      json = r;
+      aba.paginaAtual--;
+    }
+    while (aba.paginaAtual < alvo) {
+      const r = await this.clicar(aba, this.o.textoSeguinte);
+      if (r === null) return null; // não há próxima página: fim da lista
+      json = r;
+      aba.paginaAtual++;
+    }
+    return json;
+  }
+
   async pagina(consulta: ConsultaBoloes): Promise<PaginaBoloes> {
     return this.comRetentativas(async () => {
+      await this.recarregarSeSessaoMudou();
       const chave = consulta.codigoLoterica ? `loterica:${consulta.codigoLoterica}` : `modalidade:${consulta.modalidade}`;
-      const aba = await this.aba(chave);
-      let json: unknown;
-      if (consulta.pagina === 1 || aba.paginaAtual === 0 || consulta.pagina <= aba.paginaAtual) {
-        json = await this.carregarPrimeira(aba, consulta);
-      }
-      while (aba.paginaAtual < consulta.pagina) {
-        const botao = aba.page.getByText(this.o.textoSeguinte, { exact: true }).first();
-        const disponivel = (await botao.count()) > 0 && (await botao.isVisible()) && (await botao.isEnabled());
-        if (!disponivel) {
-          // não há próxima página: fim da lista
-          return {
-            consulta,
-            pagina: consulta.pagina,
-            tamanhoPagina: 30,
-            itens: [],
-            ordemDaVitrine: this.o.confiarOrdemDaFonte ?? false,
-            obtidaEm: this.agora(),
-          };
-        }
-        await this.aguardarVez();
-        json = await this.esperarLista(aba.page, () => botao.click());
-        aba.paginaAtual++;
+      const json = await this.irPara(await this.aba(chave), consulta);
+      if (json === null) {
+        return { consulta, pagina: consulta.pagina, tamanhoPagina: 30, itens: [], ordemDaVitrine: this.o.confiarOrdemDaFonte ?? false, obtidaEm: this.agora() };
       }
       return normalizarPaginaCaixa(json, consulta, {
         obtidaEm: this.agora(),
         ...(this.o.confiarOrdemDaFonte !== undefined ? { confiarOrdemDaFonte: this.o.confiarOrdemDaFonte } : {}),
       });
+    });
+  }
+
+  /**
+   * Páginas BRUTAS do link público de uma lotérica (todas as modalidades), com cache curto para
+   * várias consultas da mesma rodada não recarregarem o portal. Base do modo links (sem conta).
+   */
+  async paginasBrutasDaLoterica(codigo: string, maxPaginas = 10): Promise<{ jsons: unknown[]; obtidaEm: Date }> {
+    const c = this.cacheLink.get(codigo);
+    if (c && Date.now() - c.em < this.o.cacheLinkMs) return { jsons: c.jsons, obtidaEm: new Date(c.em) };
+    return this.comRetentativas(async () => {
+      await this.recarregarSeSessaoMudou();
+      const aba = await this.aba(`loterica:${codigo}`);
+      const jsons: unknown[] = [];
+      let json: unknown = await this.carregarPrimeira(aba, { modalidade: 'mega-sena', codigoLoterica: codigo });
+      while (json !== null && jsons.length < maxPaginas) {
+        jsons.push(json);
+        const ultima = (json as { payload?: { ultimaPagina?: unknown } }).payload?.ultimaPagina;
+        if (typeof ultima === 'number' && aba.paginaAtual >= ultima) break;
+        json = await this.clicar(aba, this.o.textoSeguinte);
+        if (json !== null) aba.paginaAtual++;
+      }
+      const em = Date.now();
+      this.cacheLink.set(codigo, { em, jsons });
+      return { jsons, obtidaEm: new Date(em) };
     });
   }
 
@@ -322,6 +404,7 @@ export class FonteCaixaNavegador implements FonteBoloes {
   }
 
   async fechar(): Promise<void> {
+    for (const a of this.abas.values()) await a.page.close().catch(() => {});
     await this.contexto?.close().catch(() => {});
     await this.browser?.close().catch(() => {});
     this.contexto = null;

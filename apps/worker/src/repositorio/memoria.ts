@@ -6,12 +6,14 @@ import {
   type EventoBolao,
   type LinhaMercado,
   type LinhaSnapshot,
+  type OrigemT0,
   type Participacao,
+  type RegraAbertura,
   type ResultadoLeitura,
 } from '@radar/core';
 import type { AberturaParaSalvar, ConcursoParaSalvar, FimColeta, InicioColeta, Repositorio } from './tipos';
 
-type ConcursoMem = ConcursoAgendavel & { origem: ConcursoParaSalvar['origem']; dataSorteio?: string; encerradoEm?: Date };
+type ConcursoMem = ConcursoAgendavel & { origem: ConcursoParaSalvar['origem']; dataSorteio?: string; encerradoEm?: Date; abreEmPrevisto?: Date };
 
 /** Repositório em memória: mesmo contrato do Postgres, para testes e `REPOSITORIO=memoria`. */
 export class RepositorioMemoria implements Repositorio {
@@ -28,8 +30,8 @@ export class RepositorioMemoria implements Repositorio {
     return [...this.concursos.values()]
       .filter((c) => !c.encerradoEm)
       .filter((c) => c.origem !== 'previsao' || !c.abreEm || c.abreEm.getTime() > agora.getTime() - 3 * 3_600_000)
-      .map(({ modalidade, concurso, abreEm, fechaEm, encerrado }) => ({
-        modalidade, concurso, abreEm, fechaEm, encerrado,
+      .map(({ modalidade, concurso, abreEm, abreEmOrigem, fechaEm, encerrado }) => ({
+        modalidade, concurso, abreEm, fechaEm, encerrado, abreEmOrigem: abreEmOrigem ?? 'regra',
         aberturaProcessada: this.aberturas.has(chaveConcurso({ modalidade, concurso })),
       }));
   }
@@ -39,10 +41,13 @@ export class RepositorioMemoria implements Repositorio {
       const k = chaveConcurso(c);
       const atual = this.concursos.get(k);
       if (!atual) {
-        this.concursos.set(k, { ...c });
+        this.concursos.set(k, { ...c, abreEmOrigem: c.abreEmOrigem ?? (c.origem === 'manual' ? 'manual' : 'regra') });
         continue;
       }
-      atual.abreEm = atual.abreEm ?? c.abreEm;
+      if (!atual.abreEm && c.abreEm) {
+        atual.abreEm = c.abreEm;
+        atual.abreEmOrigem = c.abreEmOrigem ?? 'regra';
+      }
       atual.fechaEm = c.fechaEm ?? atual.fechaEm;
       atual.dataSorteio = c.dataSorteio ?? atual.dataSorteio;
       if (c.origem === 'fonte') atual.origem = 'fonte';
@@ -78,6 +83,19 @@ export class RepositorioMemoria implements Repositorio {
 
   async salvarMercado(ref: ConcursoRef, minuto: Date, linhas: readonly LinhaMercado[]): Promise<void> {
     for (const l of linhas) this.mercado.set(`${chaveConcurso(ref)}|${l.uf}|${minuto.toISOString()}`, { ...l, minuto });
+  }
+
+  regras: RegraAbertura[] = [];
+  async regrasAbertura(): Promise<RegraAbertura[]> {
+    return this.regras;
+  }
+
+  async ajustarAbreEm(ref: ConcursoRef, abreEm: Date, origem: OrigemT0): Promise<void> {
+    const c = this.concursos.get(chaveConcurso(ref));
+    if (!c) return;
+    c.abreEmPrevisto ??= c.abreEm ?? undefined;
+    c.abreEm = abreEm;
+    c.abreEmOrigem = origem;
   }
 
   async salvarAbertura(ref: ConcursoRef, a: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void> {

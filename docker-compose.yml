@@ -57,7 +57,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       COLETA_INTERVALO_RAPIDO_MS: ${COLETA_INTERVALO_RAPIDO_MS:-5000}
       COLETA_INTERVALO_LENTO_MS: ${COLETA_INTERVALO_LENTO_MS:-15000}
-      COLETA_ABERTURA_RAPIDA_MIN: ${COLETA_ABERTURA_RAPIDA_MIN:-15}
+      COLETA_ABERTURA_RAPIDA_MIN: ${COLETA_ABERTURA_RAPIDA_MIN:-30}
       FONTE_INTERVALO_MIN_MS: ${FONTE_INTERVALO_MIN_MS:-250}
       # FONTE=caixa-navegador: sessão preparada por uma pessoa (pnpm --filter @radar/worker caixa:preparar-sessao)
       CAIXA_SESSAO: /sessao/estado.json

@@ -1,11 +1,11 @@
-import { BloqueadoPelaFonteError, FormatoInesperadoError } from './erros';
+import { BloqueadoPelaFonteError, ConfirmacaoHumanaNecessariaError, FormatoInesperadoError } from './erros';
 
 /**
  * Saúde da fonte (SPEC, Riscos): alerta após 3 falhas seguidas ou mudança de formato.
  * Bloqueio (401/403/captcha) também alerta na hora: o coletor deve parar, nunca burlar.
  * Emite no máximo 1 alerta por sequência de falhas; um sucesso zera a sequência.
  */
-export type MotivoAlerta = 'falhas_seguidas' | 'formato_mudou' | 'bloqueado';
+export type MotivoAlerta = 'falhas_seguidas' | 'formato_mudou' | 'bloqueado' | 'acao_humana';
 
 export interface Alerta {
   motivo: MotivoAlerta;
@@ -34,7 +34,8 @@ export class MonitorSaudeFonte {
     if (this.alertou) return null;
     const msg = erro instanceof Error ? erro.message : String(erro);
     let motivo: MotivoAlerta | null = null;
-    if (erro instanceof BloqueadoPelaFonteError) motivo = 'bloqueado';
+    if (erro instanceof ConfirmacaoHumanaNecessariaError) motivo = 'acao_humana';
+    else if (erro instanceof BloqueadoPelaFonteError) motivo = 'bloqueado';
     else if (erro instanceof FormatoInesperadoError) motivo = 'formato_mudou';
     else if (this.falhas >= this.limiteFalhas) motivo = 'falhas_seguidas';
     if (!motivo) return null;

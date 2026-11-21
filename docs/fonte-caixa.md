@@ -91,20 +91,36 @@ da lotérica **não exige login**. Antes de tudo, quem não está logado passa p
 | 14 | Fila dinâmica? | Ainda não sabemos: guardamos `fila_observada_entrada` e `fila_observada` (atual); se divergirem, a fila é dinâmica |
 | 15 | Termos de uso | Validar com advogado antes de vender (SPEC, Riscos) |
 
+## Modos de coleta decididos (21/11/2026)
+
+| Modo | Configuração | O que dá |
+| --- | --- | --- |
+| Conta DEDICADA da empresa | `FONTE=caixa-navegador`, `CAIXA_CONTA_DEDICADA=true`, sessão em `CAIXA_SESSAO` (arquivo) ou `CAIXA_SESSAO_JSON` (base64) | Lista geral (cidade da conta → UF → Brasil): fila, hora de entrada e colocação calculada |
+| Links públicos das lotéricas monitoradas (sem conta) | `FONTE=caixa-links`, `CAIXA_LOTERICAS=990013,990020` | Fila e hora de entrada dos bolões dessas lotéricas; colocação na vitrine **indisponível** (`aberturas.escopo_colocacao = 'monitoradas'`) |
+
+- Uma pessoa faz o login da conta dedicada UMA vez em `pnpm caixa:preparar-sessao`; só os cookies
+  da sessão são guardados (a senha não). Credenciais e sessão só por variável de ambiente ou arquivo
+  fora do git — nunca no repositório. Nunca usar a conta pessoal do Gabriel.
+- Sessão expirada: o portal volta para a home, o robô para com `SessaoExpiradaError` e alerta
+  (`acao_humana`). Quando a pessoa renova o arquivo de sessão, o adaptador percebe e volta sozinho.
+
+## Estratégia de leitura na abertura
+
+5 s até T0 + 30 min (janela de participação) e 15 s até T0 + 60 min. Leitura completa enquanto couber
+em 5 s; quando passar, só as páginas onde termina a 1ª fila (+1), porque o 1º bolão de cada lotérica
+entra no fim da 1ª fila; uma leitura completa a cada 60 s pega os demais bolões e as vendas. No
+navegador, reler a borda custa 2 ações ("Anterior" + "Seguinte") sem voltar à página 1.
+
 ## O que falta descobrir
 
-1. **Como obter a lista UF/Brasil sem a conta pessoal de ninguém.** Opções para o dono do produto decidir:
-   a) conta **dedicada da empresa**, criada para isso, com a cidade escolhida (a lista começa pela cidade da conta);
-   b) só o **link público da lotérica** (`#/bolao-caixa/{código}`, sem login): serve para acompanhar lotéricas
-      específicas (fila e hora de entrada), mas não dá a colocação na vitrine;
-   c) não coletar a lista geral.
+1. Observar uma abertura real com o script `observar-abertura` (README da raiz) e decidir os números
+   da estratégia (intervalo entre ações, margem de páginas, frequência da leitura completa).
 2. Se `ultimaPagina` é o número da última página (o código do portal sugere que sim).
 3. Se, com login, ao passar da última página da cidade, a lista da UF inclui ou exclui a cidade.
 4. Comportamento às 21:45 (o concurso novo aparece antes de T0? em lote?) e se esgotados somem.
-5. Custo de ritmo: com 3 s entre ações, ler 70 páginas leva 3,5 min. **A meta de 5 s na abertura não cabe
-   num navegador lendo tudo.** Estratégias, depois de observar uma abertura real:
-   ler só a 1ª página de cada escopo/lotérica monitorada; ler as páginas onde cada fila termina (o bolão novo
-   sempre entra no fim da sua fila); ou acompanhar só os links das lotéricas da watchlist.
+5. T0 por concurso: o portal mostra "abre dom 22/11 11:45" (Mega 3.090) e "abre qui 26/11 21:45"
+   (Lotofácil 3.840). Falta achar de onde vem essa informação (se há campo na API); hoje o T0 é previsto
+   pelas regras editáveis e ajustado pelo 1º bolão visto.
 
 ## Como rodar o adaptador
 

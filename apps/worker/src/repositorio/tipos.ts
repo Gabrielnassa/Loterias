@@ -1,10 +1,24 @@
-import type { BolaoRegistrado, ConcursoAgendavel, ConcursoRef, LinhaMercado, ModalidadeSlug, Participacao, ResultadoLeitura } from '@radar/core';
+import type {
+  BolaoRegistrado,
+  ConcursoAgendavel,
+  ConcursoRef,
+  LinhaMercado,
+  ModalidadeSlug,
+  OrigemT0,
+  Participacao,
+  RegraAbertura,
+  ResultadoLeitura,
+} from '@radar/core';
 
 export interface ConcursoParaSalvar {
   modalidade: ModalidadeSlug;
   concurso: number;
   dataSorteio?: string;
+  sorteioEm?: Date;
   abreEm?: Date;
+  /** De onde veio abre_em (regra padrão, fonte, manual). */
+  abreEmOrigem?: OrigemT0;
+  abreEmRegra?: string;
   fechaEm?: Date;
   premioEstimado?: number;
   acumulado?: boolean;
@@ -32,6 +46,7 @@ export interface FimColeta {
   eventos?: number;
   erro?: string;
   desvioServidorMs?: number;
+  estrategia?: 'completa' | 'borda';
 }
 
 /**
@@ -48,6 +63,10 @@ export interface Repositorio {
   salvarLeitura(ref: ConcursoRef, r: ResultadoLeitura, coletaId: number, vistoEm: Date): Promise<void>;
   salvarMercado(ref: ConcursoRef, minuto: Date, linhas: readonly LinhaMercado[]): Promise<void>;
   marcarEncerrado(ref: ConcursoRef, em: Date): Promise<void>;
+  /** Regras padrão de abertura (tabela editável). Vazio = usar as do core. */
+  regrasAbertura(): Promise<RegraAbertura[]>;
+  /** Corrige o T0 do concurso (guarda o previsto). Nunca chamado para T0 manual. */
+  ajustarAbreEm(ref: ConcursoRef, abreEm: Date, origem: OrigemT0): Promise<void>;
   /** Grava a abertura e SUBSTITUI as participações dela (idempotente; recalculável). */
   salvarAbertura(ref: ConcursoRef, abertura: AberturaParaSalvar, participacoes: readonly Participacao[]): Promise<void>;
 }
@@ -57,4 +76,6 @@ export interface AberturaParaSalvar {
   janelaMin: number;
   participacaoMin: number;
   processadaEm: Date;
+  /** 'monitoradas' quando a fonte só via as lotéricas monitoradas (colocação indisponível). */
+  escopoColocacao: 'vitrine' | 'monitoradas';
 }

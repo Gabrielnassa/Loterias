@@ -13,12 +13,12 @@ O oLoterico (oloterico.com.br) é um SaaS em Laravel que lê o Marketplace de Bo
 | Página | 30 bolões por página: página = teto(posição / 30) | "zona quente" = págs. 1 e 2 |
 | Colocação | Posição do bolão na vitrine por escopo: cidade, estado (UF) e Brasil | São Paulo pág 4, 117º; SP pág 7, 185º; Brasil pág 11, 311º |
 | Franquia diária | Teto em R$ (valor sem tarifa) que a lotérica pode subir por dia, janela 05:00 a 23:00 | R$ 8.000 |
-| Tarifa | 35% sobre o valor base das cotas vendidas pela internet; é a receita da lotérica | |
+| Tarifa | 35% sobre o valor base das cotas vendidas, pela internet e no balcão (impressos); é a receita da lotérica | impressos de R$ 29,15 geraram R$ 7,55 de tarifa |
 | Comissão | 8,61% pagos pela CAIXA sobre as apostas dos bolões que venderam ao menos uma cota | |
 | Sobra (encalhe) | Cotas não vendidas até o fechamento; viram custo pelo valor da aposta | |
-| Balcão (impresso) | Cotas vendidas no TFL; contam como vendidas, sem sobra | |
+| Balcão (impresso) | Cotas vendidas no TFL; contam como vendidas (geram tarifa), sem sobra | |
 | Lucro | tarifa - sobras + comissão | |
-| Break-even | % de cotas que precisa vender para empatar | 8,6% |
+| Break-even | Quantas cotas ainda faltam vender (e que % do total precisa estar vendido) para o lucro do grupo de bolões chegar a zero | 2 bolões de Timemania de 8 cotas, um esgotado e outro 0/8: faltam 3 cotas; um bolão sozinho: ≈ 67,7% das cotas. (O "8,6%" que aparecia aqui é a comissão de 8,61%.) |
 | Código do bolão | jogos, dezenas, cotas | 6J-17D-40C = 6 jogos de 17 dezenas, 40 cotas |
 | Estorno | Bolão cancelado; o usuário marca e desmarca manualmente | |
 | TFL | Terminal Financeiro Lotérico | |

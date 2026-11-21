@@ -84,7 +84,9 @@ describe('contrato bruto da CAIXA -> normalizado', () => {
   });
 
   it('concursos presentes na resposta', () => {
-    expect(concursosNaRespostaCaixa(pagina(1))).toEqual([{ modalidade: 'mega-sena', concurso: 3089, dataSorteio: '2026-11-22', premioEstimado: 3_500_000 }]);
+    expect(concursosNaRespostaCaixa(pagina(1))).toEqual([
+      { modalidade: 'mega-sena', concurso: 3089, dataSorteio: '2026-11-22', sorteioEm: new Date('2026-11-23T00:00:00Z'), premioEstimado: 3_500_000 },
+    ]); // horaSorteio "21:00" da fixture (palpite de formato) => sorteio às 21:00 de SP
   });
 
   it('detalhar-bolao traz os jogos', () => {

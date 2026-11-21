@@ -66,12 +66,12 @@ pnpm --filter @radar/core exec tsx fonte/fixtures/gerar.ts                # rege
 | Página | 30 bolões por página: página = teto(posição / 30) | "zona quente" = págs. 1 e 2 |
 | Colocação | Posição do bolão na vitrine por escopo: cidade, estado (UF) e Brasil | São Paulo pág 4, 117º; SP pág 7, 185º; Brasil pág 11, 311º |
 | Franquia diária | Teto em R$ (valor sem tarifa) que a lotérica pode subir por dia, janela 05:00 a 23:00 | R$ 8.000 |
-| Tarifa | 35% sobre o valor base das cotas vendidas pela internet; é a receita da lotérica | |
+| Tarifa | 35% sobre o valor base das cotas vendidas, pela internet e no balcão (impressos); é a receita da lotérica | impressos de R$ 29,15 geraram R$ 7,55 de tarifa |
 | Comissão | 8,61% pagos pela CAIXA sobre as apostas dos bolões que venderam ao menos uma cota | |
 | Sobra (encalhe) | Cotas não vendidas até o fechamento; viram custo pelo valor da aposta | |
-| Balcão (impresso) | Cotas vendidas no TFL; contam como vendidas, sem sobra | |
+| Balcão (impresso) | Cotas vendidas no TFL; contam como vendidas (geram tarifa), sem sobra | |
 | Lucro | tarifa - sobras + comissão | |
-| Break-even | % de cotas que precisa vender para empatar | 8,6% (ver "Questões em aberto") |
+| Break-even | Quantas cotas ainda faltam vender (e que % do total precisa estar vendido) para o lucro do grupo de bolões chegar a zero | 2 bolões de Timemania de 8 cotas, um esgotado e outro 0/8: faltam 3 cotas; um bolão sozinho: ≈ 67,7%. O "8,6%" antigo era a comissão de 8,61% |
 | Código do bolão | jogos, dezenas, cotas | 6J-17D-40C = 6 jogos de 17 dezenas, 40 cotas |
 | Estorno | Bolão cancelado; o usuário marca e desmarca manualmente | |
 | TFL | Terminal Financeiro Lotérico | |
@@ -93,9 +93,12 @@ diferenças entre snapshots, nunca dados oficiais; a frequência da coleta defin
 - **Franquia usada** = soma do valor sem tarifa dos bolões inseridos entre 05:00 e 23:00.
 
 Modos de coleta: **Normal** (o dia todo: contagens a cada 60 s; varredura completa a cada 5-10 min
-por concurso) e **Abertura** (T0 − 1 min até T0 + 60 min; 5 s nos primeiros 15 min, depois 15 s;
-só o concurso recém-aberto). T0 = 21:45 seg-sáb, 11:45 dom, configurável por concurso
-(`concursos.abre_em`).
+por concurso) e **Abertura** (T0 − 1 min até T0 + 60 min; **5 s até T0 + 30 min** — a janela que conta
+como participação — e 15 s até T0 + 60 min; só o concurso recém-aberto). Quando a leitura completa passa
+de 5 s, lê só as páginas onde termina a 1ª fila (é lá que entra o 1º bolão de cada lotérica), com uma
+leitura completa a cada 60 s. **T0 é por concurso** (`concursos.abre_em`): previsto pela tabela editável
+`regras_abertura` (padrão: 45 min depois do sorteio do concurso anterior; sem hora do sorteio, 21:45 ou
+11:45 no domingo) e ajustado pela 1ª vez que um bolão do concurso aparece. Nada de horário fixo no código.
 
 Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição observada e fila),
 `venda` (disponíveis diminuíram), `esgotou` (disponíveis = 0 ou sumiu antes do fechamento),
@@ -112,9 +115,12 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | first_seen_at | `aplicarLeitura` | Instante em que a página com o bolão foi obtida (nunca antes da chegada real). Se a fonte informar a hora de inserção, usa ela |
 | Sumiu = esgotou | `aplicarLeitura` | Só em leitura COMPLETA e após 2 leituras completas seguidas sem o bolão; data = 1ª ausência; eventos marcados `inferido` |
 | Devolução | `aplicarLeitura` | Evento extra `devolucao` quando disponíveis aumentam (não previsto na SPEC) |
-| Financeiro | `core/regras/financeiro.ts` | Tarifa por cota **truncada** em centavos (portal: 20,16 → 7,05) ou a informada pela fonte; resíduo da última cota em `valorDasApostas`. Balcão conta como vendida e libera comissão, mas não gera tarifa de internet; estornado zera tudo |
-| Franquia | `core/regras/franquia.ts` | Janela [05:00, 23:00) em SP; estornados contam por padrão (opção para não contar) |
+| Financeiro | `core/regras/financeiro.ts` | Tarifa por cota **truncada** em centavos (portal: 20,16 → 7,05; impressos 5 × 4,32 → 7,55) ou a informada pela fonte; resíduo da última cota em `valorDasApostas`. Balcão conta como vendida, gera tarifa e libera comissão; estornado zera tudo |
+| Break-even | `breakEvenGrupo` | Em cotas que ainda faltam e em % do total, somando o grupo (ex.: seus bolões de uma loteria). Guloso: a 1ª cota de um bolão sem vendas também libera a comissão dele |
+| Franquia | `core/regras/franquia.ts` | Janela [05:00, 23:00) em SP; estornados NÃO contam por padrão (dúvida aberta; `contarEstornados`) |
 | Plano de coleta | `core/coleta/plano.ts` | Slots alinhados a T0 − 1 min; tarefa só sai quando o slot avança; atrasos não acumulam (slot perdido é contado) |
+| Estratégia de leitura | `core/coleta/estrategia.ts` + `lerPaginas` | Completa enquanto couber em 5 s; senão só a borda da 1ª fila (+1 página), completa a cada 60 s; `coletas.estrategia` registra qual foi |
+| T0 por concurso | `core/coleta/calendario.ts`, tabela `regras_abertura` | `preverAbertura` pelas regras ativas (menor prioridade primeiro); `ajustarT0` = minuto cheio do 1º bolão se o concurso foi visto vazio até 5 min antes e a previsão errou por mais de 2 min; T0 manual nunca muda (`abre_em_origem`, `abre_em_previsto`) |
 | Snapshots | `aplicarLeitura` + `snapshots_bolao` | Grava linha do bolão novo, do que mudou, do que sumiu (`presente=false`) e keyframe de todos a cada 10 min; cada leitura fica em `coletas` |
 | Mercado | `core/mercado/agregar.ts` | `mercado_minuto` por concurso, UF e 'BR' (total) |
 
@@ -152,17 +158,13 @@ fonte e ficam marcados. O histórico só começa quando o coletor entrar no ar.
 
 ## Questões em aberto (decidir com o dono do produto)
 
-0. **Fonte real**: a lista geral exige login e começa pela cidade da conta. Decidir entre conta DEDICADA da
-   empresa, só o link público das lotéricas monitoradas, ou não coletar a lista geral (ver `docs/fonte-caixa.md`).
+Decididas em 21/11/2026: conta DEDICADA (`FONTE=caixa-navegador` + `CAIXA_CONTA_DEDICADA=true`) e, sem
+conta, links públicos das lotéricas monitoradas (`FONTE=caixa-links`); break-even pela fórmula, em cotas e %;
+5 s até T0 + 30 min; balcão gera tarifa; T0 por concurso com regras editáveis.
 
-1. **Break-even**: com lucro = tarifa − sobra + comissão, o empate exige vender
-   (1 − 0,0861) / 1,35 ≈ **67,7%** das cotas, não 8,6% como no exemplo do glossário. O código usa a fórmula.
-2. **Tarifa no balcão**: a SPEC só fala em tarifa nas vendas pela internet; implementado assim.
-3. **Precisão após T0 + 15 min**: o critério de aceite pede erro ≤ 5 s em toda abertura, mas o
-   modo abertura lê a cada 15 s depois dos 15 min (erro até 15 s para quem entra entre 15 e 30 min).
-   Configurável: `COLETA_ABERTURA_RAPIDA_MIN=30` mantém 5 s até o limite de participação.
-4. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
-5. **Quais modalidades abrem no domingo às 11:45** (o default prevê a próxima abertura no T0 do dia do
-   sorteio do concurso atual; `abre_em` pode ser corrigido por concurso).
-6. Preços/dias de sorteio em `core/dominio/modalidades.ts` são referência para simulação; confirmar no
+Ainda abertas:
+1. **Estornado conta na franquia?** Padrão atual: NÃO conta (configurável). Confirmar com o Gabriel.
+2. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
+3. Escopo da lista com conta dedicada (cidade → UF → Brasil): confirmar com a observação de uma abertura real.
+4. Preços/dias de sorteio em `core/dominio/modalidades.ts` são referência para simulação; confirmar no
    Manual de Produtos.

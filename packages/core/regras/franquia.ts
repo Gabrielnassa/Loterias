@@ -6,7 +6,7 @@ import { centavos } from '../util/estatistica';
  * Franquia diária: teto em R$ (valor sem tarifa) que a lotérica pode subir por dia.
  * Franquia usada = soma do valor sem tarifa dos bolões inseridos entre 05:00 e 23:00 (SP).
  * Janela adotada: [05:00:00, 23:00:00) — fim exclusivo.
- * Estornados contam por padrão (o limite é sobre o que foi inserido); confirmar com a CAIXA.
+ * Estornados NÃO contam por padrão (dúvida aberta: confirmar com a CAIXA/Gabriel); configurável.
  */
 export interface BolaoParaFranquia {
   inseridoEm: Date;
@@ -28,7 +28,7 @@ export function franquiaUsada(
   opcoes: { contarEstornados?: boolean } = {},
 ): number {
   const { inicio, fim } = janelaFranquia(dia);
-  const contarEstornados = opcoes.contarEstornados ?? true;
+  const contarEstornados = opcoes.contarEstornados ?? false;
   let total = 0;
   for (const b of boloes) {
     const t = b.inseridoEm.getTime();

@@ -37,14 +37,14 @@ function montar(sim: AberturaSimulada, fonte?: FonteBoloes) {
 }
 
 describe('coletor de ponta a ponta (agendador + fila + coletor + repositório)', () => {
-  it('abertura simulada: 372 leituras no modo abertura, sem perdas, e depois o modo normal', async () => {
+  it('abertura simulada: 492 leituras no modo abertura, sem perdas, e depois o modo normal', async () => {
     const sim = gerarAberturaSimulada({ semente: 11, t0: T0, nBoloes: 200, concurso: 3500 });
     const { repo, agendador, rodarAte } = montar(sim);
     await repo.salvarConcursos([{ modalidade: 'lotofacil', concurso: 3500, abreEm: T0, fechaEm: sim.fechaEm, origem: 'manual' }]);
     await rodarAte(new Date(T0.getTime() + 61 * 60_000));
 
     const abertura = repo.coletas.filter((c) => c.tipo === 'varredura' && c.modo === 'abertura');
-    expect(abertura).toHaveLength(372);
+    expect(abertura).toHaveLength(492);
     expect(abertura.every((c) => !c.erro && c.completa)).toBe(true);
     expect(horaSP(abertura[0]!.agendadaPara!)).toBe('21:44:00');
     expect(agendador.estatisticas.slotsPerdidos).toBe(0);
@@ -60,7 +60,7 @@ describe('coletor de ponta a ponta (agendador + fila + coletor + repositório)',
       if (!reg) continue;
       const erro = reg.firstSeenAt.getTime() - b.chegadaEm.getTime();
       expect(erro).toBeGreaterThanOrEqual(0);
-      expect(erro).toBeLessThanOrEqual(b.chegadaEm.getTime() < T0.getTime() + 15 * 60_000 ? 5000 : 15000);
+      expect(erro).toBeLessThanOrEqual(b.chegadaEm.getTime() < T0.getTime() + 30 * 60_000 ? 5000 : 15000);
       expect(reg.fila).toBe(b.fila);
     }
     // fim da janela (T0 + 60 min): participações gravadas uma vez, iguais ao cálculo do core
@@ -83,7 +83,9 @@ describe('coletor de ponta a ponta (agendador + fila + coletor + repositório)',
     await rodarAte(new Date(T0.getTime() + 61_000));
     const prox = repo.concursos.get('lotofacil#3501');
     expect(prox?.origem).toBe('previsao');
-    expect(horaSP(prox!.abreEm!)).toBe('21:45:00');
+    expect(prox?.abreEmOrigem).toBe('regra');
+    // regra padrão: sorteio do concurso anterior + 45 min (na simulação o sorteio é 1 h após o fechamento)
+    expect(prox!.abreEm!.getTime()).toBe(sim.fechaEm.getTime() + 105 * 60_000);
     expect(repo.concursos.get('lotofacil#3500')?.origem).toBe('fonte');
   });
 
@@ -191,5 +193,65 @@ describe('agendador', () => {
     await ag.tick();
     expect(despachadas.filter((t) => t.tipo === 'varredura').map((t) => t.slot)).toEqual([12, 16]);
     expect(ag.estatisticas.slotsPerdidos).toBe(3);
+  });
+});
+
+describe('T0 por concurso e estratégia de leitura', () => {
+  it('previsão errada: o T0 é ajustado pelo 1º bolão e a janela da abertura acompanha', async () => {
+    const sim = gerarAberturaSimulada({ semente: 21, t0: T0, nBoloes: 80, concurso: 3500 });
+    const { repo, rodarAte } = montar(sim);
+    // a regra previu 20 min antes da abertura real
+    await repo.salvarConcursos([{ modalidade: 'lotofacil', concurso: 3500, abreEm: new Date(T0.getTime() - 20 * 60_000), abreEmOrigem: 'regra', fechaEm: sim.fechaEm, origem: 'previsao' }]);
+    await rodarAte(new Date(T0.getTime() + 2 * 60_000));
+    const c = repo.concursos.get('lotofacil#3500')!;
+    expect(c.abreEm).toEqual(T0);
+    expect(c.abreEmOrigem).toBe('primeiro_bolao');
+    expect(c.abreEmPrevisto).toEqual(new Date(T0.getTime() - 20 * 60_000));
+  });
+
+  it('T0 manual nunca é ajustado', async () => {
+    const sim = gerarAberturaSimulada({ semente: 21, t0: T0, nBoloes: 80, concurso: 3500 });
+    const { repo, rodarAte } = montar(sim);
+    const manual = new Date(T0.getTime() - 20 * 60_000);
+    await repo.salvarConcursos([{ modalidade: 'lotofacil', concurso: 3500, abreEm: manual, fechaEm: sim.fechaEm, origem: 'manual' }]);
+    await rodarAte(new Date(T0.getTime() + 60_000));
+    expect(repo.concursos.get('lotofacil#3500')!.abreEm).toEqual(manual);
+  });
+
+  it('leitura completa passou de 5 s: lê só a borda da 1ª fila e faz a completa a cada 60 s', async () => {
+    const sim = gerarAberturaSimulada({ semente: 31, t0: T0, nBoloes: 200, concurso: 3500 });
+    const relogio = new RelogioManual(T0.getTime() + 4 * 60_000);
+    const base = new FonteSimulada([sim], () => relogio.agora());
+    // fonte "lenta": cada página custa 2 s (88 bolões = 3 páginas = 6 s > 5 s)
+    const lenta: FonteBoloes = {
+      nome: 'lenta',
+      concursosAbertos: () => base.concursosAbertos(),
+      contagens: () => base.contagens(),
+      pagina: async (c) => {
+        const p = await base.pagina(c);
+        relogio.avancar(2000);
+        return p;
+      },
+    };
+    const repo = new RepositorioMemoria();
+    const coletor = new Coletor({ fonte: lenta, repo, relogio, log: logMudo });
+    const estrategias: string[] = [];
+    for (let slot = 0; slot < 30; slot++) {
+      await coletor.executar({ tipo: 'varredura', chave: 'abertura:lotofacil#3500', concurso: { modalidade: 'lotofacil', concurso: 3500 }, modo: 'abertura', slot, agendadaPara: relogio.agora(), prioridade: 1, t0: T0 });
+      estrategias.push(repo.coletas.at(-1)!.estrategia!);
+      relogio.avancar(2000);
+    }
+    expect(estrategias[0]).toBe('completa');
+    expect(estrategias[1]).toBe('borda');
+    expect(estrategias.filter((e) => e === 'completa').length).toBeGreaterThanOrEqual(2);
+    expect(estrategias.filter((e) => e === 'borda').length).toBeGreaterThan(20);
+    // as leituras da borda leem poucas páginas
+    const borda = repo.coletas.filter((c) => c.estrategia === 'borda');
+    expect(Math.max(...borda.map((c) => c.paginas ?? 0))).toBeLessThanOrEqual(3);
+    // nenhum 1º bolão que chegou durante o teste ficou de fora
+    const fim = relogio.agora().getTime() - 2000;
+    for (const b of sim.boloes.filter((x) => x.fila === 1 && x.chegadaEm.getTime() < fim - 10_000)) {
+      expect(repo.boloes.has(b.bolao.idCaixa), b.bolao.idCaixa).toBe(true);
+    }
   });
 });

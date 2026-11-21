@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { ModalidadeSlug } from '../../dominio/modalidades';
-import { horarioSP } from '../../tempo/fuso';
+import { horarioSP, noDiaSP } from '../../tempo/fuso';
 import { FormatoInesperadoError } from '../erros';
 import type { BolaoFonte, ConcursoAbertoFonte, ConsultaBoloes, PaginaBoloes } from '../tipos';
 
@@ -73,6 +73,7 @@ export const esquemaItemBolaoCaixa = z
     concurso: inteiro.positive(),
     modalidade: z.string().min(1),
     dataSorteio: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/).optional().nullable(),
+    horaSorteio: z.string().optional().nullable(),
     vrPremioEstimado: numero.optional().nullable(),
     vrCotaSemTarifa: numero.positive(),
     vrCotaComTarifa: numero.positive().optional().nullable(),
@@ -238,7 +239,11 @@ export function concursosNaRespostaCaixa(json: unknown): ConcursoAbertoFonte[] {
     const k = `${modalidade}#${it.data.concurso}`;
     if (vistos.has(k)) continue;
     const c: ConcursoAbertoFonte = { modalidade, concurso: it.data.concurso };
-    if (it.data.dataSorteio) c.dataSorteio = lerDataSorteioCaixa(it.data.dataSorteio);
+    if (it.data.dataSorteio) {
+      c.dataSorteio = lerDataSorteioCaixa(it.data.dataSorteio);
+      const h = /^(\d{1,2})[:hH](\d{2})/.exec(it.data.horaSorteio ?? '');
+      if (h) c.sorteioEm = noDiaSP(c.dataSorteio, Number(h[1]), Number(h[2]));
+    }
     if (it.data.vrPremioEstimado) c.premioEstimado = it.data.vrPremioEstimado;
     vistos.set(k, c);
   }

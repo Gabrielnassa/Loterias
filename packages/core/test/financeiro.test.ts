@@ -51,12 +51,21 @@ describe('financeiro do bolão', () => {
     expect(r.lucro).toBe(-2513.71); // 24,99 − 2.784,60 + 245,90
   });
 
-  it('balcão conta como vendida (sem sobra) e não gera tarifa de internet', () => {
+  it('balcão conta como vendida (sem sobra) e também gera tarifa de 35%', () => {
     const r = resultadoBolao({ ...BASE, cotasVendidasInternet: 10, cotasVendidasBalcao: 30 });
     expect(r.cotasSobradas).toBe(0);
     expect(r.sobra).toBe(0);
-    expect(r.tarifa).toBe(249.9);
-    expect(r.lucro).toBe(495.8);
+    expect(r.tarifa).toBe(999.6); // 40 x 24,99
+    expect(r.lucro).toBe(1245.5); // 999,60 − 0 + 245,90
+    expect(r.recebidoInternet).toBe(963.9); // 10 x 96,39
+    expect(r.recebidoBalcao).toBe(2891.7); // 30 x 96,39
+  });
+
+  it('impressos do oLoterico: R$ 29,15 vendidos geraram R$ 7,55 de tarifa (5 cotas de R$ 4,32)', () => {
+    const r = resultadoBolao({ cotasTotal: 5, valorCotaBase: 4.32, cotasVendidasInternet: 0, cotasVendidasBalcao: 5 });
+    expect(r.recebidoBalcao).toBe(29.15);
+    expect(r.tarifa).toBe(7.55);
+    expect(r.sobra).toBe(0);
   });
 
   it('balcão sozinho também libera a comissão', () => {
@@ -106,10 +115,10 @@ describe('franquia diária (05:00 a 23:00, valor sem tarifa)', () => {
     expect(franquiaUsada(boloes, dia)).toBe(900);
   });
 
-  it('estornados contam por padrão; opção para não contar', () => {
+  it('estornados NÃO contam por padrão (dúvida aberta); opção para contar', () => {
     const boloes = [b(10, 0, 0, 500), b(11, 0, 0, 700, true)];
-    expect(franquiaUsada(boloes, dia)).toBe(1200);
-    expect(franquiaUsada(boloes, dia, { contarEstornados: false })).toBe(500);
+    expect(franquiaUsada(boloes, dia)).toBe(500);
+    expect(franquiaUsada(boloes, dia, { contarEstornados: true })).toBe(1200);
   });
 
   it('bolão de outro dia não entra', () => {
@@ -135,5 +144,33 @@ describe('tarifa observada no portal (21/11/2026)', () => {
     expect(r.tarifa).toBe(21.15); // 3 x 7,05 (e não 3 x 7,056 = 21,17)
     expect(r.recebidoInternet).toBe(81.63); // 3 x 27,21
     expect(resultadoBolao({ cotasTotal: 100, valorCotaBase: 20.16, cotasVendidasInternet: 3, tarifaPorCotaFonte: 7.05 }).tarifa).toBe(21.15);
+  });
+});
+
+describe('break-even em cotas e % (grupo de bolões, como no oLoterico)', () => {
+  it('caso real: 2 bolões de Timemania de 8 cotas, um esgotado e outro 0/8 => faltam 3 cotas', async () => {
+    const { breakEvenGrupo } = await import('../regras/financeiro');
+    const bolao = { cotasTotal: 8, valorCotaBase: 5.25 }; // 12 jogos x R$ 3,50 / 8 cotas
+    const be = breakEvenGrupo([
+      { ...bolao, cotasVendidasInternet: 8 },
+      { ...bolao, cotasVendidasInternet: 0 },
+    ]);
+    expect(be.cotasFaltando).toBe(3);
+    expect(be.pctNecessario).toBeCloseTo(11 / 16);
+    expect(be.lucroAtual).toBeLessThan(0);
+    // o mesmo resultado para outros valores de cota (a conta é proporcional)
+    for (const v of [2.1, 7, 13.13]) {
+      expect(breakEvenGrupo([{ cotasTotal: 8, valorCotaBase: v, cotasVendidasInternet: 8 }, { cotasTotal: 8, valorCotaBase: v, cotasVendidasInternet: 0 }]).cotasFaltando).toBe(3);
+    }
+  });
+
+  it('um bolão sozinho: 28 de 40 (≈ 70%), já empatado = 0, estornado não conta', async () => {
+    const { breakEvenGrupo } = await import('../regras/financeiro');
+    expect(breakEvenGrupo([{ ...BASE, cotasVendidasInternet: 0 }]).cotasFaltando).toBe(28);
+    expect(breakEvenGrupo([{ ...BASE, cotasVendidasInternet: 10 }]).cotasFaltando).toBe(18);
+    const ok = breakEvenGrupo([{ ...BASE, cotasVendidasInternet: 30 }]);
+    expect(ok.cotasFaltando).toBe(0);
+    expect(ok.pctNecessario).toBe(0.75);
+    expect(breakEvenGrupo([{ ...BASE, cotasVendidasInternet: 0, estornado: true }]).cotasTotal).toBe(0);
   });
 });

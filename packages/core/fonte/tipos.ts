@@ -71,6 +71,8 @@ export interface ConcursoAbertoFonte {
   concurso: number;
   /** Data do sorteio (YYYY-MM-DD), se informada. */
   dataSorteio?: string;
+  /** Instante do sorteio (dia + hora), se informado. Base da previsão do T0 do concurso seguinte. */
+  sorteioEm?: Date;
   fechaEm?: Date;
   premioEstimado?: number;
   acumulado?: boolean;
@@ -88,6 +90,11 @@ export interface ContagemFonte {
 
 export interface FonteBoloes {
   readonly nome: string;
+  /**
+   * 'vitrine' (padrão): a leitura cobre a vitrine, então a colocação calculada vale.
+   * 'monitoradas': só bolões de lotéricas escolhidas (links públicos); a colocação NÃO é a da vitrine.
+   */
+  readonly escopoColocacao?: 'vitrine' | 'monitoradas';
   /** Concursos com bolões à venda agora. */
   concursosAbertos(sinal?: AbortSignal): Promise<ConcursoAbertoFonte[]>;
   /** Contagens agregadas por modalidade/concurso (modo normal, a cada 60 s). */

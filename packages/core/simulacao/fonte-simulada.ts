@@ -25,7 +25,14 @@ export class FonteSimulada implements FonteBoloes {
     const agora = this.relogio().getTime();
     return [...this.sims.values()]
       .filter((s) => agora >= s.t0.getTime() && agora < s.fechaEm.getTime())
-      .map((s) => ({ modalidade: s.modalidade, concurso: s.concurso, fechaEm: s.fechaEm, dataSorteio: diaSP(s.fechaEm) }));
+      .map((s) => ({
+        modalidade: s.modalidade,
+        concurso: s.concurso,
+        fechaEm: s.fechaEm,
+        dataSorteio: diaSP(s.fechaEm),
+        // na simulação o sorteio é 1 h depois do fechamento das vendas
+        sorteioEm: new Date(s.fechaEm.getTime() + 60 * 60_000),
+      }));
   }
 
   async contagens(): Promise<ContagemFonte[]> {

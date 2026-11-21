@@ -141,6 +141,15 @@ describe('saúde da fonte', () => {
     expect(m.falhasSeguidas).toBe(0);
     expect(m.registrarFalha(new Error('e'))).toBeNull();
   });
+  it('pedido de ação humana (idade, login, sessão expirada) tem alerta próprio', async () => {
+    const { SessaoExpiradaError, LoginNecessarioError, ConfirmacaoHumanaNecessariaError } = await import('../fonte');
+    const e = new SessaoExpiradaError('expirou');
+    expect(e).toBeInstanceOf(LoginNecessarioError);
+    expect(e).toBeInstanceOf(ConfirmacaoHumanaNecessariaError);
+    expect(e).toBeInstanceOf(BloqueadoPelaFonteError);
+    expect(new MonitorSaudeFonte().registrarFalha(e)).toMatchObject({ motivo: 'acao_humana' });
+  });
+
   it('mudança de formato e bloqueio alertam na hora', () => {
     expect(new MonitorSaudeFonte().registrarFalha(new FormatoInesperadoError('x'))).toMatchObject({ motivo: 'formato_mudou' });
     expect(new MonitorSaudeFonte().registrarFalha(new BloqueadoPelaFonteError('x', 403))).toMatchObject({ motivo: 'bloqueado' });
