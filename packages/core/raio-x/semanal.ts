@@ -240,6 +240,7 @@ export interface CelulaGrade {
   houveAbertura: boolean;
   participou: boolean;
   /** Dados da participação escolhida (melhor colocação no escopo; empate -> menor atraso). */
+  aberturaId?: string;
   hora?: string;
   atrasoS?: number;
   posicao?: number;
@@ -311,6 +312,7 @@ export function gradeSemanal(
         const pos = posicaoNoEscopo(melhor.p, ctx.escopo);
         const pg = pagina(pos);
         Object.assign(cel, {
+          aberturaId: melhor.a.id,
           hora: horaSP(melhor.p.primeiroEm),
           atrasoS: melhor.p.atrasoS,
           posicao: pos,

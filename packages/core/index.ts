@@ -25,3 +25,4 @@ export * from './raio-x/ranking';
 
 // Adaptador da fonte (contrato, varredura, saúde, cliente HTTP)
 export * from './fonte';
+export * from './raio-x/busca';

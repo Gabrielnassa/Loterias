@@ -35,9 +35,14 @@ export interface OpcoesSimulacao {
   modalidade?: ModalidadeSlug;
   concurso?: number;
   fechaEm?: Date;
+  /**
+   * Plano explícito de quem entra (usado pelo histórico simulado, com lotéricas fixas). Se
+   * informado, substitui o sorteio de lotéricas/atrasos (os formatos e as vendas seguem aleatórios).
+   */
+  participantes?: readonly { loterica: LotericaRef; atrasoPrimeiroS: number; nBoloes: number }[];
 }
 
-const CIDADES: readonly (readonly [string, string, number, readonly string[]])[] = [
+export const CIDADES: readonly (readonly [string, string, number, readonly string[]])[] = [
   ['São Paulo', 'SP', 30, ['Centro', 'Mooca', 'Santana', 'Pinheiros', 'Tatuapé', 'Lapa', 'Ipiranga']],
   ['Campinas', 'SP', 7, ['Centro', 'Cambuí', 'Barão Geraldo']],
   ['Santos', 'SP', 4, ['Gonzaga', 'Boqueirão']],
@@ -123,9 +128,22 @@ export function gerarAberturaSimulada(o: OpcoesSimulacao): AberturaSimulada {
   const lotericas: LotericaRef[] = [];
   const planos: { loterica: LotericaRef; chegadas: number[] }[] = [];
   let total = 0;
-  const pool = gerarLotericas(rnd, Math.max(10, nBoloes));
+  if (o.participantes) {
+    for (const p of o.participantes) {
+      let t = t0 + p.atrasoPrimeiroS * 1000;
+      const chegadas = [t];
+      for (let i = 1; i < p.nBoloes; i++) {
+        t += Math.max(2_000, rnd.exponencial(40_000));
+        chegadas.push(t);
+      }
+      lotericas.push(p.loterica);
+      planos.push({ loterica: p.loterica, chegadas });
+      total += p.nBoloes;
+    }
+  }
+  const pool = o.participantes ? [] : gerarLotericas(rnd, Math.max(10, nBoloes));
   let iPool = 0;
-  while (total < nBoloes) {
+  while (!o.participantes && total < nBoloes) {
     const l = pool[iPool++ % pool.length]!;
     const k = Math.min(quantosBoloes(rnd), nBoloes - total);
     let t = t0 + atrasoPrimeiroBolao(rnd) * 1000;

@@ -12,3 +12,7 @@ docs/har/
 
 # Sessão de navegador preparada por uma pessoa (cookies): nunca versionar
 .sessao-caixa/
+
+# Next.js
+.next/
+next-env.d.ts.bak
