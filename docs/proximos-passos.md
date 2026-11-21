@@ -76,7 +76,17 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
       métricas anônimas em `site_eventos`), `/minha/site` (config + métricas) e `/minha/midias` com as 4 artes em PNG
       (Satori + resvg). Painel movido para o grupo `app/(painel)`. Migração 0006.
       Pendente para depois: domínio próprio por lotérica, QR code, pixel, upload de logo e foto do bilhete (OCR).
-- [ ] 7. Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (probabilidades e marcação).
+- [x] 7. `/calendario` (sorteios do mês pelo calendário oficial), `/simulador` (custo, cota com e sem tarifa, margem,
+      lucro esperado, break-even, com e sem franquia, limites oficiais do bolão de 9 loterias) e `/loteca` (chance de
+      cada jogo por odds sem margem ou modelo Elo + mando + forma; melhor marcação exata para as 38 combinações do
+      volante). APIs `/api/calendario`, `/api/simulador`, `/api/loteca`.
+
+Lote da sessão 5 concluído. Pendências conhecidas para depois:
+- Dados reais da vitrine (cidade de São Paulo) prometidos pelo Gabriel: trocar as fixtures de `fonte/fixtures/caixa/`.
+- Super Sete: trocar a fixture sintética de resultado por uma real; limites de bolão da Lotomania (a página não publica).
+- Site: domínio próprio, QR code, pixel, upload de logo; Mídias: foto do bilhete (OCR), vídeos, agendamento de posts.
+- Notificações (Web Push), contas/equipe/planos (Fase 6), gestão da loja física.
+- A simulação vende ~70% em média (perto do break-even): o otimizador marca quase tudo como risco alto; calibrar com dados reais.
 - Quando o Gabriel mandar dados reais da vitrine (cidade de São Paulo), trocar as fixtures de `fonte/fixtures/caixa/`.
 - Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
   código da Legal Loterias.

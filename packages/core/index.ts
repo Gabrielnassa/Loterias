@@ -46,3 +46,6 @@ export * from './minha/posicao';
 export * from './sugestoes/otimizador';
 export * from './abertura/simulador-posicao';
 export * from './site/site';
+export * from './simulador/bolao';
+export * from './loteca/marcacao';
+export * from './calendario/sorteios';

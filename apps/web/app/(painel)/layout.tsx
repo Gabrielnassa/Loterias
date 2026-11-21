@@ -21,6 +21,9 @@ const NAV: [string, string][] = [
   ['/ranking', 'Ranking'],
   ['/comparar', 'Comparar'],
   ['/ao-vivo', 'Ao vivo'],
+  ['/calendario', 'Calendário'],
+  ['/simulador', 'Simulador'],
+  ['/loteca', 'Loteca'],
 ];
 
 export default async function LayoutPainel({ children }: { children: ReactNode }) {
