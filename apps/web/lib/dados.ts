@@ -87,7 +87,8 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
     return true;
   }
 
-  private historico(): HistoricoSimulado {
+  /** Histórico simulado (também a base do Mercado simulado). */
+  historico(): HistoricoSimulado {
     const agora = this.relogio();
     if (!this.h || agora.getTime() - this.geradoEm > this.validadeMs) {
       this.h = gerarHistoricoSimulado({ ate: agora, semanas: this.opcoes.semanas ?? 13, ...(this.opcoes.nLotericas ? { nLotericas: this.opcoes.nLotericas } : {}) });

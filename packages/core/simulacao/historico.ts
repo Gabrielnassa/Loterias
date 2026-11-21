@@ -4,7 +4,7 @@ import type { LotericaRef } from '../dominio/tipos';
 import type { AberturaInfo, ParticipacaoInfo } from '../raio-x/semanal';
 import { diaSP, isodowDoDia, semanaSP, somarDias, t0Padrao } from '../tempo/fuso';
 import { criarAleatorio, type Aleatorio } from '../util/aleatorio';
-import { CIDADES, cronogramaAbertura, gerarAberturaSimulada } from './abertura-simulada';
+import { CIDADES, cronogramaAbertura, gerarAberturaSimulada, type AberturaSimulada } from './abertura-simulada';
 import { coletarSimulacao, type BolaoColetadoSimulado } from './coleta-rapida';
 
 /**
@@ -37,7 +37,12 @@ export interface PlanoAbertura extends AberturaInfo {
 export interface HistoricoSimulado {
   lotericas: LotericaRef[];
   perfis: PerfilLoterica[];
+  /** Aberturas cuja janela (T0 + 60 min) já terminou: base do Raio-X. */
   aberturas: PlanoAbertura[];
+  /** Todos os concursos com T0 até `ate`, inclusive o que está abrindo agora (base do Mercado). */
+  planos: PlanoAbertura[];
+  /** "Verdade" do concurso (chegadas e vendas de cada bolão), regenerada de forma determinística. */
+  verdade(planoId: string): AberturaSimulada | null;
   participacoes: (ParticipacaoInfo & { loterica: LotericaRef; primeiroBolaoId: string })[];
   /** Fechamento das vendas de cada concurso simulado (T0 + 22 h). */
   fechaEm(aberturaId: string): Date | null;
@@ -120,6 +125,7 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
   const inicio = somarDias(semanaSP(o.ate), -7 * (semanas - 1));
   const numeros: Record<string, number> = { lotofacil: 3700, quina: 6800, 'mega-sena': 3040 };
   const aberturas: PlanoAbertura[] = [];
+  const planos: PlanoAbertura[] = [];
   const participacoes: HistoricoSimulado['participacoes'] = [];
 
   for (let i = 0; ; i++) {
@@ -143,22 +149,22 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
         });
       }
       const plano: PlanoAbertura = { id, modalidade, concurso, t0: t0Dia, semente: hash(`bolões|${id}`), participantes };
+      planos.push(plano);
       // só entra no histórico a abertura cuja janela já terminou
       if (t0Dia.getTime() + 60 * 60_000 > o.ate.getTime()) continue;
       aberturas.push(plano);
     }
   }
 
-  const executar = (plano: PlanoAbertura) => {
-    const sim = gerarAberturaSimulada({
+  const gerar = (plano: PlanoAbertura) =>
+    gerarAberturaSimulada({
       semente: plano.semente,
       t0: plano.t0,
       modalidade: plano.modalidade,
       concurso: plano.concurso,
       participantes: plano.participantes,
     });
-    return coletarSimulacao(sim, { leituras: cronogramaAbertura(plano.t0), ate: o.ate });
-  };
+  const executar = (plano: PlanoAbertura) => coletarSimulacao(gerar(plano), { leituras: cronogramaAbertura(plano.t0), ate: o.ate });
 
   for (const plano of aberturas) {
     const parts: Participacao[] = calcularParticipacoes({ t0: plano.t0 }, executar(plano));
@@ -182,11 +188,20 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
     }
   }
 
-  const porId = new Map(aberturas.map((a) => [a.id, a]));
+  const porId = new Map(planos.map((a) => [a.id, a]));
+  const verdades = new Map<string, AberturaSimulada>();
   return {
     lotericas: perfis.map((p) => p.loterica),
     perfis,
     aberturas,
+    planos,
+    verdade: (id) => {
+      const plano = porId.get(id);
+      if (!plano) return null;
+      let v = verdades.get(id);
+      if (!v) verdades.set(id, (v = gerar(plano)));
+      return v;
+    },
     participacoes,
     fechaEm: (id) => {
       const plano = porId.get(id);

@@ -79,8 +79,11 @@ function gerarLotericas(rnd: Aleatorio, n: number): LotericaRef[] {
   for (let i = 0; i < n; i++) {
     const [cidade, uf, , bairros] = rnd.ponderado(CIDADES.map((c) => [c, c[2]] as const));
     let nome: string;
+    let tentativas = 0;
     do nome = `Lotérica ${rnd.escolher(NOMES_A)} ${rnd.escolher(NOMES_B)}`;
-    while (usados.has(`${nome}|${cidade}`) && usados.size < NOMES_A.length * NOMES_B.length * CIDADES.length);
+    while (usados.has(`${nome}|${cidade}`) && ++tentativas < 200);
+    // a cidade pode esgotar as combinações de nomes (São Paulo tem ~30% das lotéricas): numera
+    for (let n = 2; usados.has(`${nome}|${cidade}`); n++) nome = `${nome.replace(/ \d+$/, '')} ${n}`;
     usados.add(`${nome}|${cidade}`);
     lista.push({
       codigoCaixa: `99${String(100000 + i * 7919 + rnd.inteiro(0, 7000)).padStart(6, '0')}`,

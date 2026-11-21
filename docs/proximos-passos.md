@@ -56,8 +56,11 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
       cada modalidade com o rateio real, tabelas oficiais de probabilidade (10 modalidades) e de quantidade de
       prêmios (Dia de Sorte, Loteca), regras do volante do Super Sete, limites de números; calendário oficial
       em `modalidades.ts` (Mega, Quina, Timemania e Dia de Sorte com domingo); `probabilidade.ts`.
-- [ ] 2. Fase 4 Mercado: Monitoramento MKP (cartões ao vivo, abas, UF, Retrato), Filas, Estatísticas › Loterias
-      e Lotéricas (ficha), Mega da Virada.
+- [x] 2. Fase 4 Mercado: `/mercado` (cartões ao vivo por modalidade, abas minuto a minuto, hora a hora, páginas e
+      R$, filtro por UF, Retrato de data e hora), `/mercado/filas` (por fila, faixa de preço, maiores, novos por dia),
+      `/estatisticas` (panorama), `/estatisticas/lotericas` (busca, Top 10, ficha completa), `/mega-da-virada`
+      (contagem regressiva, filas, dia a dia). APIs com CSV/Excel. Simulação e Postgres (snapshots_bolao).
+      Corrigido: gerador simulado travava com mais de ~330 lotéricas (nomes esgotados em São Paulo).
 - [ ] 3. Previsão de fechamento por concursos parecidos (faixa, mínimo para zerar, backtest).
 - [ ] 4. Sugestões: franquia de amanhã + otimizador de formato/cota/cotas (lucro esperado e risco).
 - [ ] 5. Simulador de posição + Cronômetro de abertura.

@@ -29,5 +29,6 @@ export function soma(valores: readonly number[]): number {
 
 /** Arredonda para centavos evitando o erro clássico de ponto flutuante (1.005 -> 1.01). */
 export function centavos(valor: number): number {
-  return Math.round((valor + Number.EPSILON) * 100) / 100;
+  const r = Math.round((valor + Number.EPSILON) * 100) / 100;
+  return r === 0 ? 0 : r; // sem -0 (apareceria "-R$ 0,00")
 }

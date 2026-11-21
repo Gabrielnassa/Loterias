@@ -15,6 +15,9 @@ export * from './regras/posicao';
 export * from './regras/financeiro';
 export * from './regras/franquia';
 export * from './mercado/agregar';
+export * from './mercado/vitrine';
+export * from './mercado/filas';
+export * from './mercado/estatisticas';
 
 // Motor de dados
 export * from './eventos/estado';
