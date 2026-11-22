@@ -21,7 +21,8 @@
     "resultados": "pnpm --filter @radar/worker resultados",
     "demo:build": "pnpm --filter @radar/demo build",
     "demo:dev": "pnpm --filter @radar/demo dev",
-    "analisar-abertura": "pnpm --filter @radar/worker analisar-abertura"
+    "analisar-abertura": "pnpm --filter @radar/worker analisar-abertura",
+    "demo:pacote": "pnpm --filter @radar/demo pacote"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

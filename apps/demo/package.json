@@ -8,7 +8,8 @@
     "dados": "tsx scripts/gerar-dados.ts",
     "build": "pnpm run dados && next build",
     "dev": "pnpm run dados && next dev -p 3200",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pacote": "pnpm run build && bash scripts/empacotar.sh"
   },
   "dependencies": {
     "@radar/avisos": "workspace:*",

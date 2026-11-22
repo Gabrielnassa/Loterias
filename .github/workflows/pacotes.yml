@@ -1,0 +1,54 @@
+# Pacotes para hospedagem comum, publicados como release "pacotes" do GitHub (sempre a versão mais nova):
+# - radar-loterico-demo.zip: demonstração estática para a RAIZ de um subdomínio (ex.: demo.nassatech.com.br);
+# - radar-loterico.zip: o plugin WordPress.
+# Para gerar a demonstração para uma subpasta, rode à mão (Actions › Pacotes › Run workflow) e informe o caminho.
+name: Pacotes (demo estática e plugin WordPress)
+
+on:
+  push:
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'integracoes/**'
+      - '.github/workflows/pacotes.yml'
+  workflow_dispatch:
+    inputs:
+      caminho:
+        description: 'Caminho da demonstração no site (vazio = raiz do subdomínio; ex.: /radar-demo)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pacotes
+  cancel-in-progress: true
+
+jobs:
+  pacotes:
+    runs-on: ubuntu-latest
+    # só o branch padrão publica a release
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Demonstração estática (.zip)
+        run: pnpm --filter @radar/demo pacote
+        env:
+          DEMO_BASE_PATH: ${{ github.event.inputs.caminho || '' }}
+      - name: Plugin WordPress (.zip)
+        run: bash integracoes/wordpress/empacotar.sh
+      - name: Publicar a release "pacotes"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete pacotes --yes --cleanup-tag 2>/dev/null || true
+          gh release create pacotes apps/demo/pacotes/*.zip integracoes/wordpress/radar-loterico.zip \
+            --target "$GITHUB_SHA" --title "Pacotes para hospedagem comum" --latest=false \
+            --notes "Gerado a partir de ${GITHUB_SHA::7}. radar-loterico-demo*.zip: demonstração estática (dados simulados) para subir no public_html (instruções no LEIAME.txt dentro do zip). radar-loterico.zip: plugin WordPress (Plugins › Adicionar novo › Enviar plugin)."
