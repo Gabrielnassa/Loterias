@@ -16,14 +16,12 @@ import {
   rotuloFaixa,
   somarDias,
   type BolaoMinha,
-  type ColunaLoteca,
-  type JogoBolao,
-  type PartidaLoteca,
   type ColocacaoPorEscopo,
   type ModalidadeSlug,
   type ResultadoOficial,
 } from '@radar/core';
 import type { Sql } from '@radar/db';
+import { lerJogos, lerResultados } from '@radar/db/conferencia';
 import type { FonteDadosRaioX, MinhaLotericaRef } from './dados';
 import type { FontePostgresRaioX } from './dados-postgres';
 
@@ -217,51 +215,13 @@ export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number;
   const linhas = (await carregarBoloes(sql, loterica.codigoCaixa, desde)).filter((l) => !l.estornado && modalidadeConferivel(l.slug));
   const concursos = [...new Set(linhas.map((l) => l.concurso_id))];
   if (!concursos.length) return { loterica, linhas: [], totalPremios: 0, totalLoterica: 0, resultados: 0 };
-  const [resultados, rateios, jogos] = await Promise.all([
-    sql<{
-      concurso_id: number; data_apuracao: string | Date; dezenas: number[]; dezenas2: number[] | null; trevos: number[] | null;
-      time_coracao: string | null; mes_sorte: number | null; partidas: PartidaLoteca[] | null; acumulado: boolean; origem: string;
-    }[]>`
-      select concurso_id, data_apuracao, dezenas, dezenas2, trevos, time_coracao, mes_sorte, partidas, acumulado, origem
-      from resultados where concurso_id = any(${concursos})`,
-    sql<{ concurso_id: number; faixa: number; descricao: string; acertos: number | null; ganhadores: number; valor_premio: string }[]>`
-      select concurso_id, faixa, descricao, acertos, ganhadores, valor_premio from rateios where concurso_id = any(${concursos}) order by faixa`,
-    sql<{ bolao_id: number; ordem: number; numeros: number[]; trevos: number[] | null; time_coracao: string | null; mes_sorte: number | null; colunas: unknown }[]>`
-      select bolao_id, ordem, numeros, trevos, time_coracao, mes_sorte, colunas
-      from bolao_jogos where bolao_id = any(${linhas.map((l) => l.id)}) order by bolao_id, ordem`,
-  ]);
-  const resPorConcurso = new Map(resultados.map((r) => [r.concurso_id, r]));
-  const slugDoBolao = new Map(linhas.map((l) => [l.id, l.slug]));
-  const jogosPorBolao = new Map<number, JogoBolao[]>();
-  for (const j of jogos) {
-    const jogo: JogoBolao = { numeros: j.numeros };
-    if (j.trevos?.length) jogo.trevos = j.trevos;
-    if (j.time_coracao) jogo.timeCoracao = j.time_coracao;
-    if (j.mes_sorte) jogo.mesSorte = j.mes_sorte;
-    if (Array.isArray(j.colunas)) {
-      if (slugDoBolao.get(j.bolao_id) === 'loteca') jogo.palpites = j.colunas as ColunaLoteca[][];
-      else jogo.colunas = j.colunas as number[][];
-    }
-    jogosPorBolao.set(j.bolao_id, [...(jogosPorBolao.get(j.bolao_id) ?? []), jogo]);
-  }
+  const [resultadosDoBanco, jogosPorBolao] = await Promise.all([lerResultados(sql, concursos), lerJogos(sql, linhas.map((l) => ({ id: l.id, slug: l.slug })))]);
   const saida = [];
   for (const l of linhas) {
-    const r = resPorConcurso.get(l.concurso_id);
-    const js = jogosPorBolao.get(l.id);
+    const r = resultadosDoBanco.get(Number(l.concurso_id));
+    const js = jogosPorBolao.get(Number(l.id));
     if (!r || !js?.length) continue;
-    const oficial: ResultadoOficial = {
-      modalidade: l.slug,
-      concurso: l.numero,
-      dataApuracao: typeof r.data_apuracao === 'string' ? r.data_apuracao.slice(0, 10) : r.data_apuracao.toISOString().slice(0, 10),
-      dezenas: r.dezenas,
-      ...(r.dezenas2 ? { dezenas2: r.dezenas2 } : {}),
-      ...(r.trevos?.length ? { trevos: r.trevos } : {}),
-      ...(r.time_coracao ? { timeCoracao: r.time_coracao } : {}),
-      ...(r.mes_sorte ? { mesSorte: r.mes_sorte } : {}),
-      ...(r.partidas ? { partidas: r.partidas } : {}),
-      acumulado: r.acumulado,
-      rateios: rateios.filter((x) => x.concurso_id === l.concurso_id).map((x) => ({ faixa: x.faixa, descricao: x.descricao, acertos: x.acertos, ganhadores: x.ganhadores, valorPremio: Number(x.valor_premio) })),
-    };
+    const oficial: ResultadoOficial = { modalidade: l.slug, concurso: l.numero, ...r.resultado };
     const sobradas = l.sobra_final ?? l.cotas_disponiveis;
     const c = conferirBolao(js, oficial, l.cotas_total, sobradas);
     if (!c) continue;
@@ -296,7 +256,7 @@ export async function conferenciaMkp(fonte: FonteDadosRaioX, o: { dias?: number;
   return {
     loterica,
     linhas: saida,
-    resultados: resultados.length,
+    resultados: resultadosDoBanco.size,
     totalPremios: Math.round(saida.reduce((s, x) => s + x.premioTotal, 0) * 100) / 100,
     totalLoterica: Math.round(saida.reduce((s, x) => s + x.premioLoterica, 0) * 100) / 100,
   };

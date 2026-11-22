@@ -32,11 +32,11 @@ deployment › Source = "GitHub Actions"**. Depois, em **Actions › Demonstraç
 | --- | --- |
 | 0. Descobrir a fonte | API do portal mapeada; adaptador `caixa-navegador` (Playwright, navegador real, sem decifrar nada) e modo `caixa-links` (links públicos, sem login); decisão: conta DEDICADA. Foto real da vitrine de São Paulo analisada (escopos cidade → estado → Brasil). **Falta:** uma pessoa preparar a sessão da conta dedicada e gravar uma abertura real |
 | 1. Monorepo, schema, coletor, eventos | **Pronta** (Postgres 16, Redis/BullMQ, modos normal e abertura a 5 s, T0 por concurso, snapshots particionados, `coletas`) |
-| 2. Raio-X de Abertura | **Pronta**: telas 1 a 5, job de fim de janela, API, busca, listas Elite e Top. Falta: watchlist e alertas (dependem de contas, fase 6) |
+| 2. Raio-X de Abertura | **Pronta**: telas 1 a 5, job de fim de janela, API, busca, listas Elite e Top, monitoradas com os 2 alertas (push quando entra na abertura e resumo semanal) |
 | 3. Minha lotérica | **Pronta**: Bolões MKP (franquia, internet x balcão, break-even, colocação, estorno), Financeiro, Conferência das 10 modalidades com resultado e rateio oficiais, Posição na abertura, várias lojas, CSV/Excel. Precisa do banco com a coleta real |
 | 4. Mercado e previsões | **Pronta**: Monitoramento MKP (ao vivo e "Retrato"), Filas, Estatísticas (panorama, Top 10, ficha de qualquer lotérica), Mega da Virada, previsão de fechamento com faixa e backtest, Sugestões (franquia de amanhã e otimizador de formato com risco), simulador de posição, cronômetro de abertura. A calibração fina depende de dados reais |
 | 5. Site e artes | **Pronta**: site público `/{slug}` (SEO local, filtros, jogos, chance do prêmio, carrinho pelo WhatsApp, link da CAIXA, 3 temas, métricas anônimas) e 4 artes em PNG (resultado, bolões, premiado, "Saiu aqui!"). Falta: vídeos, foto do bilhete (OCR), agendar posts, domínio próprio, QR code |
-| 6. Contas e gestão | **Em andamento**: contas prontas (login por link no e-mail ou senha, várias lotéricas por conta, equipe com responsável, sócio e colaborador, permissão por tela e por loja, convites). Falta: monitoradas e alertas com Web Push (PWA), planos (Asaas, sandbox), gestão da loja física |
+| 6. Contas e gestão | **Em andamento**: contas (login por link no e-mail ou senha, várias lotéricas, equipe com responsável, sócio e colaborador, permissão por tela e por loja, convites); monitoradas e alertas (entrou na abertura, resumo semanal na segunda 08:00, vendas, encerramento, previsão de zerar, resultados, prêmios) com Web Push, PWA instalável e central de notificações com preferências por aparelho. Falta: planos (Asaas, sandbox), gestão da loja física |
 | Ferramentas | **Prontas**: Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (chances e melhor marcação) |
 
 Números de terceiros (vendas, sobras, colocação) são **estimativas** a partir de leituras periódicas da vitrine;
@@ -151,6 +151,18 @@ EMAIL_REMETENTE="Radar Lotérico <nao-responda@exemplo.com>"
 
 Sem SMTP, os links aparecem no log do servidor. A titularidade da lotérica ainda não é verificada (a tela marca
 "não verificada").
+
+### Notificações (Web Push) e app instalável
+
+O painel é um PWA: no celular, "Adicionar à Tela de Início" (no iPhone, o push só funciona assim). Em
+**Notificações**, cada aparelho liga o push e escolhe o que recebe (vendas de hoje, todas, só no encerramento ou
+nenhuma; monitoradas na abertura; resumo semanal; resultados; previsão de zerar mantida por 45 min; prêmios). Os
+alertas saem do worker (a cada 20 s, com Postgres) e ficam também na central. Para o push, gere as chaves VAPID e
+ponha no `.env` do web e do worker (nunca no repositório):
+
+```bash
+pnpm --filter @radar/avisos vapid
+```
 - Site público: `RADAR_SITE_URL` (endereço base, para SEO) e `RADAR_SITES` (JSON com WhatsApp, Instagram, endereço,
   horário e tema de cada loja); com banco, a tela `/minha/site` grava na tabela `sites`.
 

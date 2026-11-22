@@ -1,0 +1,32 @@
+{
+  "name": "@radar/avisos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fase 6: monitoradas, aparelhos (Web Push com VAPID) e central de notificações; despacho e geração dos alertas",
+  "exports": {
+    "./tipos": "./tipos.ts",
+    "./memoria": "./memoria.ts",
+    "./postgres": "./postgres.ts",
+    "./push": "./push.ts",
+    "./despachar": "./despachar.ts",
+    "./gerar": "./gerar.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json",
+    "vapid": "tsx vapid.ts"
+  },
+  "dependencies": {
+    "@radar/core": "workspace:*",
+    "@radar/db": "workspace:*",
+    "web-push": "3.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/web-push": "3.6.4",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

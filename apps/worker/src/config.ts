@@ -34,6 +34,8 @@ const esquema = z.object({
   COLETA_COMPLETA_A_CADA_S: z.coerce.number().positive().default(60),
   /** Buscar o resultado oficial na API pública da CAIXA (Conferência). Padrão: só com fonte real. */
   RESULTADOS_CAIXA: bool.optional(),
+  /** Fase 6: gera os alertas (monitoradas, vendas, resultados, prêmios, resumo semanal) e manda Web Push (VAPID_*). Só com Postgres. */
+  ALERTAS: bool.default('true'),
   FONTE_INTERVALO_MIN_MS: z.coerce.number().int().nonnegative().default(250),
   FONTE_FIXTURES_DIR: z.string().optional(),
   CAIXA_BASE_URL: z.string().optional(),

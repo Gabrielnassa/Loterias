@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { BuscaLoterica } from '@/components/BuscaLoterica';
+import { RegistrarSW } from '@/components/RegistrarSW';
 
 const NAV: [string, string][] = [
   ['/', 'Início'],
@@ -11,6 +12,7 @@ const NAV: [string, string][] = [
   ['/mega-da-virada', 'Mega da Virada'],
   ['/ranking', 'Ranking'],
   ['/elite', 'Elite e Top'],
+  ['/monitoradas', 'Monitoradas'],
   ['/comparar', 'Comparar'],
   ['/ao-vivo', 'Ao vivo'],
   ['/calendario', 'Calendário'],
@@ -40,6 +42,9 @@ export default function LayoutPainel({ children }: { children: ReactNode }) {
           </nav>
           <div className="ml-auto flex w-full flex-wrap items-center gap-3 sm:w-auto">
             <BuscaLoterica />
+            <Link href="/notificacoes" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+              Notificações
+            </Link>
             <Link href="/conta" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" title="Na demonstração você é o responsável de uma conta de exemplo">
               Você <span className="text-zinc-400">· responsável</span>
             </Link>
@@ -47,6 +52,7 @@ export default function LayoutPainel({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <RegistrarSW />
     </>
   );
 }

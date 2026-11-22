@@ -1,3 +1,6 @@
+import { GeradorDeAlertas } from '@radar/avisos/gerar';
+import { RepositorioAvisosPostgres } from '@radar/avisos/postgres';
+import { criarEnviarPush } from '@radar/avisos/push';
 import { criarDb, criarSql, garantirParticoes, migrar, removerParticoesAntigas } from '@radar/db';
 import { Agendador } from './agendador';
 import { Coletor } from './coletor';
@@ -49,6 +52,19 @@ async function principal() {
     const manutTimer = setInterval(manutencao, 6 * 3_600_000);
     finalizar.push(() => clearInterval(manutTimer));
     repo = new RepositorioPostgres(criarDb(sql));
+    if (amb.ALERTAS) {
+      // Fase 6: alertas da central e Web Push (sem VAPID_* configurado, só a central)
+      const enviar = criarEnviarPush();
+      const gerador = new GeradorDeAlertas(sql, new RepositorioAvisosPostgres(sql), enviar, log);
+      let rodando = false;
+      const alertas = setInterval(() => {
+        if (rodando) return;
+        rodando = true;
+        void gerador.rodar(relogio.agora()).finally(() => (rodando = false));
+      }, 20_000);
+      finalizar.push(() => clearInterval(alertas));
+      log.info({ push: !!enviar }, enviar ? 'alertas com Web Push ligados' : 'alertas ligados só na central (defina VAPID_* para Web Push)');
+    }
   } else {
     repo = new RepositorioMemoria();
   }

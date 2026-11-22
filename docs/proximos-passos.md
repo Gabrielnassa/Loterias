@@ -109,9 +109,12 @@ Retomar do primeiro item sem [x]. Commit e push a cada item; manter a demonstra�
       `core/contas/permissoes.ts`, migração 0007, `apps/web/lib/contas/`, `middleware.ts` (Node), telas `/entrar`,
       `/cadastro`, `/convite/[token]`, `/conta`, `/equipe`, `/sem-permissao`. Na demo: Equipe e Conta gravam no localStorage.
       Depende do Gabriel: SMTP (RADAR_EMAIL=smtp, SMTP_URL) e como verificar a titularidade da lotérica.
-- [ ] 5. Watchlist (monitoradas) + alertas do Raio-X (push quando uma monitorada entra na abertura; resumo semanal
-      segunda 08:00). Web Push (VAPID), PWA instalável, central de notificações com preferências por aparelho
-      (vendas de hoje, todas, só no encerramento, resultados, previsão de zerar mantida por 45 min, prêmios na lotérica).
+- [x] 5. Monitoradas + alertas (entrou na abertura; resumo semanal segunda 08:00; vendas; encerramento; previsão de zerar
+      mantida 45 min; resultados; prêmios). Regras puras em `core/notificacoes/alertas.ts`; pacote `@radar/avisos`
+      (repositório, despacho, Web Push VAPID, gerador do worker a cada 20 s); migração 0008; PWA (manifest, `public/sw.js`,
+      ícones); telas `/monitoradas` e `/notificacoes` (preferências por aparelho). Na demo: tudo no localStorage, push desligado.
+      Depende do Gabriel: gerar as chaves VAPID (`pnpm --filter @radar/avisos vapid`) e testar o push num celular de verdade
+      (aqui o navegador headless não tem serviço de push).
 - [ ] 6. Planos e cobrança via Asaas (SÓ sandbox, sem chave real no repositório): Grátis, Pro, Pro+ e Gestão;
       assinatura recorrente (Pix e cartão), teste grátis de 14 dias, webhook de pagamento, bloqueio de telas por plano.
 - [ ] 7. Gestão da loja física: caixas por TFL, caixas extras (ex.: Federal), fechamento de caixa diário, fluxo de

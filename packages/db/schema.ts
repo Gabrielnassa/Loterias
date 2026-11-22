@@ -366,6 +366,46 @@ export const sessoes = pgTable('sessoes', {
   aparelho: text('aparelho'),
 });
 
+// Fase 6: monitoradas, aparelhos (Web Push) e notificações (0008_avisos.sql)
+export const monitoradas = pgTable(
+  'monitoradas',
+  {
+    contaId: uuid('conta_id').notNull(),
+    lotericaCodigo: text('loterica_codigo').notNull(),
+    apelido: text('apelido'),
+    criadoEm: tz('criado_em').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.contaId, t.lotericaCodigo] })],
+);
+
+export const aparelhos = pgTable('aparelhos', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  usuarioId: uuid('usuario_id').notNull(),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  nome: text('nome'),
+  preferencias: jsonb('preferencias').notNull().default({}),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  vistoEm: tz('visto_em').notNull().defaultNow(),
+  falhas: integer('falhas').notNull().default(0),
+  desativadoEm: tz('desativado_em'),
+});
+
+export const notificacoes = pgTable('notificacoes', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  usuarioId: uuid('usuario_id').notNull(),
+  contaId: uuid('conta_id'),
+  categoria: text('categoria').notNull(),
+  titulo: text('titulo').notNull(),
+  corpo: text('corpo').notNull(),
+  url: text('url'),
+  chave: text('chave').notNull(),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  lidaEm: tz('lida_em'),
+  enviadas: integer('enviadas').notNull().default(0),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -391,4 +431,7 @@ export const todasAsTabelas = {
   convites,
   tokensLogin,
   sessoes,
+  monitoradas,
+  aparelhos,
+  notificacoes,
 };

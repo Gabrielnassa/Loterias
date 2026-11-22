@@ -16,6 +16,7 @@
     "analisar-abertura": "tsx src/analisar-abertura.ts"
   },
   "dependencies": {
+    "@radar/avisos": "workspace:*",
     "@radar/core": "workspace:*",
     "@radar/db": "workspace:*",
     "bullmq": "5.81.5",

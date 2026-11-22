@@ -2,6 +2,7 @@ import { reconstruirHistorico, type HistoricoSerializado } from '@radar/core/sim
 import { FonteSimuladaRaioX } from '@/lib/dados';
 import { aoVivo } from '@/lib/servico';
 import { registrarEvento, siteDoSlug } from '@/lib/site';
+import { carregarAvisosDemo } from './avisos-ativo';
 import { carregarContasDemo } from './contas-ativo';
 import { definirFonteDeDados } from './fonte-dados';
 
@@ -31,6 +32,7 @@ export function prepararDemo(): Promise<InfoDemo> {
     const fonte = new FonteSimuladaRaioX(() => new Date(json.ate + (Date.now() - carregado)), Number.POSITIVE_INFINITY, { historicoPronto: historico });
     definirFonteDeDados(fonte);
     await carregarContasDemo();
+    await carregarAvisosDemo();
     instalarServidorLocal(fonte);
     return { geradoEm: new Date(json.ate), carregadoEm: new Date(carregado) };
   })();
@@ -63,6 +65,8 @@ async function evento(fonte: FonteSimuladaRaioX, u: URL, corpo: string | null) {
 const API_LOCAIS: Record<string, () => Promise<unknown>> = {
   '/api/equipe': () => import('@/app/api/equipe/route'),
   '/api/conta': () => import('@/app/api/conta/route'),
+  '/api/monitoradas': () => import('@/app/api/monitoradas/route'),
+  '/api/notificacoes': () => import('@/app/api/notificacoes/route'),
 };
 
 function instalarServidorLocal(fonte: FonteSimuladaRaioX) {

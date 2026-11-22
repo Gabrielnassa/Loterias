@@ -5,7 +5,7 @@
  * - demo/parametros.json: lotéricas, aberturas e sites para as páginas estáticas.
  * DEMO_AGORA (ISO) fixa o instante; DEMO_LOTERICAS, o número de lotéricas (padrão 500).
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { diaSP, isodowDoDia, noDiaSP, slugDoNome, somarDias } from '@radar/core';
 import { gerarHistoricoSimulado, serializarHistorico } from '@radar/core/simulacao';
@@ -28,6 +28,9 @@ const nLotericas = Number(process.env.DEMO_LOTERICAS ?? 500);
 const t = Date.now();
 const h = gerarHistoricoSimulado({ ate: agora, semanas: 13, nLotericas });
 const json = JSON.stringify(serializarHistorico(h, agora));
+// PWA: service worker e ícones do apps/web (instalável também na demonstração)
+cpSync(join(raiz, '..', 'web', 'public', 'sw.js'), join(raiz, 'public', 'sw.js'));
+cpSync(join(raiz, '..', 'web', 'public', 'icones'), join(raiz, 'public', 'icones'), { recursive: true });
 mkdirSync(join(raiz, 'public', 'dados'), { recursive: true });
 writeFileSync(join(raiz, 'public', 'dados', 'historico.json'), json);
 

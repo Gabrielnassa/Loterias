@@ -26,7 +26,7 @@ const config: NextConfig = {
   basePath,
   trailingSlash: true,
   images: { unoptimized: true },
-  transpilePackages: ['@radar/core'],
+  transpilePackages: ['@radar/core', '@radar/avisos'],
   experimental: { externalDir: true },
   // o typecheck da demo roda à parte (pnpm --filter @radar/demo typecheck)
   typescript: { ignoreBuildErrors: true },

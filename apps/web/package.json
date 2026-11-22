@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@radar/avisos": "workspace:*",
     "@radar/core": "workspace:*",
     "@radar/db": "workspace:*",
     "@resvg/resvg-js": "2.6.2",
