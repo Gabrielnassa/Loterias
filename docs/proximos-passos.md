@@ -172,6 +172,9 @@ sessão (VNC ou exportada), gravar uma abertura, chave da API no WordPress.
 - [x] Workflow `site-demo.yml`: demo com basePath vazio, `.htaccess` (rotas limpas, 404 próprio, cache) testado num
       Apache, force push no branch órfão `site-demo` para a Hostinger publicar com auto-deploy. Pages continua igual.
 
-Pendente de conferência fora daqui: o MCP do GitHub não conectou nesta sessão; a confirmação das imagens públicas e
-do branch `site-demo` foi feita pelo registro (ghcr.io) e pelo `git ls-remote`. Se as imagens aparecerem como
-privadas, o dono muda para Public em GitHub › Packages › (cada imagem) › Package settings.
+Conferido em 22/11/2026: workflow "Imagens Docker" verde (build das 3 + teste do compose no Actions: web no ar,
+aviso "dados simulados", chave VAPID, HTTP→HTTPS, migrate com código 0, 6 serviços rodando); as 3 imagens são
+PÚBLICAS (manifesto baixado sem login; tags `latest`, SHA e `sha-<7>`); branch `site-demo` criado (órfão, 1 commit).
+Depende do Gabriel: no Docker Manager, a URL raw do compose + `DOMINIO` e `POSTGRES_PASSWORD`; na hospedagem
+comum, Git com o branch `site-demo` e auto-deploy (se o sistema for para radar.nassatech.com.br no VPS, a demo
+precisa de outro nome).
