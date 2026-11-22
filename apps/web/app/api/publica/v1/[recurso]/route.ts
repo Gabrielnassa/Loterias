@@ -1,4 +1,4 @@
-import { normalizarCodigoLoterica, slugDoNome } from '@radar/core';
+import { MODALIDADES, normalizarCodigoLoterica, slugDoNome } from '@radar/core';
 import { repositorioContas } from '@/lib/contas/ativo';
 import { autenticarChave, chaveDaRequisicao, ErroChave, type AcessoApi } from '@/lib/contas/chaves-api';
 import { fonteDeDados } from '@/lib/fonte-dados';
@@ -56,7 +56,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ recurso:
       });
     }
     case 'raio-x': {
-      const codigo = normalizarCodigoLoterica(s.get('loterica') ?? '') ?? s.get('loterica') ?? lojas[0]?.codigo;
+      // o código como veio (forma do banco) ou em qualquer forma (21.002894-7)
+      const bruto = (s.get('loterica') ?? '').trim();
+      const codigo = bruto ? ((await fonte.loterica(bruto)) ? bruto : (normalizarCodigoLoterica(bruto) ?? bruto)) : lojas[0]?.codigo;
       if (!codigo) return json({ erro: 'informe ?loterica=código' }, 400);
       const f = await fichaAberturas(fonte, codigo, { semanas: lerSemanas(s.get('semanas'), 4, 13), escopo: lerEscopo(s.get('escopo')) });
       if (!f) return json({ erro: 'lotérica não encontrada na vitrine' }, 404);
@@ -68,7 +70,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ recurso:
         tendencia: f.tendencia,
         chanceAmanha: f.chanceAmanha,
         porSemana: f.metricas.map((m) => ({ semana: m.semana, aberturas: m.aberturasOcorridas, participacoes: m.participacoes, atrasoMedianoS: m.atrasoMedianoS, melhorPosicao: m.melhorPosicao, pctPagina1: m.pctPagina1 })),
-        ultimasEntradas: f.metricas.flatMap((m) => m.horarios).slice(-10).reverse(),
+        // as 10 entradas mais recentes, com o nome oficial da loteria
+        ultimasEntradas: f.metricas
+          .flatMap((m) => m.horarios)
+          .sort((x, y) => `${y.dia} ${y.hora}`.localeCompare(`${x.dia} ${x.hora}`))
+          .slice(0, 10)
+          .map((h) => ({ ...h, nomeModalidade: MODALIDADES[h.modalidade]?.nome ?? h.modalidade })),
       });
     }
     case 'ranking': {
@@ -84,8 +91,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ recurso:
       return json({ aviso: AVISO, de: r.de, ate: r.ate, criterio: r.criterio, linhas: r.linhas.slice(0, limite) });
     }
     case 'boloes': {
-      const codigo = normalizarCodigoLoterica(s.get('loja') ?? '') ?? s.get('loja') ?? lojas[0]?.codigo;
-      const loja = lojas.find((l) => l.codigo === codigo);
+      const bruto = (s.get('loja') ?? '').trim();
+      const loja = bruto ? (lojas.find((l) => l.codigo === bruto) ?? lojas.find((l) => l.codigo === normalizarCodigoLoterica(bruto))) : lojas[0];
       if (!loja) return json({ erro: 'loja fora da conta desta chave' }, 403);
       const l = (await fonte.loterica(loja.codigo)) ?? { codigoCaixa: loja.codigo, nome: loja.nome, cidade: '', uf: '' };
       const site: ConfigSite = siteDa(loja.codigo) ?? { slug: slugDoNome(loja.nome), loterica: l, whatsapp: null, instagram: null, endereco: null, horario: null, sobre: null, tema: 'classico', linkCaixa: '', origem: 'padrao', siteId: null };

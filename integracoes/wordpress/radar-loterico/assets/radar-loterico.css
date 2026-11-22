@@ -1,0 +1,21 @@
+/* Radar Lotérico: estilos discretos, herdam a fonte e as cores do tema do site. */
+.radar-loterico { --radar-borda: rgba(0, 0, 0, .12); --radar-fundo: rgba(0, 0, 0, .03); --radar-destaque: #0b7fbd; margin: 1.5em 0; }
+.radar-loterico .radar-titulo { margin: 0 0 .25em; }
+.radar-loterico .radar-sub, .radar-loterico .radar-rodape { margin: 0 0 1em; font-size: .875em; opacity: .75; }
+.radar-loterico .radar-rodape { margin-top: .75em; }
+.radar-cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75em; margin-bottom: 1em; }
+.radar-cartao { border: 1px solid var(--radar-borda); border-radius: 10px; padding: .75em 1em; background: var(--radar-fundo); }
+.radar-cartao span { display: block; font-size: .8em; opacity: .7; }
+.radar-cartao strong { font-size: 1.35em; font-variant-numeric: tabular-nums; }
+.radar-tabela { width: 100%; border-collapse: collapse; font-size: .92em; font-variant-numeric: tabular-nums; }
+.radar-tabela th, .radar-tabela td { padding: .45em .5em; border-bottom: 1px solid var(--radar-borda); text-align: left; }
+.radar-tabela th { font-size: .8em; text-transform: uppercase; letter-spacing: .03em; opacity: .7; }
+.radar-tabela small { opacity: .65; }
+.radar-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .75em; }
+.radar-bolao { display: flex; flex-direction: column; gap: .2em; border: 1px solid var(--radar-borda); border-radius: 10px; padding: .9em 1em; }
+.radar-bolao .radar-preco { font-size: 1.25em; font-weight: 600; font-variant-numeric: tabular-nums; }
+.radar-botao { display: inline-block; margin-top: .5em; padding: .55em 1em; border-radius: 8px; background: var(--radar-destaque); color: #fff !important; text-decoration: none !important; text-align: center; font-weight: 600; }
+.radar-botao:hover, .radar-botao:focus-visible { filter: brightness(1.08); }
+.radar-iframe iframe { width: 100%; border: 0; border-radius: 10px; }
+.radar-aviso { padding: .75em 1em; border: 1px dashed var(--radar-borda); border-radius: 8px; font-size: .9em; }
+@media (max-width: 600px) { .radar-tabela th:nth-child(4), .radar-tabela td:nth-child(4) { display: none; } }

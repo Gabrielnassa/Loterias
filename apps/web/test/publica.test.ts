@@ -61,6 +61,8 @@ describe('API pública v1 (plugin WordPress)', () => {
     expect(Array.isArray(b.corpo.boloes)).toBe(true);
     // loja que não é da conta
     expect((await pedir('boloes?loja=999999')).status).toBe(403);
+    // código em outra forma também vale (21.0xxxxx-d) e sem ?loja vale a 1ª loja da conta
+    expect((await pedir('boloes')).status).toBe(200);
     expect((await pedir('inventado')).status).toBe(404);
   });
   it('chave revogada para de funcionar', async () => {
