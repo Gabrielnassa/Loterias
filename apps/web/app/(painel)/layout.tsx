@@ -19,6 +19,7 @@ const NAV: [string, string][] = [
   ['/estatisticas', 'Estatísticas'],
   ['/mega-da-virada', 'Mega da Virada'],
   ['/ranking', 'Ranking'],
+  ['/elite', 'Elite e Top'],
   ['/comparar', 'Comparar'],
   ['/ao-vivo', 'Ao vivo'],
   ['/calendario', 'Calendário'],

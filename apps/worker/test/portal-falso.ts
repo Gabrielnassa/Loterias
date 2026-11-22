@@ -50,7 +50,8 @@ async function carregar() {
   const r = await fetch(API + btoa(caminho) + '/?q=' + encodeURIComponent(q));
   if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) { render('<p>erro</p>'); return; }
   const j = await r.json();
-  estado.ultima = j.payload.ultimaPagina;
+  // _paginasGlobais: só do portal falso, para o botão Seguinte seguir da cidade para o estado
+  estado.ultima = j.payload._paginasGlobais || j.payload.ultimaPagina;
   render('<ul>' + j.payload.cotas.map((c) => '<li>' + c.nomeFantasia + '</li>').join('') + '</ul>' +
     (estado.pagina > 1 ? '<button id="ant">Anterior</button>' : '') +
     (estado.pagina < estado.ultima ? '<button id="seg">Seguinte</button>' : ''));
@@ -88,7 +89,12 @@ export function vitrineFalsa(n = 75): { bolao: BolaoFonte; fila: number }[] {
   return r.sort((a, b) => a.fila - b.fila);
 }
 
-export async function iniciarPortalFalso(vitrine = vitrineFalsa()): Promise<PortalFalso> {
+/**
+ * `escopos`: tamanhos (em bolões) dos escopos da lista geral, em sequência (ex.: [45, 30] = cidade com
+ * 45 e resto do estado com 30). Cada escopo tem a própria numeração e o próprio totalRegistros, como
+ * no portal real (observado em 21/11/2026); "Seguinte" na última página da cidade vai para a 1ª do estado.
+ */
+export async function iniciarPortalFalso(vitrine = vitrineFalsa(), opcoes: { escopos?: number[] } = {}): Promise<PortalFalso> {
   const portal: Omit<PortalFalso, 'url' | 'fechar'> = { requisicoesLista: [], forcar: [] };
   const sorteioEm = horarioSP(2026, 11, 22, 21, 0);
   const servidor: Server = createServer((req, res) => {
@@ -113,9 +119,23 @@ export async function iniciarPortalFalso(vitrine = vitrineFalsa()): Promise<Port
         return res.end('{}');
       }
       const lista = /^\d+$/.test(q.alvo ?? '') ? vitrine.filter((v) => v.bolao.loterica.codigoCaixa === q.alvo) : vitrine;
-      const itens = lista.slice((pagina - 1) * 30, pagina * 30).map((v) => paraItemBrutoCaixa(v.bolao, { fila: v.fila, sorteioEm }));
+      // escopos: a página global vira (escopo, página do escopo)
+      const tamanhos = /^\d+$/.test(q.alvo ?? '') || !opcoes.escopos ? [lista.length] : opcoes.escopos;
+      const paginasGlobais = tamanhos.reduce((t, n) => t + Math.max(1, Math.ceil(n / 30)), 0);
+      let resto = pagina;
+      let inicioItens = 0;
+      let e = 0;
+      while (e < tamanhos.length - 1 && resto > Math.max(1, Math.ceil(tamanhos[e]! / 30))) {
+        resto -= Math.max(1, Math.ceil(tamanhos[e]! / 30));
+        inicioItens += tamanhos[e]!;
+        e++;
+      }
+      const doEscopo = lista.slice(inicioItens, inicioItens + tamanhos[e]!);
+      const itens = doEscopo.slice((resto - 1) * 30, resto * 30).map((v) => paraItemBrutoCaixa(v.bolao, { fila: v.fila, sorteioEm }));
+      const corpo = respostaBoloesCaixa(itens, { pagina: resto, totalRegistros: doEscopo.length, agora: new Date() }) as { payload: Record<string, unknown> };
+      if (tamanhos.length > 1) corpo.payload._paginasGlobais = paginasGlobais;
       res.writeHead(200, { 'content-type': 'application/json;charset=UTF-8' });
-      return res.end(JSON.stringify(respostaBoloesCaixa(itens, { pagina, totalRegistros: lista.length, agora: new Date() })));
+      return res.end(JSON.stringify(corpo));
     }
     res.writeHead(404);
     res.end();

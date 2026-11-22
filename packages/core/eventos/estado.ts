@@ -1,5 +1,6 @@
 import { BOLOES_POR_PAGINA } from '../dominio/constantes';
 import type { JogoBolao } from '../dominio/jogo';
+import type { RegraOrdemVitrine } from '../regras/ordem-vitrine';
 import type { ModalidadeSlug } from '../dominio/modalidades';
 import type { ColocacaoPorEscopo, ConcursoRef, LotericaRef } from '../dominio/tipos';
 import type { ItemLeitura, LeituraVitrine } from '../fonte/varredura';
@@ -128,6 +129,8 @@ export interface OpcoesAplicacao {
   /** Grava linha de snapshot de todos os vistos (keyframe) ou só de quem mudou. */
   keyframe?: boolean;
   porPagina?: number;
+  /** Regra de ordem dentro da fila para a colocação calculada (padrão 'fila-chegada'). */
+  regraOrdem?: RegraOrdemVitrine;
 }
 
 function paraVitrine(b: BolaoRegistrado): BolaoNaVitrine {
@@ -299,6 +302,7 @@ export function aplicarLeitura(
     visiveis.map((b) => ({ ...paraVitrine(b), saiuEm: null })),
     undefined,
     porPagina,
+    opcoes.regraOrdem,
   );
   for (const b of res.novos) b.posEntradaCalculada = calculadas.get(b.idCaixa)!;
 

@@ -82,11 +82,34 @@ Retomar do primeiro item sem [x]. Commit e push a cada item.
       volante). APIs `/api/calendario`, `/api/simulador`, `/api/loteca`.
 
 Lote da sessão 5 concluído. Pendências conhecidas para depois:
-- Dados reais da vitrine (cidade de São Paulo) prometidos pelo Gabriel: trocar as fixtures de `fonte/fixtures/caixa/`.
+- ~~Dados reais da vitrine (cidade de São Paulo)~~: chegaram na sessão 6 (resumo em `docs/observacoes/`).
 - Super Sete: trocar a fixture sintética de resultado por uma real; limites de bolão da Lotomania (a página não publica).
 - Site: domínio próprio, QR code, pixel, upload de logo; Mídias: foto do bilhete (OCR), vídeos, agendamento de posts.
 - Notificações (Web Push), contas/equipe/planos (Fase 6), gestão da loja física.
-- A simulação vende ~70% em média (perto do break-even): o otimizador marca quase tudo como risco alto; calibrar com dados reais.
-- Quando o Gabriel mandar dados reais da vitrine (cidade de São Paulo), trocar as fixtures de `fonte/fixtures/caixa/`.
+- ~~A simulação vende ~70% em média~~: calibrada com a foto real na sessão 6.
 - Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
   código da Legal Loterias.
+
+## Sessão 6 (21-22/11/2026) — demonstração, README, dados reais e Fase 6
+
+Retomar do primeiro item sem [x]. Commit e push a cada item; manter a demonstração do GitHub Pages atualizada
+(cada tela nova do painel ganha uma rota em `apps/demo/demo/rotas.ts` + `apps/demo/app/...` + o menu da demo).
+
+- [x] 1. Demonstração estática (`apps/demo`, `.github/workflows/pages.yml`): https://gabrielnassa.github.io/Loterias/
+      Depende do Gabriel: Settings › Pages › Source = "GitHub Actions" (depois, rodar o workflow "Pages" uma vez).
+- [x] 2. README com o estado real, o link da demo e como rodar local.
+- [x] 3. Dados reais da vitrine de SP (resumo em `docs/observacoes/2026-11-21-vitrine-sp.md`, amostra anonimizada
+      em `fonte/fixtures/vitrine-sp-2026-11-21-amostra.json`): escopos cidade → estado → Brasil (`fonte/escopos.ts`,
+      `CAIXA_ESCOPOS`), ordem dentro da fila como hipótese plugável (`regras/ordem-vitrine.ts`, `VITRINE_ORDEM`,
+      `pnpm analisar-abertura`), simulação e Sugestões calibradas (`mercado/referencias.ts`, coluna "Real SP*"),
+      listas Elite e Top (`raio-x/elite.ts`, `/elite`).
+      Depende do Gabriel: gravar a abertura de hoje 21:45 (ou domingo 11:45) e rodar `pnpm analisar-abertura`.
+- [ ] 4. Fase 6, Contas: login (e-mail + link mágico ou senha), contas com várias lotéricas, equipe com papéis
+      (responsável, sócio, colaborador), permissão por tela, convites de colaborador.
+- [ ] 5. Watchlist (monitoradas) + alertas do Raio-X (push quando uma monitorada entra na abertura; resumo semanal
+      segunda 08:00). Web Push (VAPID), PWA instalável, central de notificações com preferências por aparelho
+      (vendas de hoje, todas, só no encerramento, resultados, previsão de zerar mantida por 45 min, prêmios na lotérica).
+- [ ] 6. Planos e cobrança via Asaas (SÓ sandbox, sem chave real no repositório): Grátis, Pro, Pro+ e Gestão;
+      assinatura recorrente (Pix e cartão), teste grátis de 14 dias, webhook de pagamento, bloqueio de telas por plano.
+- [ ] 7. Gestão da loja física: caixas por TFL, caixas extras (ex.: Federal), fechamento de caixa diário, fluxo de
+      caixa, carro-forte, fiados, cobrança diária, despesas e DRE mensal, consolidando várias lojas do mesmo dono.

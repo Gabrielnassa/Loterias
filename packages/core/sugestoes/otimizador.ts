@@ -2,7 +2,8 @@ import { formatarCodigoBolao } from '../dominio/codigo-bolao';
 import { custoJogo, type ModalidadeSlug } from '../dominio/modalidades';
 import type { BolaoHistorico } from '../mercado/estatisticas';
 import { faixaDePreco } from '../mercado/vitrine';
-import { resultadoBolao } from '../regras/financeiro';
+import { resultadoBolao, tarifaPorCota } from '../regras/financeiro';
+import { vendidoObservadoSP } from '../mercado/referencias';
 import { diaSP, isodowDoDia } from '../tempo/fuso';
 import { centavos, media, percentil } from '../util/estatistica';
 
@@ -46,6 +47,8 @@ export interface AvaliacaoOpcao extends OpcaoBolao {
   lucroP10: number;
   lucroP90: number;
   risco: 'baixo' | 'medio' | 'alto';
+  /** % vendido observado na vitrine real (SP, 21/11/2026) para a mesma faixa de preço, se houver. */
+  referenciaReal: { faixa: string; boloes: number; pctVendido: number; fonte: string } | null;
 }
 
 /** Monta a opção (valor da cota = custo dos jogos / cotas, em centavos). */
@@ -89,6 +92,7 @@ export function avaliarOpcao(op: OpcaoBolao, fracoes: readonly number[], base: A
     lucroP10: centavos(percentil(lucros, 0.1)!),
     lucroP90: centavos(percentil(lucros, 0.9)!),
     risco: pPrej <= 0.15 ? 'baixo' : pPrej <= 0.35 ? 'medio' : 'alto',
+    referenciaReal: vendidoObservadoSP(op.modalidade, op.valorCota + tarifaPorCota(op.valorCota)),
   };
 }
 

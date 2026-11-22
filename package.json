@@ -20,7 +20,8 @@
     "observar-abertura": "pnpm --filter @radar/worker observar-abertura",
     "resultados": "pnpm --filter @radar/worker resultados",
     "demo:build": "pnpm --filter @radar/demo build",
-    "demo:dev": "pnpm --filter @radar/demo dev"
+    "demo:dev": "pnpm --filter @radar/demo dev",
+    "analisar-abertura": "pnpm --filter @radar/worker analisar-abertura"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

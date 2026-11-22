@@ -51,3 +51,23 @@ describe('observar abertura (script da etapa C)', () => {
     expect(linhas.at(-1)).toMatchObject({ tipo: 'resumo', leituras: resumo.leituras });
   });
 });
+
+describe('analisar a gravação de uma abertura (ordem dentro da fila)', () => {
+  it('chegada em ordem na 1ª fila => recomenda fila-chegada; embaralhada => fila-aleatoria', async () => {
+    const { analisarGravacao } = await import('../src/analisar-abertura');
+    const linha = (leitura: number, pagina: number, inicio: string, ordem: [number, number][]) => JSON.stringify({ tipo: 'pagina', leitura, pagina, inicio, ordem });
+    // leitura 1 vê 3 bolões; leitura 2 vê mais 3 chegando depois, todos na fila 1, na ordem de chegada
+    const emOrdem = [
+      linha(1, 1, '2026-11-22T14:45:05Z', [[1, 1], [2, 1], [3, 1]]),
+      linha(2, 1, '2026-11-22T14:45:10Z', [[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1]]),
+    ].join('\n');
+    expect(analisarGravacao(emOrdem).resumo.leitura).toMatch(/fila-chegada/);
+    const embaralhada = [
+      linha(1, 1, '2026-11-22T14:45:05Z', [[1, 1], [2, 1], [3, 1]]),
+      linha(2, 1, '2026-11-22T14:45:10Z', [[5, 1], [2, 1], [6, 1], [1, 1], [4, 1], [3, 1]]),
+    ].join('\n');
+    const r = analisarGravacao(embaralhada);
+    expect(r.resumo.leitura).toMatch(/fila-aleatoria/);
+    expect(r.leituras[1]!.diagnostico.itens).toBe(6);
+  });
+});

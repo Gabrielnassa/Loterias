@@ -1,0 +1,15 @@
+{
+  "descricao": "Linhas de amostra da foto real da vitrine (cidade de São Paulo, 21/11/2026 16:44, Mega-Sena 3089). Lotéricas e números de bolão são FICTÍCIOS (o número preserva só a ordem relativa dos reais); valores, cotas, apostas e dezenas são os observados. Resumo em docs/observacoes/2026-11-21-vitrine-sp.md.",
+  "modalidade": "mega-sena",
+  "concurso": 3089,
+  "colunas": ["pagina", "posicaoNaPagina", "fila", "loterica", "numeroBolao", "cotasTotal", "cotasDigitais", "cotasDisponiveis", "valorCotaSemTarifa", "valorCotaComTarifa", "jogos", "dezenas"],
+  "linhas": [
+    [1, 1, 1, "990101", 100000303, 100, 100, 33, 20.16, 27.21, 4, 9],
+    [1, 2, 1, "990102", 100000505, 60, 60, 30, 33.6, 45.35, 4, 9],
+    [1, 3, 1, "990103", 100000707, 100, 100, 80, 16.8, 22.68, 10, 8],
+    [1, 4, 1, "990104", 100000404, 100, 100, 3, 20.16, 27.21, 4, 9],
+    [1, 5, 1, "990105", 100000202, 50, 50, 29, 25.2, 34.02, 1, 10],
+    [1, 27, 1, "990106", 100000606, 3, 3, 2, 420, 567, 1, 10],
+    [2, 8, 1, "990107", 100000101, 58, 58, 41, 21.72, 29.32, 1, 10]
+  ]
+}

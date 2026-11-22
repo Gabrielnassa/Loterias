@@ -12,6 +12,7 @@ export * from './util/aleatorio';
 // Regras
 export * from './regras/fila';
 export * from './regras/posicao';
+export * from './regras/ordem-vitrine';
 export * from './regras/financeiro';
 export * from './regras/franquia';
 export * from './mercado/agregar';
@@ -19,6 +20,7 @@ export * from './mercado/vitrine';
 export * from './mercado/filas';
 export * from './mercado/estatisticas';
 export * from './mercado/previsao';
+export * from './mercado/referencias';
 
 // Motor de dados
 export * from './eventos/estado';
@@ -30,6 +32,7 @@ export * from './coleta/calendario';
 export * from './abertura/participacao';
 export * from './raio-x/semanal';
 export * from './raio-x/ranking';
+export * from './raio-x/elite';
 
 // Adaptador da fonte (contrato, varredura, saúde, cliente HTTP)
 export * from './fonte';

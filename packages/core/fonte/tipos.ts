@@ -1,4 +1,5 @@
 import type { JogoBolao } from '../dominio/jogo';
+import type { PosicaoNoEscopo } from './escopos';
 import type { ModalidadeSlug } from '../dominio/modalidades';
 import type { LotericaRef } from '../dominio/tipos';
 
@@ -68,6 +69,13 @@ export interface PaginaBoloes {
   obtidaEm: Date;
   /** Hora informada pelo servidor da fonte (dataHoraServidor), para medir o desvio de relógio. */
   horaServidor?: Date;
+  /** Escopo da vitrine desta página (cidade, resto do estado, resto do Brasil) e a numeração dele. */
+  escopo?: PosicaoNoEscopo;
+  /**
+   * A lista continua depois desta página (próxima página do escopo ou o escopo seguinte), mesmo que
+   * esta tenha menos de `tamanhoPagina` itens. Ausente = vale `totalPaginas`/página incompleta.
+   */
+  haMais?: boolean;
 }
 
 export interface ConcursoAbertoFonte {

@@ -2,6 +2,7 @@ import {
   backtestPrevisao,
   diaSP,
   fichaLoterica,
+  listasEliteTop,
   preverPorParecidos,
   resumirConcurso,
   noDiaSP,
@@ -12,6 +13,7 @@ import {
   somarDias,
   topLotericas,
   type BolaoHistorico,
+  type BolaoParaElite,
   type BolaoMercado,
   type CriterioTop,
   type FiltroRegiao,
@@ -441,6 +443,23 @@ export async function previsaoDoConcurso(fonte: FonteDadosRaioX, chave: string, 
   const backtest = backtestPrevisao(resumos, { ultimos: 16 });
   const ritmo = retratoMercado(boloes, em, { fechaEm: c.fechaEm, maiores: 0 }).ritmoPorMinuto * 60;
   return { concurso: c, fracao, estado: atual.estado, previsao, backtest, ritmoPorHora: Math.round(ritmo), historico: resumos.length, motivo: previsao ? null : 'histórico insuficiente (menos de 3 concursos fechados)' };
+}
+
+/** Raio-X › Elite e Top: últimas 7 noites de abertura (sem a Loteca), refeitas toda manhã. */
+export async function listasElite(fonte: FonteDadosRaioX, o: { filtro?: FiltroRegiao } = {}) {
+  const m = fonteMercado(fonte);
+  const agora = m.agora();
+  const [aberturas, lotericas] = await Promise.all([fonte.aberturas(), fonte.lotericas()]);
+  // 7 noites + folga (domingo de manhã, feriados) e os 30 dias para estimar o limite da franquia
+  const de = noDiaSP(somarDias(diaSP(agora), -30), 0, 0);
+  const todos = await m.historico(de, agora);
+  const uf = o.filtro?.uf?.toUpperCase();
+  const cidade = o.filtro?.cidade?.toLowerCase();
+  const daRegiao = (l: LotericaRef) => (!uf || l.uf.toUpperCase() === uf) && (!cidade || l.cidade.toLowerCase() === cidade);
+  const boloes: BolaoParaElite[] = todos
+    .filter((b) => daRegiao(b.loterica))
+    .map((b) => ({ lotericaCodigo: b.loterica.codigoCaixa, aberturaId: `${b.modalidade}-${b.concurso}`, modalidade: b.modalidade, entrouEm: b.entrouEm, valor: b.valorCotaBase * b.cotasTotal }));
+  return listasEliteTop({ aberturas, boloes, lotericas: new Map(lotericas.filter(daRegiao).map((l) => [l.codigoCaixa, l])), agora });
 }
 
 export type { LotericaRef };

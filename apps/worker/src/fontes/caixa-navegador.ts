@@ -1,5 +1,10 @@
 import { existsSync, statSync } from 'node:fs';
 import {
+  ESCOPOS_VITRINE,
+  paginasConhecidas,
+  registrarEscopo,
+  type EscopoNaNavegacao,
+  type EscopoVitrine,
   BloqueadoPelaFonteError,
   CAMINHOS_CAIXA,
   caminhoDaUrlCaixa,
@@ -65,6 +70,11 @@ export interface OpcoesCaixaNavegador {
   cacheLinkMs?: number;
   /** Trata a ordem da lista como a ordem da vitrine (default false: lista é por cidade do comprador). */
   confiarOrdemDaFonte?: boolean;
+  /**
+   * Até que escopo a varredura segue: 'cidade' (padrão; só a cidade da conta), 'estado' (continua no
+   * resto do estado depois da última página da cidade) ou 'brasil'. Ver core/fonte/escopos.ts.
+   */
+  escopos?: EscopoVitrine;
   agora?: () => Date;
   log?: (msg: string, extra?: Record<string, unknown>) => void;
 }
@@ -87,7 +97,10 @@ const MARCAS_DESAFIO = /captcha|perfdrive|challenge|access denied|acesso negado|
 
 interface Aba {
   page: Page;
+  /** Página GLOBAL (contando desde a 1ª da cidade; o escopo seguinte continua a numeração). */
   paginaAtual: number;
+  /** Escopos vistos nesta aba (cidade, resto do estado...). */
+  escopos?: EscopoNaNavegacao[];
 }
 
 class Desvio extends Error {
@@ -343,14 +356,29 @@ export class FonteCaixaNavegador implements FonteBoloes {
     return this.comRetentativas(async () => {
       await this.recarregarSeSessaoMudou();
       const chave = consulta.codigoLoterica ? `loterica:${consulta.codigoLoterica}` : `modalidade:${consulta.modalidade}`;
-      const json = await this.irPara(await this.aba(chave), consulta);
+      const aba = await this.aba(chave);
+      const json = await this.irPara(aba, consulta);
       if (json === null) {
-        return { consulta, pagina: consulta.pagina, tamanhoPagina: 30, itens: [], ordemDaVitrine: this.o.confiarOrdemDaFonte ?? false, obtidaEm: this.agora() };
+        return { consulta, pagina: consulta.pagina, tamanhoPagina: 30, itens: [], ordemDaVitrine: this.o.confiarOrdemDaFonte ?? false, obtidaEm: this.agora(), haMais: false };
       }
-      return normalizarPaginaCaixa(json, consulta, {
+      const p = normalizarPaginaCaixa(json, consulta, {
         obtidaEm: this.agora(),
         ...(this.o.confiarOrdemDaFonte !== undefined ? { confiarOrdemDaFonte: this.o.confiarOrdemDaFonte } : {}),
       });
+      // escopo da página (cidade, resto do estado...): a numeração da fonte recomeça a cada escopo
+      const c = { paginaAtual: p.pagina, ultimaPagina: p.totalPaginas ?? p.pagina, totalRegistros: p.totalItens ?? p.itens.length };
+      const r = registrarEscopo(aba.escopos ?? [], consulta.pagina, c);
+      aba.escopos = r.escopos;
+      p.escopo = { indice: r.indice, nome: ESCOPOS_VITRINE[Math.min(r.indice, 2)]!, pagina: c.paginaAtual, totalPaginas: c.ultimaPagina, totalItens: c.totalRegistros };
+      const maxEscopo = Math.max(0, ESCOPOS_VITRINE.indexOf(this.o.escopos ?? 'cidade'));
+      if (maxEscopo > 0) {
+        // numeração GLOBAL: a varredura segue do fim da cidade para a 1ª página do estado
+        p.pagina = consulta.pagina;
+        p.haMais = c.paginaAtual < c.ultimaPagina || r.indice < maxEscopo;
+        p.totalPaginas = paginasConhecidas(aba.escopos) + (r.indice < maxEscopo && r.indice === aba.escopos.length - 1 ? 1 : 0);
+        p.totalItens = aba.escopos.reduce((t, e) => t + e.totalRegistros, 0);
+      }
+      return p;
     });
   }
 

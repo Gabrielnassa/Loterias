@@ -1,5 +1,7 @@
 import { CONFIG_COLETA_PADRAO, type ConfigColeta } from '../coleta/plano';
 import { custoJogo, type ModalidadeSlug } from '../dominio/modalidades';
+import { fatorDeVendaPorPreco } from '../mercado/referencias';
+import { tarifaPorCota } from '../regras/financeiro';
 import type { LotericaRef } from '../dominio/tipos';
 import type { BolaoFonte } from '../fonte/tipos';
 import type { ItemLeitura, LeituraVitrine } from '../fonte/varredura';
@@ -60,17 +62,24 @@ export const CIDADES: readonly (readonly [string, string, number, readonly strin
 const NOMES_A = ['Sorte', 'Trevo', 'Estrela', 'Fortuna', 'Ponto', 'Casa', 'Canto', 'Recanto', 'Mundo', 'Rota'];
 const NOMES_B = ['Grande', 'de Ouro', 'Feliz', 'da Sorte', 'Premiada', 'Certa', 'Nova', 'Central', 'do Bairro', 'Real'];
 
-/** Formatos populares por modalidade: [dezenas, jogos, cotas]. */
+/**
+ * Formatos por modalidade: [dezenas, jogos, cotas]. Calibrado com a vitrine real de São Paulo
+ * (21/11/2026): os mais comuns são Lotofácil 10 jogos de 15, Mega-Sena 10 de 6 e 10 de 7 e
+ * +Milionária 10 de 6 (repetidos aqui para pesarem mais no sorteio).
+ */
 const FORMATOS: Partial<Record<ModalidadeSlug, readonly (readonly [number, number, number])[]>> = {
   lotofacil: [
-    [16, 10, 20], [16, 20, 40], [17, 6, 40], [17, 3, 20], [17, 10, 50], [18, 1, 50], [18, 2, 100], [16, 5, 10], [15, 30, 10], [16, 8, 16],
+    [15, 10, 7], [15, 10, 7], [15, 10, 7], [15, 10, 5],
+    [16, 10, 20], [16, 20, 40], [17, 6, 40], [17, 3, 20], [17, 10, 50], [18, 1, 50], [18, 2, 100], [16, 5, 10], [16, 8, 16],
   ],
   'mega-sena': [
-    [7, 10, 10], [8, 5, 20], [9, 2, 24], [10, 1, 30], [8, 10, 40], [7, 6, 6], [9, 4, 48], [11, 1, 66],
+    [6, 10, 8], [6, 10, 8], [6, 10, 6], [7, 10, 40], [7, 10, 40], [7, 10, 20],
+    [8, 5, 20], [9, 2, 24], [10, 1, 30], [8, 10, 40], [9, 4, 48], [11, 1, 66], [9, 4, 100],
   ],
   quina: [
-    [6, 10, 10], [7, 5, 15], [8, 2, 16], [7, 10, 30], [6, 20, 20], [9, 1, 12],
+    [6, 10, 10], [7, 5, 15], [8, 2, 16], [7, 10, 30], [6, 20, 20], [9, 1, 12], [10, 3, 30],
   ],
+  'mais-milionaria': [[6, 10, 10], [6, 10, 10], [7, 3, 21], [8, 1, 28]],
 };
 
 function gerarLotericas(rnd: Aleatorio, n: number): LotericaRef[] {
@@ -168,8 +177,11 @@ export function gerarAberturaSimulada(o: OpcoesSimulacao): AberturaSimulada {
       const custo = (custoJogo(modalidade, dezenas) ?? 3.5) * jogos;
       const valorCotaBase = Math.round((custo / cotas) * 100) / 100;
       const vendas: number[] = [];
-      const relampago = rnd.proximo() < 0.12;
-      const vendidas = relampago ? cotas : Math.round(cotas * (0.3 + 0.7 * rnd.proximo()));
+      // Venda calibrada com a vitrine real de SP (21/11/2026): ~36% vendido horas antes do fechamento
+      // (~45% no fim); poucos esgotam logo; a faixa de preço da cota muda a venda (fatorDeVendaPorPreco).
+      const relampago = rnd.proximo() < 0.04;
+      const fator = fatorDeVendaPorPreco(modalidade, valorCotaBase + tarifaPorCota(valorCotaBase));
+      const vendidas = relampago ? cotas : Math.min(cotas, Math.round(cotas * fator * (0.06 + 0.85 * rnd.proximo() ** 1.25)));
       for (let c = 0; c < vendidas; c++) {
         const dt = relampago
           ? (3 + rnd.proximo() * 37) * 60_000 * rnd.proximo()

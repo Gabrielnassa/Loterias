@@ -23,6 +23,7 @@ export const ROTAS = {
   mercado: { pagina: () => import('@/app/(painel)/mercado/page') },
   filas: { pagina: () => import('@/app/(painel)/mercado/filas/page') },
   ranking: { pagina: () => import('@/app/(painel)/ranking/page') },
+  elite: { pagina: () => import('@/app/(painel)/elite/page') },
   simulador: { pagina: () => import('@/app/(painel)/simulador/page') },
   'minha-boloes': { pagina: () => import('@/app/(painel)/minha/boloes/page'), layout: minha },
   'minha-financeiro': { pagina: () => import('@/app/(painel)/minha/financeiro/page'), layout: minha },

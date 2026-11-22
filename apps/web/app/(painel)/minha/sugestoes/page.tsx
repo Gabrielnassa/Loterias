@@ -73,7 +73,7 @@ export default async function Sugestoes({ searchParams }: { searchParams: Promis
           <p className="text-sm text-zinc-500">Lucro esperado = tarifa x cotas que devem vender + comissão − sobra esperada, sobre bolões parecidos já encerrados. Ordem: lucro por R$ de franquia.</p>
           <div className="overflow-x-auto">
             <table className="tabela tabular min-w-[980px]">
-              <thead><tr><th>Formato</th><th className="text-right">Bolão</th><th className="text-right">Cota</th><th className="text-right">Vende</th><th className="text-right">Esgota</th><th className="text-right">Tarifa</th><th className="text-right">Sobra</th><th className="text-right">Lucro esp.</th><th className="text-right">Por R$</th><th className="text-right">Pior 10%</th><th>Risco</th><th className="text-right">Base</th></tr></thead>
+              <thead><tr><th>Formato</th><th className="text-right">Bolão</th><th className="text-right">Cota</th><th className="text-right">Vende</th><th className="text-right">Esgota</th><th className="text-right">Tarifa</th><th className="text-right">Sobra</th><th className="text-right">Lucro esp.</th><th className="text-right">Por R$</th><th className="text-right">Pior 10%</th><th>Risco</th><th className="text-right">Base</th><th className="text-right" title="% vendido na mesma faixa de preço na foto real da vitrine de São Paulo (21/11/2026 16:44, parcial)">Real SP*</th></tr></thead>
               <tbody>
                 {o.opcoes.map((a) => (
                   <tr key={a.formato}>
@@ -82,6 +82,7 @@ export default async function Sugestoes({ searchParams }: { searchParams: Promis
                     <td className="text-right">{fmtMoeda(a.sobraEsperada)}</td><td className="text-right font-semibold">{fmtMoeda(a.lucroEsperado)}</td><td className="text-right">{fmtPct(a.lucroPorReal, 1)}</td>
                     <td className="text-right">{fmtMoeda(a.lucroP10)}</td><td className={COR_RISCO[a.risco]}>{a.risco}</td>
                     <td className="text-right text-xs text-zinc-500">{a.amostras} {a.base === 'formato' ? 'iguais' : a.base === 'parecidos' ? 'parecidos' : 'Brasil'}</td>
+                    <td className="text-right text-xs">{a.referenciaReal ? fmtPct(a.referenciaReal.pctVendido) : '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -89,7 +90,7 @@ export default async function Sugestoes({ searchParams }: { searchParams: Promis
           </div>
         </section>
       ))}
-      <p className="text-xs text-zinc-500">Estimativas a partir da vitrine pública; vendas de terceiros contam como internet. Valores sem tarifa. Não é garantia de venda.</p>
+      <p className="text-xs text-zinc-500">Estimativas a partir da vitrine pública; vendas de terceiros contam como internet. Valores sem tarifa. Não é garantia de venda. * Real SP: % vendido na mesma faixa de preço (com tarifa) na foto da vitrine de São Paulo de 21/11/2026 às 16:44, horas antes do fechamento (parcial).</p>
     </div>
   );
 }

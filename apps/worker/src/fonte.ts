@@ -24,6 +24,7 @@ function criarNavegador(cfg: ConfigWorker, relogio: FonteDeTempo): FonteCaixaNav
     baseUrl: amb.CAIXA_BASE_URL_NAVEGADOR,
     estadoSessao: sessaoDaConfig(amb) as EstadoSessao,
     contaDedicada: amb.CAIXA_CONTA_DEDICADA,
+    escopos: amb.CAIXA_ESCOPOS,
     headless: amb.CAIXA_HEADLESS,
     intervaloMinimoMs: amb.CAIXA_INTERVALO_MS,
     timeoutMs: amb.CAIXA_TIMEOUT_MS,

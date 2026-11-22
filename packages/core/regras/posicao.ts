@@ -1,3 +1,4 @@
+import { posicaoEsperadaNoBloco, REGRA_ORDEM_PADRAO, type RegraOrdemVitrine } from './ordem-vitrine';
 import { BOLOES_POR_PAGINA, type FaixaPagina } from '../dominio/constantes';
 import type { ColocacaoPorEscopo, Escopo } from '../dominio/tipos';
 import { compararChegada, type BolaoParaFila } from './fila';
@@ -49,7 +50,7 @@ export interface BolaoNaVitrine extends BolaoParaFila {
   saiuEm?: Date | null;
 }
 
-/** Ordem da vitrine: 1ª fila inteira antes da 2ª; dentro da fila, ordem de chegada. */
+/** Ordem da vitrine: 1ª fila inteira antes da 2ª; dentro da fila, ordem de chegada (hipótese; ver ordem-vitrine.ts). */
 export function compararVitrine(a: BolaoNaVitrine, b: BolaoNaVitrine): number {
   if (a.fila !== b.fila) return a.fila - b.fila;
   return compararChegada(a, b);
@@ -74,17 +75,35 @@ export function calcularPosicoes(
   boloes: readonly BolaoNaVitrine[],
   em?: Date,
   porPagina = BOLOES_POR_PAGINA,
+  regra: RegraOrdemVitrine = REGRA_ORDEM_PADRAO,
 ): Map<string, ColocacaoPorEscopo> {
   const visiveis = boloes.filter((b) => visivelEm(b, em)).sort(compararVitrine);
   const contagem = new Map<string, number>();
   const res = new Map<string, ColocacaoPorEscopo>();
+  // fila aleatória: a posição é o meio do bloco da fila no escopo
+  const blocos = new Map<string, { inicio: number; tamanho: number }>();
+  if (regra === 'fila-aleatoria') {
+    const n = new Map<string, number>();
+    for (const b of visiveis) {
+      for (const escopo of ['brasil', 'uf', 'cidade'] as const) {
+        const k = chaveEscopo(escopo, b.loterica);
+        const pos = (n.get(k) ?? 0) + 1;
+        n.set(k, pos);
+        const kb = `${k}|${b.fila}`;
+        const bl = blocos.get(kb);
+        if (bl) bl.tamanho++;
+        else blocos.set(kb, { inicio: pos, tamanho: 1 });
+      }
+    }
+  }
   for (const b of visiveis) {
     const c = {} as ColocacaoPorEscopo;
     for (const escopo of ['brasil', 'uf', 'cidade'] as const) {
       const k = chaveEscopo(escopo, b.loterica);
       const n = (contagem.get(k) ?? 0) + 1;
       contagem.set(k, n);
-      c[escopo] = colocacao(n, porPagina);
+      const bl = blocos.get(`${k}|${b.fila}`);
+      c[escopo] = colocacao(bl ? posicaoEsperadaNoBloco(bl.inicio, bl.tamanho) : n, porPagina);
     }
     res.set(b.id, c);
   }
@@ -133,6 +152,7 @@ export function posicoesObservadas(
 export function posicoesNaEntrada(
   boloes: readonly BolaoNaVitrine[],
   porPagina = BOLOES_POR_PAGINA,
+  regra: RegraOrdemVitrine = REGRA_ORDEM_PADRAO,
 ): Map<string, ColocacaoPorEscopo> {
   const ordenados = [...boloes].sort(compararChegada);
   const saidas = boloes
@@ -187,7 +207,9 @@ export function posicoesNaEntrada(
         const r = (rank.get(kk) ?? 0) + 1;
         rank.set(kk, r);
         const antesDoLoteNaFila = naFila(k, b.fila) - (noLote.get(kk) ?? 0);
-        c[escopo] = colocacao(prefixoAntesDaFila(k, b.fila) + antesDoLoteNaFila + r, porPagina);
+        // fila aleatória: na entrada, a posição esperada é o meio do bloco da fila naquele instante
+        const dentro = regra === 'fila-aleatoria' ? posicaoEsperadaNoBloco(1, naFila(k, b.fila)) : antesDoLoteNaFila + r;
+        c[escopo] = colocacao(prefixoAntesDaFila(k, b.fila) + dentro, porPagina);
       }
       res.set(b.id, c);
     }

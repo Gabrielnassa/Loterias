@@ -85,7 +85,9 @@ function gerarPerfis(rnd: Aleatorio, n: number): PerfilLoterica[] {
       velocidade,
       chancePorDia,
       modalidades: i === 0 ? ['lotofacil', 'quina', 'mega-sena'] : modalidades,
-      boloesMedio: 1 + rnd.inteiro(0, 4),
+      // bolões por lotérica calibrados com a vitrine real de SP (21/11/2026): ~metade só com 1 bolão,
+      // ~1/4 com 3 ou mais, algumas com muitos (a maior fila vista foi a 28ª)
+      boloesMedio: rnd.ponderado([[1, 52], [2, 22], [3, 10], [5, 10], [10, 5], [22, 1]] as const),
       tendenciaSemanal: rnd.proximo() < 0.12 ? (rnd.proximo() < 0.5 ? -0.04 : 0.04) : 0,
     });
   }
@@ -145,7 +147,8 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
         participantes.push({
           loterica: p.loterica,
           atrasoPrimeiroS: atrasoPorVelocidade(r, p.velocidade),
-          nBoloes: Math.max(1, Math.round(p.boloesMedio * (0.5 + r.proximo()))),
+          // na Quina quase todo mundo põe 1 bolão (1ª fila 427, 2ª 53 na foto real)
+          nBoloes: modalidade === 'quina' && r.proximo() < 0.85 ? 1 : Math.max(1, Math.round(p.boloesMedio * (0.6 + 0.8 * r.proximo()))),
         });
       }
       const plano: PlanoAbertura = { id, modalidade, concurso, t0: t0Dia, semente: hash(`bolões|${id}`), participantes };

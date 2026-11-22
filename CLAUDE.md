@@ -19,6 +19,8 @@ os textos, as artes ou o código do oLoterico.
 | `packages/core/minha`, `packages/core/conferencia` | Regras da Fase 3: financeiro por bolão (internet x balcão), resumo dia a dia, break-even por concurso, posição na abertura 7/30/90 dias, resultado oficial e prêmios das 10 modalidades |
 | `packages/db/seed.ts` | Seed de demonstração: grava o histórico simulado no banco com `concursos.origem = 'seed'` (a web avisa "dados simulados") |
 | `docs/fonte-caixa.md` | Fase 0: API observada no portal, respostas e o que falta descobrir |
+| `docs/observacoes/` | Resumos de observações reais (só agregados; o repositório é PÚBLICO: nada de nomes de lotéricas nem fotos completas) |
+| `apps/demo` | Demonstração estática (GitHub Pages): as mesmas telas do `apps/web` rodando no navegador com o histórico simulado gerado no build |
 | `docs/proximos-passos.md` | Ponto de retomada entre sessões |
 
 ## Comandos
@@ -36,6 +38,8 @@ DATABASE_URL=... pnpm db:seed                                             # grav
 pnpm caixa:preparar-sessao                                                # UMA PESSOA prepara a sessão do navegador
 FONTE=caixa-navegador CAIXA_MODALIDADES=mega-sena pnpm poc:fonte          # adaptador real (exige a sessão)
 pnpm observar-abertura -- --modalidade mega-sena --t0 2026-11-22T11:45    # registra uma abertura real em JSONL (README)
+pnpm analisar-abertura -- apps/worker/observacoes/arquivo.jsonl           # mede a ordem dentro da fila e recomenda VITRINE_ORDEM
+pnpm demo:build                                                           # demonstração estática em apps/demo/out (basePath /Loterias)
 pnpm resultados -- --modalidade mega-sena --concurso 3088                 # resultado oficial (grava com DATABASE_URL); atrás de proxy: NODE_USE_ENV_PROXY=1
 docker compose up -d postgres redis && docker compose up -d --build worker
 pnpm --filter @radar/core exec tsx fonte/fixtures/gerar.ts                # regenera fixtures sintéticas
@@ -117,11 +121,14 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | Fila | `core/regras/fila.ts`, `core/eventos/estado.ts` | **Efetiva = `index` da CAIXA (fila observada)** quando vem; a calculada (ordem de first_seen_at na lotérica) é sempre guardada (`fila_calculada`). `fila_observada_entrada` x `fila_observada` revela se a fila é dinâmica |
 | Posição atual | `calcularPosicoes` | Escopos normalizados sem acento; cidade qualificada pela UF |
 | Posição observada | `posicoesObservadas` | Só quando a fonte declara a ordem da vitrine Brasil. A lista da CAIXA é por cidade do comprador (→ UF → Brasil), então o adaptador real manda `ordemDaVitrine=false` e vale a colocação calculada |
+| Escopos da vitrine | `core/fonte/escopos.ts`, `caixa-navegador` (`CAIXA_ESCOPOS`) | Foto real de SP (21/11/2026): cidade do comprador → resto do estado (nova numeração e novo total) → resto do Brasil (presumido). O adaptador numera as páginas globalmente, marca o escopo de cada uma (`PaginaBoloes.escopo`, `haMais`) e só passa da cidade com `CAIXA_ESCOPOS=estado` ou `brasil` (padrão `cidade`) |
+| Ordem dentro da fila | `core/regras/ordem-vitrine.ts`, `VITRINE_ORDEM` | **Hipótese plugável**: `fila-chegada` (padrão, SPEC) ou `fila-aleatoria` (a fila define o bloco; dentro dele vale a posição esperada, o meio do bloco). A foto real teve quedas de fila (Mega 41/542) e o número do bolão sem relação com a posição; `pnpm analisar-abertura` decide com uma gravação (Spearman entre posição e chegada na 1ª fila) |
+| Calibração real | `core/mercado/referencias.ts` | Foto de SP: % vendido por faixa de preço COM tarifa, bolões por fila, formatos comuns. A simulação vende por essa curva (~36% a 72% da janela na Mega, antes ~70%) e as Sugestões mostram a coluna "Real SP*" |
 | Colocação na entrada | `posicoesNaEntrada` (O(n·filas)) e `aplicarLeitura` | Grava observada e calculada (`boloes.pos_entrada_*` e `pos_entrada_calc_*`); a participação usa a observada se houver |
 | first_seen_at | `aplicarLeitura` | Instante em que a página com o bolão foi obtida (nunca antes da chegada real). Se a fonte informar a hora de inserção, usa ela |
 | Sumiu = esgotou | `aplicarLeitura` | Só em leitura COMPLETA e após 2 leituras completas seguidas sem o bolão; data = 1ª ausência; eventos marcados `inferido` |
 | Devolução | `aplicarLeitura` | Evento extra `devolucao` quando disponíveis aumentam (não previsto na SPEC) |
-| Financeiro | `core/regras/financeiro.ts` | Tarifa por cota **truncada** em centavos (portal: 20,16 → 7,05; impressos 5 × 4,32 → 7,55) ou a informada pela fonte; resíduo da última cota em `valorDasApostas`. Balcão conta como vendida, gera tarifa e libera comissão; estornado zera tudo |
+| Financeiro | `core/regras/financeiro.ts` | Tarifa por cota **truncada** em centavos (portal: 20,16 → 7,05; impressos 5 × 4,32 → 7,55) ou a informada pela fonte (a tarifa é "até 35%": na foto de SP, 33,60 → 11,75 em vez de 11,76); resíduo da última cota em `valorDasApostas`. Balcão conta como vendida, gera tarifa e libera comissão; estornado zera tudo |
 | Break-even | `breakEvenGrupo` | Em cotas que ainda faltam e em % do total, somando o grupo (ex.: seus bolões de uma loteria). Guloso: a 1ª cota de um bolão sem vendas também libera a comissão dele |
 | Franquia | `core/regras/franquia.ts` | Janela [05:00, 23:00) em SP; estornados NÃO contam por padrão (dúvida aberta; `contarEstornados`) |
 | Plano de coleta | `core/coleta/plano.ts` | Slots alinhados a T0 − 1 min; tarefa só sai quando o slot avança; atrasos não acumulam (slot perdido é contado) |
@@ -178,6 +185,7 @@ fonte e ficam marcados. O histórico só começa quando o coletor entrar no ar.
 | Ranking (tela 4) | `core/raio-x/ranking.ts` | Critérios: mais aberturas, mais rápida (atraso mediano), mais pág. 1 |
 | Comparar (tela 3) | `compararLotericas` | Até 6 lotéricas; "primeiro do dia" = menor atraso, empate pela colocação |
 | Ao vivo (tela 5) | `ordemDeChegada` | Ordem por primeiro_em; filtro por UF/cidade |
+| Elite e Top (`/elite`) | `core/raio-x/elite.ts` (`listasEliteTop`), `lib/mercado.ts` (`listasElite`) | Noite = aberturas do dia sem a Loteca, T0 = a mais cedo; abriu = bolão em [T0, T0 + 2 h]; também conta (com *) a noite com 90% da franquia usada antes do T0 (limite estimado = max(R$ 8.000, maior uso diário em 30 dias)); últimas 7 noites encerradas até as 06:00 ("refeitas toda manhã"); Elite = 7/7, Top ≥ 4/7; franquia média que resta e fila média por modalidade |
 
 ## Questões em aberto (decidir com o dono do produto)
 
@@ -188,9 +196,10 @@ conta, links públicos das lotéricas monitoradas (`FONTE=caixa-links`); break-e
 Ainda abertas:
 1. **Estornado conta na franquia?** Padrão atual: NÃO conta (configurável). Confirmar com o Gabriel.
 2. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
-3. Escopo da lista com conta dedicada (cidade → UF → Brasil): confirmar com a observação de uma abertura real.
+3. Escopo da lista: a foto de SP confirmou cidade → resto do estado; falta ver se depois vem o resto do Brasil.
 4. Preços e dias de sorteio em `core/dominio/modalidades.ts` conferidos nas páginas oficiais (21/11/2026);
    a Lotofácil não informa os dias na página (mantido seg a sáb). Horário de fechamento das cotas ainda é referência.
 5. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
    Sete e palpites da Loteca (o adaptador aceita os nomes prováveis; sem eles a faixa fica como aviso).
 6. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.
+7. **Ordem dentro da fila** (chegada x aleatória): gravar uma abertura e rodar `pnpm analisar-abertura`; ajustar `VITRINE_ORDEM`.

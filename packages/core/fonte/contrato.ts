@@ -74,6 +74,10 @@ export const esquemaPagina = z.object({
   ordemDaVitrine: z.boolean(),
   obtidaEm: z.date(),
   horaServidor: z.date().optional(),
+  escopo: z
+    .object({ indice: inteiroNaoNegativo, nome: z.enum(['cidade', 'estado', 'brasil']), pagina: inteiroPositivo, totalPaginas: inteiroNaoNegativo, totalItens: inteiroNaoNegativo })
+    .optional(),
+  haMais: z.boolean().optional(),
 });
 
 export function validarPagina(p: unknown): PaginaBoloes {

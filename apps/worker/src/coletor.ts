@@ -223,7 +223,7 @@ export class Coletor {
       }
       const agora = relogio.agora().getTime();
       const keyframe = agora - (this.ultimoKeyframe.get(k) ?? 0) >= this.cfg.keyframeMs;
-      const r = aplicarLeitura(estado, leitura, { keyframe, leiturasParaSumico: this.cfg.leiturasParaSumico });
+      const r = aplicarLeitura(estado, leitura, { keyframe, leiturasParaSumico: this.cfg.leiturasParaSumico, ...(this.cfg.regraOrdem ? { regraOrdem: this.cfg.regraOrdem } : {}) });
       try {
         await repo.salvarLeitura(ref, r, coletaId, leitura.terminouEm);
         if (leitura.completa) await repo.salvarMercado(ref, minutoDe(leitura.iniciouEm), agregarMercado(leitura.itens));

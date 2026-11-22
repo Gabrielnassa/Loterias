@@ -156,3 +156,39 @@ describe('navegação, conta dedicada e modo links', () => {
     expect(portal.requisicoesLista.at(-1)!.caminho).toBe('boloes/recuperar-boloes-disponiveis-link');
   });
 });
+
+describe('escopos da vitrine: cidade -> resto do estado (portal falso)', () => {
+  let p2: PortalFalso;
+  const fontes: FonteCaixaNavegador[] = [];
+  beforeAll(async () => {
+    p2 = await iniciarPortalFalso(undefined, { escopos: [45, 30] }); // cidade 2 págs. (30 + 15), estado 1 pág.
+  });
+  afterAll(async () => {
+    for (const f of fontes) await f.fechar();
+    await p2?.fechar();
+  });
+  const criar2 = (escopos: 'cidade' | 'estado') => {
+    const f = new FonteCaixaNavegador({ baseUrl: p2.url, intervaloMinimoMs: 200, timeoutMs: 8000, backoffBaseMs: 100, modalidades: ['mega-sena'], estadoSessao: sessaoFalsa(p2.url, { termosDeUso: '1', logado: '1' }), escopos });
+    fontes.push(f);
+    return f;
+  };
+  it('padrão: lê só a cidade, com cada página marcada no escopo', async () => {
+    const f = criar2('cidade');
+    const l = await varrerConcurso(f, { modalidade: 'mega-sena', concurso: 3089 });
+    expect(l.completa).toBe(true);
+    expect(l.itens).toHaveLength(45);
+    const p1 = await f.pagina({ modalidade: 'mega-sena', concurso: 3089, pagina: 1 });
+    expect(p1.escopo).toEqual({ indice: 0, nome: 'cidade', pagina: 1, totalPaginas: 2, totalItens: 45 });
+  });
+  it('CAIXA_ESCOPOS=estado: depois da última página da cidade, segue para a página 1 do estado', async () => {
+    const f = criar2('estado');
+    const vistos: unknown[] = [];
+    const contada = { ...f, nome: f.nome, concursosAbertos: () => f.concursosAbertos(), contagens: () => f.contagens(), pagina: async (c: Parameters<typeof f.pagina>[0]) => { const p = await f.pagina(c); vistos.push([p.pagina, p.escopo?.nome, p.escopo?.pagina, p.haMais]); return p; } };
+    const l = await varrerConcurso(contada, { modalidade: 'mega-sena', concurso: 3089 });
+    expect(l.completa).toBe(true);
+    expect(l.itens).toHaveLength(75);
+    expect(vistos).toEqual([[1, 'cidade', 1, true], [2, 'cidade', 2, true], [3, 'estado', 1, false]]);
+    expect(l.itens.at(-1)!.posicaoObservada).toBe(75);
+  });
+});
+

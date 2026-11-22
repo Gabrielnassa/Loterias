@@ -46,6 +46,10 @@ const esquema = z.object({
   CAIXA_CONTA_DEDICADA: bool.default('false'),
   /** Modo caixa-links: códigos das lotéricas monitoradas, separados por vírgula. */
   CAIXA_LOTERICAS: z.string().default(''),
+  /** Até onde a varredura segue na vitrine: cidade (padrão), estado (resto da UF) ou brasil. */
+  CAIXA_ESCOPOS: z.enum(['cidade', 'estado', 'brasil']).default('cidade'),
+  /** Regra de ordem DENTRO da fila para a colocação calculada (hipótese a validar). */
+  VITRINE_ORDEM: z.enum(['fila-chegada', 'fila-aleatoria']).default('fila-chegada'),
   CAIXA_HEADLESS: bool.default('true'),
   CAIXA_INTERVALO_MS: z.coerce.number().int().positive().default(3000),
   CAIXA_TIMEOUT_MS: z.coerce.number().int().positive().default(30_000),
@@ -68,6 +72,8 @@ export interface ConfigColetor {
   maxPaginas: { abertura: number; normal: number };
   keyframeMs: number;
   leiturasParaSumico: number;
+  /** Regra de ordem dentro da fila (colocação calculada): hipótese a validar com uma abertura real. */
+  regraOrdem?: 'fila-chegada' | 'fila-aleatoria';
   pausaBloqueioMs: number;
   /** Janela da abertura e limite de participação (minutos após T0). */
   janelaMin: number;
@@ -111,6 +117,7 @@ export function lerConfig(env: NodeJS.ProcessEnv = process.env): ConfigWorker {
       maxPaginas: { abertura: amb.COLETA_MAX_PAGINAS_ABERTURA, normal: amb.COLETA_MAX_PAGINAS_NORMAL },
       keyframeMs: amb.COLETA_KEYFRAME_MIN * 60_000,
       leiturasParaSumico: amb.COLETA_LEITURAS_PARA_SUMICO,
+      regraOrdem: amb.VITRINE_ORDEM,
       pausaBloqueioMs: amb.COLETA_PAUSA_BLOQUEIO_MIN * 60_000,
       janelaMin: amb.COLETA_ABERTURA_DURACAO_MIN,
       participacaoMin: amb.COLETA_PARTICIPACAO_MIN,

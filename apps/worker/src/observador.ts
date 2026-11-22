@@ -1,6 +1,6 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { BloqueadoPelaFonteError, horaSP, planejarLeitura, varrerConcurso, type ConcursoRef, type FonteBoloes, type PaginaBoloes } from '@radar/core';
+import { BloqueadoPelaFonteError, decodificarCodigoBolao, horaSP, planejarLeitura, varrerConcurso, type ConcursoRef, type FonteBoloes, type PaginaBoloes } from '@radar/core';
 
 /**
  * Observação de uma abertura REAL, para decidir a estratégia de leitura com dados (etapa C).
@@ -137,6 +137,9 @@ export async function observarAbertura(o: OpcoesObservacao): Promise<ResumoObser
             filaMax: filas.length ? Math.max(...filas) : null,
             novos,
             horaServidor: p?.horaServidor?.toISOString() ?? null,
+            escopo: p?.escopo ?? null,
+            // ordem da página: [número do bolão (ou id), fila] — base do `pnpm analisar-abertura`
+            ordem: (p?.itens ?? []).map((b) => [decodificarCodigoBolao(b.idCaixa)?.numero ?? b.idCaixa, b.filaFonte ?? null]),
             ok: Boolean(p),
           });
         }

@@ -85,9 +85,11 @@ export async function varrerConcurso(
       vistos.add(b.idCaixa);
       itens.push({ ...b, posicaoObservada: itens.length + 1, vistoEm: pagina.obtidaEm });
     }
+    // a fonte pode dizer que a lista continua no escopo seguinte (ex.: da cidade para o estado)
     const ultima =
-      pagina.itens.length < pagina.tamanhoPagina ||
-      (pagina.totalPaginas !== undefined && p >= pagina.totalPaginas);
+      pagina.haMais !== undefined
+        ? !pagina.haMais
+        : pagina.itens.length < pagina.tamanhoPagina || (pagina.totalPaginas !== undefined && p >= pagina.totalPaginas);
     if (ultima) {
       completa = true;
       break;

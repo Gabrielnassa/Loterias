@@ -114,6 +114,16 @@ O script espera até T0 − 1 min, lê o concurso novo a cada 5 s até T0 + 31 m
 ou sessão expirada. O arquivo não tem dados pessoais. Teste sem a CAIXA:
 `FONTE=simulada pnpm observar-abertura -- --modalidade lotofacil --duracao-min 1`.
 
+Depois, meça a ordem dentro da fila (chegada x aleatória; hoje é uma hipótese, ver
+[`docs/observacoes/2026-11-21-vitrine-sp.md`](docs/observacoes/2026-11-21-vitrine-sp.md)):
+
+```bash
+pnpm analisar-abertura -- apps/worker/observacoes/ARQUIVO.jsonl
+```
+
+Ele recomenda o valor de `VITRINE_ORDEM` (`fila-chegada` ou `fila-aleatoria`). A lista da CAIXA começa pela cidade do
+comprador e depois passa para o resto do estado: `CAIXA_ESCOPOS=cidade` (padrão), `estado` ou `brasil` diz até onde ler.
+
 Resultado oficial de um concurso (o coletor também busca sozinho): `pnpm resultados -- --modalidade mega-sena --concurso 3088`
 (atrás de proxy HTTP, com `NODE_USE_ENV_PROXY=1`).
 
