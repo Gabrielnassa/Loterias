@@ -8,6 +8,17 @@ quem abre bolão, quando e em que colocação) e marketing (site da lotérica e 
 - Fonte de dados (o que a CAIXA expõe e como lemos): [`docs/fonte-caixa.md`](docs/fonte-caixa.md)
 - Onde paramos e o que vem depois: [`docs/proximos-passos.md`](docs/proximos-passos.md)
 
+## Colocar no ar
+
+O sistema roda num **VPS** (Ubuntu + Docker); o WordPress do site vira a porta de entrada pelo plugin.
+Checklist completo, em ordem: [`docs/producao.md`](docs/producao.md).
+
+| O quê | Onde |
+| --- | --- |
+| Kit do VPS (Caddy com HTTPS, web, worker, Postgres, Redis, instalador, backup) | [`deploy/hostinger-vps`](deploy/hostinger-vps/LEIAME.md) |
+| Plugin WordPress (shortcodes do Raio-X, ranking, bolões e botão do painel) | [`integracoes/wordpress/radar-loterico.zip`](integracoes/wordpress/LEIAME.md) |
+| Demonstração estática para hospedagem comum (.zip) | release **pacotes** do GitHub (workflow "Pacotes"), ou `DEMO_BASE_PATH= pnpm demo:pacote` |
+
 ## Demonstração navegável
 
 **https://gabrielnassa.github.io/Loterias/**
@@ -199,4 +210,7 @@ Veja [`.env.example`](.env.example) para todas as variáveis.
 | `packages/db` | Migrações SQL (fonte da verdade), espelho Drizzle, seed |
 | `apps/worker` | Coletor contínuo (agendador ao segundo, BullMQ, adaptadores da CAIXA, resultados) |
 | `apps/web` | Painel e site público (Next.js 15), API, CSV/Excel, artes |
-| `apps/demo` | Demonstração estática para o GitHub Pages (mesmas páginas, dados simulados no navegador) |
+| `apps/demo` | Demonstração estática para o GitHub Pages e o .zip para hospedagem comum (mesmas páginas, dados simulados no navegador) |
+| `packages/avisos` | Monitoradas, Web Push e central de notificações (web e worker) |
+| `deploy/hostinger-vps` | Produção num VPS: docker-compose, Caddy, instalador, backup |
+| `integracoes/wordpress` | Plugin WordPress (API pública com chave) |

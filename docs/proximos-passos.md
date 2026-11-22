@@ -138,3 +138,20 @@ Lote da sessão 6 concluído. Depende do Gabriel:
 
 Ideias para depois: push diário "fiados a cobrar hoje"; importar o relatório do TFL no fechamento; puxar as tarifas
 de bolão do Financeiro MKP para o DRE automaticamente; conciliação bancária.
+
+## Sessão 7 (22/11/2026) — respostas do Gabriel e produção
+
+- [x] Respostas: estornado NÃO conta na franquia (regra confirmada, sem opção); Legal Loterias fora das pendências.
+- [x] 1. Kit de produção `deploy/hostinger-vps` (compose, Caddy, .env.exemplo, instalar.sh, backup/restaurar/atualizar,
+      preparar-sessao-vnc.sh, LEIAME com a saída esperada). Testado aqui com Docker de verdade: build das imagens,
+      instalador do zero num Ubuntu 24.04 (modo --teste), HTTPS pelo Caddy, migrações, seed, cadastro e login, API
+      pública, backup como o usuário radar e restauração. API pública v1 com chaves (migração 0011) e CSP de iframe.
+- [x] 2. Plugin WordPress `integracoes/wordpress/radar-loterico.zip` (4 shortcodes, cache, configurações). Testado num
+      WordPress 6.8 / PHP 8.3 em Docker lendo o stack de produção (instalação pelo zip, shortcodes, desinstalação).
+- [x] 3. Pacote estático da demo (`pnpm demo:pacote`, `DEMO_BASE_PATH`), com .htaccess e LEIAME.txt; testado num Apache.
+      Workflow "Pacotes" publica a release `pacotes` (demo na raiz + plugin).
+- [x] 4. `docs/producao.md`: checklist em ordem.
+
+Depende do Gabriel (ordem do `docs/producao.md`): contratar o VPS, registro A `radar` → IP, e-mail de envio,
+GitHub Pages, rodar o instalador, SMTP, Asaas sandbox + webhook, preços dos planos, conta dedicada da CAIXA e a
+sessão (VNC ou exportada), gravar uma abertura, chave da API no WordPress.
