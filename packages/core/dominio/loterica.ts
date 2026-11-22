@@ -39,7 +39,7 @@ export interface LotericaConfigurada {
 
 /**
  * Lê a lista de lotéricas do dono (multi-loja): entradas separadas por vírgula ou ponto e vírgula,
- * cada uma `código` ou `código=Nome`. Ex.: "21.002894-7=Coli Loterias, 002895=Legal Loterias".
+ * cada uma `código` ou `código=Nome`. Ex.: "21.002894-7=Coli Loterias, 002895=Loja Bairro".
  * Códigos inválidos geram erro (melhor falhar na partida do que mostrar a loja errada).
  */
 export function lerLotericasConfiguradas(valor: string | undefined | null): LotericaConfigurada[] {

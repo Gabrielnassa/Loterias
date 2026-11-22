@@ -135,7 +135,7 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | Devolução | `aplicarLeitura` | Evento extra `devolucao` quando disponíveis aumentam (não previsto na SPEC) |
 | Financeiro | `core/regras/financeiro.ts` | Tarifa por cota **truncada** em centavos (portal: 20,16 → 7,05; impressos 5 × 4,32 → 7,55) ou a informada pela fonte (a tarifa é "até 35%": na foto de SP, 33,60 → 11,75 em vez de 11,76); resíduo da última cota em `valorDasApostas`. Balcão conta como vendida, gera tarifa e libera comissão; estornado zera tudo |
 | Break-even | `breakEvenGrupo` | Em cotas que ainda faltam e em % do total, somando o grupo (ex.: seus bolões de uma loteria). Guloso: a 1ª cota de um bolão sem vendas também libera a comissão dele |
-| Franquia | `core/regras/franquia.ts` | Janela [05:00, 23:00) em SP; estornados NÃO contam por padrão (dúvida aberta; `contarEstornados`) |
+| Franquia | `core/regras/franquia.ts` | Janela [05:00, 23:00) em SP; estornados NÃO contam (regra confirmada pelo Gabriel em 22/11/2026) |
 | Plano de coleta | `core/coleta/plano.ts` | Slots alinhados a T0 − 1 min; tarefa só sai quando o slot avança; atrasos não acumulam (slot perdido é contado) |
 | Estratégia de leitura | `core/coleta/estrategia.ts` + `lerPaginas` | Completa enquanto couber em 5 s; senão só a borda da 1ª fila (+1 página), completa a cada 60 s; `coletas.estrategia` registra qual foi |
 | T0 por concurso | `core/coleta/calendario.ts`, tabela `regras_abertura` | `preverAbertura` pelas regras ativas (menor prioridade primeiro); `ajustarT0` = minuto cheio do 1º bolão se o concurso foi visto vazio até 5 min antes e a previsão errou por mais de 2 min; T0 manual nunca muda (`abre_em_origem`, `abre_em_previsto`) |
@@ -164,7 +164,7 @@ Eventos de cada par de snapshots: `bolao_novo` (grava first_seen_at, posição o
 | Cobrança (Asaas) | `lib/planos/asaas.ts`, `/api/webhooks/asaas` | SÓ sandbox (`api-sandbox.asaas.com/v3`; chave `$aact_prod_` recusada); sem `ASAAS_API_KEY` = Asaas simulado. Cliente (CPF/CNPJ validado), assinatura MONTHLY PIX ou CREDIT_CARD (cartão digitado no Asaas), Pix QR. Webhook: token `asaas-access-token` = `ASAAS_WEBHOOK_TOKEN` (comparação em tempo constante), evento gravado uma vez (`webhooks_asaas.chave`), PAYMENT_CONFIRMED/RECEIVED = pago até vencimento + 1 mês, OVERDUE = atrasada, REFUNDED/CHARGEBACK = cai, SUBSCRIPTION_DELETED = cancelada (vale o já pago); responde 200 mesmo em evento ignorado |
 | Gestão da loja | `core/gestao/gestao.ts`, `apps/web/lib/gestao/*`, `/gestao/*`, migração 0010 | Registros por tipo em `gestao_registros` (jsonb; `chave` única p/ fechamento por caixa e dia). Fechamento: esperado = troco + entradas − saídas − sangrias + suprimentos; quebra = contado − esperado (tolerância R$ 0,50). Cofre (numerário, quase todo da CAIXA) = sangrias − suprimentos − recolhimentos + entregas do carro-forte, SEPARADO do dinheiro da lotérica. Fluxo de caixa e DRE só com receitas/despesas da lotérica (regime de caixa); quebras entram no DRE. Despesa fixa paga = lançamento com `despesaFixaId`. Fiados: só nome e telefone do cliente da loja (apagáveis); cobrança do dia = vencidos até hoje, cobrados hoje por último; link wa.me com a mensagem. Colaborador só nas lojas liberadas; "todas" consolida |
 | Equipe | `lib/contas/equipe.ts`, `/equipe` | Responsável (1 por conta, transferível) vê tudo; sócio tudo menos o plano e gerencia colaboradores; colaborador só as telas e lojas marcadas (nunca equipe/plano). Convite 7 dias, aceitar cria a pessoa (o token prova o e-mail) |
-| Código da lotérica | `core/dominio/loterica.ts` | Forma canônica = campo `loterica` do JSON (`2894`); aceita `21.002894-7`, `210028947`, `002894`. `RADAR_MINHA_LOTERICA` = várias lojas (`código=Nome`, separadas por vírgula). Coli Loterias (São Paulo/SP) = 2894, franquia R$ 8.000; Legal Loterias (Vila Prudente) com código a informar |
+| Código da lotérica | `core/dominio/loterica.ts` | Forma canônica = campo `loterica` do JSON (`2894`); aceita `21.002894-7`, `210028947`, `002894`. `RADAR_MINHA_LOTERICA` = várias lojas (`código=Nome`, separadas por vírgula); com contas, as lojas vêm da conta. Coli Loterias (São Paulo/SP) = 2894, franquia R$ 8.000 |
 
 ## Raio-X de Abertura: definições (SPEC)
 
@@ -204,16 +204,16 @@ fonte e ficam marcados. O histórico só começa quando o coletor entrar no ar.
 Decididas em 21/11/2026: conta DEDICADA (`FONTE=caixa-navegador` + `CAIXA_CONTA_DEDICADA=true`) e, sem
 conta, links públicos das lotéricas monitoradas (`FONTE=caixa-links`); break-even pela fórmula, em cotas e %;
 5 s até T0 + 30 min; balcão gera tarifa; T0 por concurso com regras editáveis.
+Decidida em 22/11/2026: bolão estornado NÃO conta na franquia.
 
 Ainda abertas:
-1. **Estornado conta na franquia?** Padrão atual: NÃO conta (configurável). Confirmar com o Gabriel.
-2. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
-3. Escopo da lista: a foto de SP confirmou cidade → resto do estado; falta ver se depois vem o resto do Brasil.
-4. Preços e dias de sorteio em `core/dominio/modalidades.ts` conferidos nas páginas oficiais (21/11/2026);
+1. **Fila estática x dinâmica**: o `index` da CAIXA é guardado na entrada e a cada leitura; os dados vão responder.
+2. Escopo da lista: a foto de SP confirmou cidade → resto do estado; falta ver se depois vem o resto do Brasil.
+3. Preços e dias de sorteio em `core/dominio/modalidades.ts` conferidos nas páginas oficiais (21/11/2026);
    a Lotofácil não informa os dias na página (mantido seg a sáb). Horário de fechamento das cotas ainda é referência.
-5. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
+4. Formato dos jogos no detalhe do bolão do MKP para trevos, Time do Coração, Mês da Sorte, colunas do Super
    Sete e palpites da Loteca (o adaptador aceita os nomes prováveis; sem eles a faixa fica como aviso).
-6. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.
-7. **Ordem dentro da fila** (chegada x aleatória): gravar uma abertura e rodar `pnpm analisar-abertura`; ajustar `VITRINE_ORDEM`.
-8. Como verificar que a lotérica cadastrada é mesmo de quem cadastrou (hoje fica "não verificada").
-9. Preços e limites dos planos (provisórios) e quando liberar o Asaas de produção.
+5. Super Sete: formato do resultado presumido (a API da CAIXA deu erro 500); trocar a fixture por um JSON real.
+6. **Ordem dentro da fila** (chegada x aleatória): gravar uma abertura e rodar `pnpm analisar-abertura`; ajustar `VITRINE_ORDEM`.
+7. Como verificar que a lotérica cadastrada é mesmo de quem cadastrou (hoje fica "não verificada").
+8. Preços e limites dos planos (provisórios) e quando liberar o Asaas de produção.

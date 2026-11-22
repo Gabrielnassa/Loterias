@@ -22,18 +22,14 @@ export function janelaFranquia(dia: string): { inicio: Date; fim: Date } {
   };
 }
 
-export function franquiaUsada(
-  boloes: readonly BolaoParaFranquia[],
-  dia: string,
-  opcoes: { contarEstornados?: boolean } = {},
-): number {
+/** Regra CONFIRMADA pelo dono do produto (22/11/2026): bolão estornado NÃO conta na franquia. */
+export function franquiaUsada(boloes: readonly BolaoParaFranquia[], dia: string): number {
   const { inicio, fim } = janelaFranquia(dia);
-  const contarEstornados = opcoes.contarEstornados ?? false;
   let total = 0;
   for (const b of boloes) {
     const t = b.inseridoEm.getTime();
     if (t < inicio.getTime() || t >= fim.getTime()) continue;
-    if (b.estornado && !contarEstornados) continue;
+    if (b.estornado) continue;
     total += b.cotasTotal * b.valorCotaBase;
   }
   return centavos(total);

@@ -87,8 +87,7 @@ Lote da sessão 5 concluído. Pendências conhecidas para depois:
 - Site: domínio próprio, QR code, pixel, upload de logo; Mídias: foto do bilhete (OCR), vídeos, agendamento de posts.
 - Notificações (Web Push), contas/equipe/planos (Fase 6), gestão da loja física.
 - ~~A simulação vende ~70% em média~~: calibrada com a foto real na sessão 6.
-- Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real, estorno na franquia,
-  código da Legal Loterias.
+- Pendentes com o Gabriel: sessão da conta dedicada, observar uma abertura real.
 
 ## Sessão 6 (21-22/11/2026) — demonstração, README, dados reais e Fase 6
 
@@ -134,7 +133,8 @@ Lote da sessão 6 concluído. Depende do Gabriel:
 - SMTP para os e-mails (link de acesso, convites); chaves VAPID e um teste de push num celular de verdade.
 - Asaas: conta no sandbox, `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` no .env, cadastrar o webhook; preços dos planos;
   quando liberar produção.
-- Verificar a titularidade das lotéricas cadastradas; estorno na franquia; código da Legal Loterias.
+- Verificar a titularidade das lotéricas cadastradas.
+- Respondido em 22/11/2026: estornado NÃO conta na franquia (regra confirmada); Legal Loterias saiu das pendências.
 
 Ideias para depois: push diário "fiados a cobrar hoje"; importar o relatório do TFL no fechamento; puxar as tarifas
 de bolão do Financeiro MKP para o DRE automaticamente; conciliação bancária.

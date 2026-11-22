@@ -30,9 +30,9 @@ describe('código CAIXA da lotérica (Coli Loterias: 21.002894-7)', () => {
 
 describe('várias lotéricas na configuração (multi-loja)', () => {
   it('lê código ou código=Nome, separados por vírgula ou ponto e vírgula', () => {
-    expect(lerLotericasConfiguradas('21.002894-7=Coli Loterias; 2895 = Legal Loterias, 002894')).toEqual([
+    expect(lerLotericasConfiguradas('21.002894-7=Coli Loterias; 2895 = Loja Bairro, 002894')).toEqual([
       { codigoCaixa: '2894', codigoInformado: '21.002894-7', nome: 'Coli Loterias' },
-      { codigoCaixa: '2895', codigoInformado: '2895', nome: 'Legal Loterias' },
+      { codigoCaixa: '2895', codigoInformado: '2895', nome: 'Loja Bairro' },
     ]);
     expect(lerLotericasConfiguradas('2894')).toEqual([{ codigoCaixa: '2894', codigoInformado: '2894' }]);
     expect(lerLotericasConfiguradas('')).toEqual([]);

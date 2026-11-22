@@ -115,10 +115,9 @@ describe('franquia diária (05:00 a 23:00, valor sem tarifa)', () => {
     expect(franquiaUsada(boloes, dia)).toBe(900);
   });
 
-  it('estornados NÃO contam por padrão (dúvida aberta); opção para contar', () => {
+  it('estornados NÃO contam na franquia (regra confirmada em 22/11/2026)', () => {
     const boloes = [b(10, 0, 0, 500), b(11, 0, 0, 700, true)];
     expect(franquiaUsada(boloes, dia)).toBe(500);
-    expect(franquiaUsada(boloes, dia, { contarEstornados: true })).toBe(1200);
   });
 
   it('bolão de outro dia não entra', () => {
