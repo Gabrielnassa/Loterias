@@ -152,6 +152,7 @@ de bolão do Financeiro MKP para o DRE automaticamente; conciliação bancária.
       Workflow "Pacotes" publica a release `pacotes` (demo na raiz + plugin).
 - [x] 4. `docs/producao.md`: checklist em ordem.
 
+GitHub Pages: já ativo (deploy de 22/11/2026 ok). Pacotes: release `pacotes` publicada pelo workflow.
 Depende do Gabriel (ordem do `docs/producao.md`): contratar o VPS, registro A `radar` → IP, e-mail de envio,
-GitHub Pages, rodar o instalador, SMTP, Asaas sandbox + webhook, preços dos planos, conta dedicada da CAIXA e a
+rodar o instalador, SMTP, Asaas sandbox + webhook, preços dos planos, conta dedicada da CAIXA e a
 sessão (VNC ou exportada), gravar uma abertura, chave da API no WordPress.

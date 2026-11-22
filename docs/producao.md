@@ -17,8 +17,8 @@ Siga na ordem. O que é clique ou contrato está marcado com ☐.
    IP do VPS. Espere propagar (`nslookup radar.nassatech.com.br` devolve o IP).
 3. ☐ **E-mail de envio**: hPanel › E-mails: crie `nao-responda@nassatech.com.br` (para os links de acesso e os
    convites). Anote a senha.
-4. ☐ **GitHub Pages** (demonstração pública): no repositório, Settings › Pages › Source = **GitHub Actions** e
-   rode o workflow "Demonstração (GitHub Pages)" uma vez.
+4. ☑ **GitHub Pages** (demonstração pública): já ativado; o workflow publica sozinho em
+   https://gabrielnassa.github.io/Loterias/ a cada mudança e todo dia de manhã.
 
 ## 2. Instalar o sistema no VPS
 
