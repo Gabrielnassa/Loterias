@@ -31,6 +31,12 @@ function lerIdAbertura(id: string): { slug: string; numero: number } | null {
   return m ? { slug: m[1]!, numero: Number(m[2]) } : null;
 }
 
+/** FONTE do coletor que não é a vitrine real da CAIXA (vazia = não informada à web). */
+export function fonteDeTeste(fonte: string | undefined): boolean {
+  const f = (fonte ?? '').trim().toLowerCase();
+  return f !== '' && !f.startsWith('caixa');
+}
+
 export class FontePostgresRaioX implements FonteDadosRaioX {
   readonly tipo = 'postgres' as const;
   /** Conexão (usada também pela "Minha lotérica"). */
@@ -59,9 +65,14 @@ export class FontePostgresRaioX implements FonteDadosRaioX {
     return valor;
   }
 
+  /**
+   * Aviso "dados simulados": enquanto o coletor rodar com uma fonte de teste (FONTE=simulada ou fixture,
+   * o modo inicial da produção até existir a sessão da conta dedicada da CAIXA) ou houver dados do seed.
+   */
   async simulado(): Promise<boolean> {
+    if (fonteDeTeste(process.env.FONTE)) return true;
     return this.cache('simulado', async () => {
-      const [r] = await this.sql<{ existe: boolean }[]>`select exists(select 1 from concursos where origem = 'seed') as existe`;
+      const [r] = await this.sql<{ existe: boolean }[]>`select exists(select 1 from concursos where origem in ('seed', 'simulacao')) as existe`;
       return r?.existe ?? false;
     });
   }

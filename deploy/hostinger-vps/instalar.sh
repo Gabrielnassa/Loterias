@@ -3,17 +3,19 @@
 # Radar Lotérico: instalação num VPS Ubuntu LIMPO (22.04 ou 24.04), por exemplo um VPS KVM da Hostinger.
 #
 #   curl -fsSL https://raw.githubusercontent.com/gabrielnassa/Loterias/claude/peaceful-noether-hs112s/deploy/hostinger-vps/instalar.sh -o instalar.sh
-#   sudo bash instalar.sh --dominio radar.nassatech.com.br --email voce@exemplo.com [--seed]
+#   sudo bash instalar.sh --dominio radar.nassatech.com.br --email voce@exemplo.com [--seed] [--construir]
 #
+# (Sem SSH, pelo Docker Manager da Hostinger: use só o docker-compose.yaml; ver VARIAVEIS.md.)
 # O que faz (pode rodar de novo sem estragar nada):
 #   1. atualiza o sistema e instala Docker, git, firewall (ufw), fail2ban e atualizações automáticas;
 #   2. cria o usuário "radar" (dono dos arquivos, sem senha; entra com a sua chave SSH);
-#   3. cria 2 GB de swap se o VPS tiver pouca memória (o build do Next.js precisa);
+#   3. cria 2 GB de swap se o VPS tiver pouca memória;
 #   4. libera no firewall só SSH, 80 e 443;
-#   5. baixa o sistema em /opt/radar, cria o .env com senhas e chaves geradas;
-#   6. constrói as imagens, sobe tudo (Caddy com HTTPS, web, worker, Postgres, Redis) e roda as migrações;
-#   7. (opcional, --seed) grava dados SIMULADOS de demonstração no banco;
-#   8. agenda o backup diário do Postgres (03:30, guarda 14 dias).
+#   5. baixa o sistema em /opt/radar, cria o .env com as senhas geradas;
+#   6. baixa as imagens prontas (ghcr.io) ou, com --construir, constrói aqui; sobe tudo (Caddy com HTTPS,
+#      web, worker, Postgres, Redis, backup); o "migrate" roda as migrações e gera as chaves VAPID;
+#   7. (opcional, --seed) o "migrate" grava dados SIMULADOS de demonstração no banco;
+#   8. backup diário do Postgres pelo serviço "backup" (03:30 de Brasília, guarda 14 dias).
 # =====================================================================================================
 set -euo pipefail
 
@@ -25,18 +27,20 @@ DOMINIO=""
 EMAIL=""
 SEED=0
 TESTE=0
+CONSTRUIR=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --dominio) DOMINIO="$2"; shift 2 ;;
     --email) EMAIL="$2"; shift 2 ;;
     --seed) SEED=1; shift ;;
+    --construir) CONSTRUIR=1; shift ;;
     --repo) REPO="$2"; shift 2 ;;
     --branch) BRANCH="$2"; shift 2 ;;
     --destino) DESTINO="$2"; shift 2 ;;
     # --teste: pula o upgrade do sistema, o firewall, o swap e os serviços (para testar o script)
     --teste) TESTE=1; shift ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
     *) echo "opção desconhecida: $1" >&2; exit 2 ;;
   esac
 done
@@ -116,8 +120,7 @@ else
 fi
 chown -R "$USUARIO:$USUARIO" "$DESTINO"
 cd "${DESTINO}/deploy/hostinger-vps"
-install -d -o "$USUARIO" -g "$USUARIO" sessao-caixa backups
-install -d -o 1001 -g 1001 observacoes 2>/dev/null || install -d observacoes
+install -d -o "$USUARIO" -g "$USUARIO" backups
 
 # .env com segredos gerados (só preenche o que estiver vazio)
 if [ ! -f .env ]; then cp .env.exemplo .env; fi
@@ -132,6 +135,11 @@ sed -i "s|^DOMINIO=.*|DOMINIO=${DOMINIO}|" .env
 definir EMAIL_ACME "$EMAIL"
 definir POSTGRES_PASSWORD "$(openssl rand -hex 24)"
 definir ASAAS_WEBHOOK_TOKEN "$(openssl rand -hex 24)"
+if [ "$SEED" -eq 1 ]; then sed -i "s|^SEED_DEMO=.*|SEED_DEMO=true|" .env; fi
+if [ "$CONSTRUIR" -eq 1 ]; then
+  if grep -qE '^COMPOSE_FILE=' .env; then sed -i "s|^COMPOSE_FILE=.*|COMPOSE_FILE=docker-compose.yaml:docker-compose.build.yml|" .env
+  else echo "COMPOSE_FILE=docker-compose.yaml:docker-compose.build.yml" >> .env; fi
+fi
 chmod 600 .env
 chown "$USUARIO:$USUARIO" .env
 ok ".env pronto (senhas geradas; ele NÃO vai para o git)"
@@ -143,33 +151,28 @@ if [ -n "$ip_publico" ] && [ "$ip_dns" != "$ip_publico" ]; then
   aviso "o HTTPS só funciona depois que o registro A apontar para ${ip_publico} (o Caddy tenta de novo sozinho)."
 fi
 
-passo "6/8 Construindo as imagens (pode levar 5 a 15 minutos na 1ª vez)"
-docker compose --env-file .env build
-if [ -z "$(grep -E '^VAPID_PUBLIC_KEY=' .env | cut -d= -f2-)" ]; then
-  chaves=$(docker compose --env-file .env run --rm --no-deps migrar pnpm --silent --filter @radar/avisos vapid)
-  definir VAPID_PUBLIC_KEY "$(echo "$chaves" | grep '^VAPID_PUBLIC_KEY=' | cut -d= -f2-)"
-  definir VAPID_PRIVATE_KEY "$(echo "$chaves" | grep '^VAPID_PRIVATE_KEY=' | cut -d= -f2-)"
-  ok "chaves VAPID (Web Push) geradas"
+if grep -qE '^COMPOSE_FILE=.*build' .env; then
+  passo "6/8 Construindo as imagens aqui (pode levar 5 a 15 minutos na 1ª vez)"
+  docker compose --env-file .env build
+else
+  passo "6/8 Baixando as imagens prontas (ghcr.io)"
+  docker compose --env-file .env pull --quiet
 fi
 docker compose --env-file .env up -d
-ok "serviços no ar"
-docker compose --env-file .env ps
+ok "serviços no ar (o migrate já rodou as migrações e gerou as chaves VAPID)"
+docker compose --env-file .env ps -a
 
-if [ "$SEED" -eq 1 ]; then
+if grep -qE '^SEED_DEMO=true' .env; then
   passo "7/8 Dados SIMULADOS de demonstração (o painel avisa que são simulados)"
-  docker compose --env-file .env run --rm migrar pnpm --filter @radar/db seed
 else
   passo "7/8 Sem seed (use --seed para ver o painel com dados simulados)"
 fi
+docker compose --env-file .env logs --no-color --no-log-prefix migrate | grep -E "seed|fictícios|VAPID|migrações" || true
 
-passo "8/8 Backup diário do Postgres (03:30, guarda 14 dias)"
+passo "8/8 Backup diário do Postgres (serviço backup: 03:30 de Brasília, guarda 14 dias)"
 chmod +x backup.sh restaurar.sh atualizar.sh preparar-sessao-vnc.sh
-cat > /etc/cron.d/radar-backup <<CRON
-SHELL=/bin/bash
-30 3 * * * ${USUARIO} ${DESTINO}/deploy/hostinger-vps/backup.sh >> ${DESTINO}/deploy/hostinger-vps/backups/backup.log 2>&1
-CRON
-chmod 644 /etc/cron.d/radar-backup
-ok "agendado em /etc/cron.d/radar-backup"
+rm -f /etc/cron.d/radar-backup
+ok "no volume radar_backups; ./backup.sh faz um na hora em ./backups"
 
 printf '\n\033[1;32mPronto!\033[0m Abra https://%s/cadastro para criar a conta do responsável.\n' "$DOMINIO"
 echo "Logs: cd ${DESTINO}/deploy/hostinger-vps && docker compose logs -f web worker"

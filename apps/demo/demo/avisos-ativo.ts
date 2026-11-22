@@ -54,7 +54,8 @@ export function repositorioAvisos(): RepositorioAvisos | null {
   return repo;
 }
 
-export const chavePublicaVapid = (): string | null => null;
+export const chavePublicaVapid = async (): Promise<string | null> => null;
+export const chavesVapidServidor = async () => null;
 
 export { membrosDaMemoria };
 

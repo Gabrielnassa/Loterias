@@ -1,0 +1,114 @@
+# Imagens Docker do Radar Lotérico no GitHub Container Registry, para o Docker Manager da Hostinger (que
+# só recebe um docker-compose.yaml e variáveis: não faz build no servidor):
+#   ghcr.io/<dono>/radar-web      Next.js (painel, site público, API)
+#   ghcr.io/<dono>/radar-worker   coletor com Playwright e Chromium
+#   ghcr.io/<dono>/radar-migrate  migrações + chaves VAPID + dados de demonstração (roda e sai)
+# Tags: latest, o SHA completo do commit e sha-<7 primeiros>. Depois do build, o job "teste" sobe o
+# deploy/hostinger-vps/docker-compose.yaml com as imagens recém-publicadas e confere o HTTPS.
+name: Imagens Docker (GHCR)
+
+on:
+  push:
+    branches: [claude/peaceful-noether-hs112s]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: imagens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: radar-web
+            dockerfile: apps/web/Dockerfile
+            descricao: Radar Lotérico - web (Next.js)
+          - nome: radar-worker
+            dockerfile: apps/worker/Dockerfile
+            descricao: Radar Lotérico - coletor (Playwright + Chromium)
+          - nome: radar-migrate
+            dockerfile: packages/db/Dockerfile
+            descricao: Radar Lotérico - migrações e preparação do banco
+    steps:
+      - uses: actions/checkout@v4
+      - name: Nome da imagem (dono em minúsculas)
+        id: nome
+        run: |
+          dono="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "imagem=ghcr.io/${dono}/${{ matrix.nome }}" >> "$GITHUB_OUTPUT"
+          echo "curto=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          provenance: false
+          tags: |
+            ${{ steps.nome.outputs.imagem }}:latest
+            ${{ steps.nome.outputs.imagem }}:${{ github.sha }}
+            ${{ steps.nome.outputs.imagem }}:sha-${{ steps.nome.outputs.curto }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.description=${{ matrix.descricao }}
+            org.opencontainers.image.licenses=NOASSERTION
+          annotations: |
+            org.opencontainers.image.description=${{ matrix.descricao }}
+          cache-from: type=gha,scope=${{ matrix.nome }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.nome }},ignore-error=true
+
+  teste:
+    # sobe o compose do Docker Manager com as imagens deste commit, como a Hostinger faria
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Subir o deploy/hostinger-vps/docker-compose.yaml
+        working-directory: deploy/hostinger-vps
+        env:
+          RADAR_IMAGENS: ghcr.io/${{ github.repository_owner }}
+          RADAR_VERSAO: ${{ github.sha }}
+          DOMINIO: localhost
+          POSTGRES_PASSWORD: teste${{ github.run_id }}
+          SEED_DEMO: 'false'
+          # só no teste: painel aberto, para conferir o aviso "dados simulados" e a chave VAPID sem login
+          RADAR_AUTH: desligado
+        run: |
+          export RADAR_IMAGENS="${RADAR_IMAGENS,,}"
+          docker compose -f docker-compose.yaml config --quiet
+          docker compose -f docker-compose.yaml up -d
+      - name: Esperar o HTTPS responder (até 4 min)
+        run: |
+          for i in $(seq 1 48); do
+            if curl -skf --resolve localhost:443:127.0.0.1 https://localhost/entrar -o /dev/null; then echo "web no ar (${i})"; break; fi
+            sleep 5
+          done
+          curl -skf https://localhost/ | grep -q "Dados simulados" && echo "painel com o aviso de dados simulados: OK"
+          curl -skf https://localhost/api/push | grep -q '"chavePublica":"B' && echo "chave VAPID gerada pelo migrate: OK"
+          curl -sf -o /dev/null -w "HTTP %{http_code} -> %{redirect_url}\n" http://localhost/
+      - name: Estado dos serviços
+        if: always()
+        working-directory: deploy/hostinger-vps
+        run: |
+          docker compose -f docker-compose.yaml ps -a
+          docker compose -f docker-compose.yaml logs --no-color migrate web worker caddy | tail -200
+          test "$(docker compose -f docker-compose.yaml ps -a migrate --format '{{.ExitCode}}')" = "0"

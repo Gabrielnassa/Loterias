@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Backup do Postgres (formato custom do pg_dump, comprimido) em ./backups, guardando 14 dias.
-# Agendado pelo instalar.sh para 03:30. Rodar à mão: ./backup.sh
+# O backup DIÁRIO é o serviço "backup" do compose (volume radar_backups). Este faz um na hora: ./backup.sh
 # Cópia para fora do VPS (recomendado): defina BACKUP_RCLONE_DESTINO no .env (ex.: gdrive:radar-backups)
 # depois de configurar o rclone (rclone config).
 set -euo pipefail

@@ -1,13 +1,13 @@
 import { PREFERENCIAS_PADRAO } from '@radar/core';
 import { criarEnviarPush } from '@radar/avisos/push';
-import { chavePublicaVapid, repositorioAvisos } from '@/lib/avisos/ativo';
+import { chavePublicaVapid, chavesVapidServidor, repositorioAvisos } from '@/lib/avisos/ativo';
 import { contexto } from '@/lib/contexto';
 
 export const dynamic = 'force-dynamic';
 
 /** GET /api/push: chave pública VAPID (null = Web Push desligado no servidor). */
 export async function GET() {
-  return Response.json({ chavePublica: chavePublicaVapid() });
+  return Response.json({ chavePublica: await chavePublicaVapid() });
 }
 
 type Inscricao = { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     return Response.json({ ok: 'notificações ligadas neste aparelho', aparelho: { id: a.id } });
   }
   if (d.acao === 'testar') {
-    const enviar = criarEnviarPush();
-    if (!enviar) return Response.json({ erro: 'Web Push desligado no servidor (defina VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY)' }, { status: 409 });
+    const enviar = criarEnviarPush(await chavesVapidServidor());
+    if (!enviar) return Response.json({ erro: 'Web Push desligado no servidor (sem chaves VAPID: rode o migrate ou defina VAPID_PUBLIC_KEY e VAPID_PRIVATE_KEY)' }, { status: 409 });
     const ap = d.endpoint ? await repo.aparelhoPorEndpoint(d.endpoint) : null;
     if (!ap || ap.usuarioId !== ctx.usuario.id) return Response.json({ erro: 'aparelho não encontrado: ligue as notificações primeiro' }, { status: 404 });
     const r = await enviar(ap, { titulo: 'Radar Lotérico', corpo: 'Teste: as notificações deste aparelho estão funcionando.', url: '/notificacoes', chave: `teste:${Date.now()}`, categoria: 'sistema' });

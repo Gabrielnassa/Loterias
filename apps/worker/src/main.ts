@@ -1,7 +1,10 @@
+import { writeFileSync } from 'node:fs';
 import { GeradorDeAlertas } from '@radar/avisos/gerar';
 import { RepositorioAvisosPostgres } from '@radar/avisos/postgres';
-import { criarEnviarPush } from '@radar/avisos/push';
+import { assuntoVapid, criarEnviarPush } from '@radar/avisos/push';
 import { criarDb, criarSql, garantirParticoes, migrar, removerParticoesAntigas } from '@radar/db';
+import { garantirChavesVapid } from '@radar/db/config-sistema';
+import { limparDadosDeOrigem } from '@radar/db/seed';
 import { Agendador } from './agendador';
 import { Coletor } from './coletor';
 import { lerConfig } from './config';
@@ -35,8 +38,10 @@ async function principal() {
   finalizar.push(() => clearInterval(ntpTimer));
 
   let repo: Repositorio;
+  let sqlPostgres: ReturnType<typeof criarSql> | null = null;
   if (amb.REPOSITORIO === 'postgres') {
     const sql = criarSql(amb.DATABASE_URL!);
+    sqlPostgres = sql;
     finalizar.push(() => sql.end({ timeout: 5 }));
     if (amb.MIGRAR_NA_PARTIDA) await migrar(sql, (m) => log.info(m));
     const manutencao = async () => {
@@ -53,8 +58,12 @@ async function principal() {
     finalizar.push(() => clearInterval(manutTimer));
     repo = new RepositorioPostgres(criarDb(sql));
     if (amb.ALERTAS) {
-      // Fase 6: alertas da central e Web Push (sem VAPID_* configurado, só a central)
-      const enviar = criarEnviarPush();
+      // Fase 6: alertas da central e Web Push (chaves do ambiente ou as guardadas no banco)
+      const vapid = await garantirChavesVapid(sql).catch((e) => {
+        log.warn({ erro: e instanceof Error ? e.message : String(e) }, 'sem chaves VAPID: alertas só na central');
+        return null;
+      });
+      const enviar = criarEnviarPush(vapid ? { publica: vapid.publica, privada: vapid.privada, assunto: assuntoVapid() } : null);
       const gerador = new GeradorDeAlertas(sql, new RepositorioAvisosPostgres(sql), enviar, log);
       let rodando = false;
       const alertas = setInterval(() => {
@@ -71,8 +80,13 @@ async function principal() {
 
   const { fonte, simulacoes } = criarFonte(cfg, relogio);
   if (fonte.fechar) finalizar.push(() => fonte.fechar!());
+  if (simulacoes.length && sqlPostgres) {
+    // cada partida da simulação começa do zero (o T0 é sempre "daqui a 90 s"); nada real é tocado
+    const n = await limparDadosDeOrigem(criarDb(sqlPostgres), 'simulacao');
+    if (n) log.info({ concursos: n }, 'abertura simulada anterior removida');
+  }
   for (const s of simulacoes) {
-    await repo.salvarConcursos([{ modalidade: s.modalidade, concurso: s.concurso, abreEm: s.t0, fechaEm: s.fechaEm, origem: 'manual' }]);
+    await repo.salvarConcursos([{ modalidade: s.modalidade, concurso: s.concurso, abreEm: s.t0, abreEmOrigem: 'manual', fechaEm: s.fechaEm, origem: 'simulacao' }]);
     log.info({ concurso: `${s.modalidade} ${s.concurso}`, t0: s.t0.toISOString(), boloes: s.boloes.length }, 'abertura SIMULADA cadastrada');
   }
 
@@ -117,6 +131,19 @@ async function principal() {
 
   const status = setInterval(() => log.info({ agendador: agendador.estatisticas, pausadoAte: coletor.pausadoAte || null }, 'status do coletor'), 60_000);
   finalizar.unshift(() => clearInterval(status));
+  // healthcheck do container: o arquivo é tocado enquanto o processo estiver respondendo
+  if (amb.VIVO_ARQUIVO) {
+    const vivo = () => {
+      try {
+        writeFileSync(amb.VIVO_ARQUIVO, `${new Date().toISOString()} ${fonte.nome}\n`);
+      } catch {
+        // sem permissão de escrita: só não há healthcheck
+      }
+    };
+    vivo();
+    const vivoTimer = setInterval(vivo, 30_000);
+    finalizar.unshift(() => clearInterval(vivoTimer));
+  }
 
   let saindo = false;
   const sair = async (sinal: string) => {

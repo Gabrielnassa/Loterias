@@ -24,8 +24,8 @@ export interface ConcursoParaSalvar {
   premioEstimado?: number;
   acumulado?: boolean;
   especial?: boolean;
-  /** fonte = visto na CAIXA; previsao = abertura prevista pelo calendário; manual = cadastrado. */
-  origem: 'fonte' | 'previsao' | 'manual';
+  /** fonte = visto na CAIXA; previsao = abertura prevista pelo calendário; manual = cadastrado; simulacao = FONTE=simulada (fictício). */
+  origem: 'fonte' | 'previsao' | 'manual' | 'simulacao';
 }
 
 export interface InicioColeta {

@@ -9,7 +9,7 @@
  * e tecle Enter: os cookies/armazenamento da sessão são salvos no arquivo (fora do git).
  * O coletor só reutiliza esse arquivo; ele nunca responde a pergunta nem faz login sozinho.
  */
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium } from 'playwright';
@@ -32,6 +32,9 @@ async function preparar() {
   await ctx.storageState({ path: destino });
   await browser.close();
   console.log(`\nSessão salva em ${destino}. Use CAIXA_SESSAO=${destino} FONTE=caixa-navegador.`);
+  console.log('Servidor sem arquivos (Docker Manager da Hostinger): cole o conteúdo abaixo na variável CAIXA_SESSAO_JSON.');
+  console.log(`  base64: ${readFileSync(destino).toString('base64').length} caracteres; gere com \`base64 -w0 ${destino}\` (Linux),`);
+  console.log(`  \`base64 -i ${destino}\` (macOS) ou [Convert]::ToBase64String([IO.File]::ReadAllBytes("${destino}")) (PowerShell).`);
   console.log('Este arquivo contém cookies de sessão: não versione e não compartilhe.');
 }
 

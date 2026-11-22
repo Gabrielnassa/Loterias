@@ -472,6 +472,13 @@ export const chavesApi = pgTable('chaves_api', {
   revogadaEm: tz('revogada_em'),
 });
 
+// Configuração gerada pelo sistema (0012_config_sistema.sql)
+export const configSistema = pgTable('config_sistema', {
+  chave: text('chave').primaryKey(),
+  valor: text('valor').notNull(),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -505,4 +512,5 @@ export const todasAsTabelas = {
   webhooksAsaas,
   gestaoRegistros,
   chavesApi,
+  configSistema,
 };

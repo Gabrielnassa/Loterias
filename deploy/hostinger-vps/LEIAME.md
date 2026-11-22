@@ -7,16 +7,27 @@ WordPress vira a porta de entrada, com o plugin em `integracoes/wordpress/radar-
 Este kit foi testado de verdade em 22/11/2026, num Ubuntu 24.04 limpo: build das imagens, Caddy com HTTPS,
 migrações, seed, cadastro e login, API pública, backup e restauração.
 
+**Duas formas de instalar, com o mesmo `docker-compose.yaml`:**
+
+- **Sem SSH, pelo Docker Manager da Hostinger** (hPanel › VPS › Docker Manager): informe a URL raw do compose
+  `https://raw.githubusercontent.com/gabrielnassa/Loterias/claude/peaceful-noether-hs112s/deploy/hostinger-vps/docker-compose.yaml`
+  e as variáveis de [`VARIAVEIS.md`](VARIAVEIS.md) (no mínimo `DOMINIO` e `POSTGRES_PASSWORD`). As imagens já vêm
+  prontas do GitHub (`ghcr.io/gabrielnassa/radar-web`, `radar-worker`, `radar-migrate`, publicadas pelo workflow
+  "Imagens Docker" a cada push). Não há build no servidor.
+- **Com SSH** (este passo a passo): o `instalar.sh` prepara o Ubuntu (firewall, usuário, swap), cria o `.env` com
+  as senhas e sobe o mesmo compose.
+
 ## O que tem aqui
 
 | Arquivo | Para quê |
 | --- | --- |
-| `docker-compose.yml` | Caddy (HTTPS automático) → web; worker (coletor + alertas); Postgres 16; Redis; `migrar` (roda as migrações e sai) |
-| `Caddyfile` | Domínio, certificado Let's Encrypt, HTTP→HTTPS e cabeçalhos de segurança |
-| `.env.exemplo` | Todas as configurações, comentadas. O `instalar.sh` copia para `.env` e gera as senhas |
+| `docker-compose.yaml` | Autossuficiente, só imagens prontas: Caddy (HTTPS automático, Caddyfile embutido) → web; worker (coletor + alertas); Postgres 16; Redis; `migrate` (migrações, chaves VAPID e dados de demonstração; roda e sai); `backup` (pg_dump diário num volume) |
+| `VARIAVEIS.md` | Todas as variáveis (obrigatórias, opcionais, exemplo, se é segredo) e o modo de fonte inicial |
+| `docker-compose.build.yml` | Complemento para construir as imagens na própria VPS (`instalar.sh --construir`) |
+| `.env.exemplo` | As mesmas variáveis, comentadas. O `instalar.sh` copia para `.env` e gera as senhas |
 | `instalar.sh` | Instala tudo num Ubuntu limpo (pode rodar de novo sem estragar nada) |
-| `backup.sh` / `restaurar.sh` | Backup diário do Postgres (03:30, 14 dias) e restauração |
-| `atualizar.sh` | Backup, baixa a versão nova do GitHub, reconstrói e sobe |
+| `backup.sh` / `restaurar.sh` | Backup na hora em `./backups` (o diário é o serviço `backup`) e restauração |
+| `atualizar.sh` | Backup, baixa a versão nova (repositório e imagens) e sobe |
 | `preparar-sessao-vnc.sh` | Navegador temporário no VPS, visto por VNC via túnel SSH, para uma pessoa preparar a sessão da CAIXA |
 
 ## Passo a passo
@@ -64,7 +75,7 @@ sudo bash instalar.sh --dominio radar.nassatech.com.br --email SEU-EMAIL --seed
 `--seed` grava dados SIMULADOS para você conhecer as telas (o painel avisa "dados simulados"). Sem ele, o
 banco começa vazio e enche conforme o coletor lê a vitrine.
 
-O que aparece (saída real do teste, resumida; a 1ª construção leva de 5 a 15 minutos):
+O que aparece (saída real do teste, resumida; baixar as imagens leva 2 a 5 minutos; com `--construir`, 5 a 15):
 
 ```text
 ==> 1/8 Atualizando o sistema e instalando o básico
@@ -80,21 +91,22 @@ O que aparece (saída real do teste, resumida; a 1ª construção leva de 5 a 15
 ==> 5/8 Baixando o sistema em /opt/radar
     ok: clonado (57f6ba4)
     ok: .env pronto (senhas geradas; ele NÃO vai para o git)
-==> 6/8 Construindo as imagens (pode levar 5 a 15 minutos na 1ª vez)
- Image radar-loterico-worker:local Built
- Image radar-loterico-web:local Built
-    ok: chaves VAPID (Web Push) geradas
-    ok: serviços no ar
-NAME               IMAGE                         SERVICE    STATUS
-radar-caddy-1      caddy:2.10-alpine             caddy      Up
-radar-postgres-1   postgres:16-alpine            postgres   Up (healthy)
-radar-redis-1      redis:7.4-alpine              redis      Up (healthy)
-radar-web-1        radar-loterico-web:local      web        Up (health: starting)
-radar-worker-1     radar-loterico-worker:local   worker     Up
+==> 6/8 Baixando as imagens prontas (ghcr.io)
+    ok: serviços no ar (o migrate já rodou as migrações e gerou as chaves VAPID)
+SERVICE    STATUS
+backup     Up 2 minutes (healthy)
+caddy      Up 53 seconds (healthy)
+migrate    Exited (0) 57 seconds ago
+postgres   Up 2 minutes (healthy)
+redis      Up 2 minutes (healthy)
+web        Up 56 seconds (healthy)
+worker     Up 57 seconds (healthy)
 ==> 7/8 Dados SIMULADOS de demonstração (o painel avisa que são simulados)
-seed gravado: 128666 bolões, 53079 participações
-==> 8/8 Backup diário do Postgres (03:30, guarda 14 dias)
-    ok: agendado em /etc/cron.d/radar-backup
+migrações: 12 nova(s)
+chaves VAPID: guardadas no banco
+seed de demonstração gravado em 59 s: 129244 bolões
+==> 8/8 Backup diário do Postgres (serviço backup: 03:30 de Brasília, guarda 14 dias)
+    ok: no volume radar_backups; ./backup.sh faz um na hora em ./backups
 
 Pronto! Abra https://radar.nassatech.com.br/cadastro para criar a conta do responsável.
 ```
@@ -147,7 +159,7 @@ Para usar só nas suas lojas, sem cobrar ninguém, deixe `RADAR_PLANOS=livre` (j
 
 ### 7. Notificações no celular
 
-As chaves VAPID já foram geradas. No celular: abra o painel, toque em **Compartilhar › Adicionar à Tela de
+As chaves VAPID já foram geradas pelo `migrate` (ficam no banco). No celular: abra o painel, toque em **Compartilhar › Adicionar à Tela de
 Início** (no iPhone é obrigatório para receber push), abra pelo ícone, vá em **Notificações › Ligar
 notificações neste aparelho** e toque em **Enviar um teste**.
 
@@ -173,16 +185,22 @@ No navegador que aparece: responda a idade, entre com a conta DEDICADA e abra a 
 terminal do VPS e tecle Enter.
 
 **B. Pelo seu computador (sessão exportada):** com o repositório e o Node instalados, rode
-`pnpm caixa:preparar-sessao`, depois copie o arquivo:
+`pnpm caixa:preparar-sessao`, depois copie o arquivo para o VPS e ponha o conteúdo em base64 no `.env`
+(é o mesmo `CAIXA_SESSAO_JSON` do Docker Manager):
 
 ```bash
-scp .sessao-caixa/estado.json radar@IP-DO-VPS:/opt/radar/deploy/hostinger-vps/sessao-caixa/estado.json
+scp .sessao-caixa/estado.json radar@IP-DO-VPS:/tmp/estado.json
 ```
 
-Em qualquer caso, no `.env`: `FONTE=caixa-navegador` e `CAIXA_CONTA_DEDICADA=true`. Depois:
+```bash
+cd /opt/radar/deploy/hostinger-vps && sed -i '/^CAIXA_SESSAO_JSON=/d' .env && echo "CAIXA_SESSAO_JSON=$(base64 -w0 /tmp/estado.json)" >> .env && rm /tmp/estado.json
+```
+
+Em qualquer caso, no `.env`: `FONTE=caixa-navegador` e `CAIXA_CONTA_DEDICADA=true`. Depois (o `migrate` apaga
+os dados fictícios e a faixa "dados simulados" some):
 
 ```bash
-cd /opt/radar/deploy/hostinger-vps && docker compose up -d worker && docker compose logs -f worker
+cd /opt/radar/deploy/hostinger-vps && docker compose up -d && docker compose logs -f worker
 ```
 
 Sem conta, dá para acompanhar só lotéricas específicas pelos links públicos: `FONTE=caixa-links` e
@@ -203,7 +221,7 @@ Sem conta, dá para acompanhar só lotéricas específicas pelos links públicos
 | Ver se está tudo de pé | `docker compose ps` |
 | Logs ao vivo | `docker compose logs -f web worker` |
 | Atualizar para a versão nova | `./atualizar.sh` |
-| Backup agora | `./backup.sh` (ficam em `backups/`; copie para fora do VPS de vez em quando) |
+| Backup agora | `./backup.sh` (em `backups/`; os diários ficam no volume `radar_backups`) |
 | Restaurar | `./restaurar.sh backups/radar-AAAAMMDD-HHMM.dump` |
 | Reiniciar só o coletor | `docker compose restart worker` |
 | Mudou o `.env` | `docker compose up -d` |
@@ -215,7 +233,8 @@ Backup fora do VPS (recomendado): instale e configure o `rclone` (ex.: Google Dr
 
 - Só as portas 22, 80 e 443 ficam abertas (ufw); fail2ban protege o SSH.
 - Banco e Redis não ficam expostos: só os containers falam com eles.
-- `.env`, `sessao-caixa/` e `backups/` não vão para o git (e o `.env` fica com permissão 600).
+- `.env` e `backups/` não vão para o git (e o `.env` fica com permissão 600); a sessão da CAIXA fica no `.env`
+  (`CAIXA_SESSAO_JSON`) ou no volume `radar_sessao_caixa`.
 - O painel não abre dentro de iframe de outro site; o site público da lotérica só nas origens de `RADAR_EMBED_ORIGENS`.
 - Chaves do Asaas, SMTP e VAPID só no `.env` do VPS, nunca no repositório.
 
@@ -224,5 +243,5 @@ Backup fora do VPS (recomendado): instale e configure o `rclone` (ex.: Google Dr
 Os Dockerfiles aceitam um certificado extra só na hora do build, sem mudar a imagem:
 
 ```bash
-docker build -f apps/web/Dockerfile -t radar-loterico-web:local --secret id=ca,src=certificado.crt --build-arg HTTPS_PROXY=$HTTPS_PROXY .
+docker build -f apps/web/Dockerfile -t radar-local/radar-web:local --secret id=ca,src=certificado.crt --build-arg HTTPS_PROXY=$HTTPS_PROXY .
 ```

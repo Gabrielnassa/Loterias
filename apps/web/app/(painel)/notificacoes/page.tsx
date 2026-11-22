@@ -56,7 +56,7 @@ export default async function Notificacoes({ searchParams }: Props) {
 
       <section className="cartao space-y-3">
         <h2 className="font-semibold">Este aparelho</h2>
-        <PushAparelho chavePublica={chavePublicaVapid()} aparelhos={aparelhos.map((a) => ({ id: a.id, endpoint: a.endpoint }))} />
+        <PushAparelho chavePublica={await chavePublicaVapid()} aparelhos={aparelhos.map((a) => ({ id: a.id, endpoint: a.endpoint }))} />
         <p className="text-xs text-zinc-500">
           Instale o Radar como aplicativo (menu do navegador › Instalar / Adicionar à Tela de Início) para receber os avisos mesmo com ele fechado.
         </p>

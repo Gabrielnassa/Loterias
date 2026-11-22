@@ -3,13 +3,24 @@ import { criarDb, criarSql, migrar, recriarBancoDeTeste, type Sql } from '@radar
 import { semearHistoricoSimulado } from '@radar/db/seed';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FonteSimuladaRaioX } from '../lib/dados';
-import { FontePostgresRaioX } from '../lib/dados-postgres';
+import { fonteDeTeste, FontePostgresRaioX } from '../lib/dados-postgres';
 import { aoVivo, detalheAbertura, fichaAberturas, rankingDaAbertura, rankingPeriodo } from '../lib/servico';
 
 /**
  * A web lendo do PostgreSQL (seed do histórico simulado) tem de dar o MESMO resultado que lendo da
  * simulação em memória. Roda só com DATABASE_URL_TESTE (cria/apaga o banco radar_teste_web).
  */
+describe('aviso "dados simulados" pela FONTE do coletor', () => {
+  it('simulada e fixture são fontes de teste; caixa-* e vazio (não informado) não', () => {
+    expect(fonteDeTeste('simulada')).toBe(true);
+    expect(fonteDeTeste('fixture')).toBe(true);
+    expect(fonteDeTeste('caixa-navegador')).toBe(false);
+    expect(fonteDeTeste('caixa-links')).toBe(false);
+    expect(fonteDeTeste('')).toBe(false);
+    expect(fonteDeTeste(undefined)).toBe(false);
+  });
+});
+
 const URL = process.env.DATABASE_URL_TESTE;
 const suite = URL ? describe : describe.skip;
 const ATE = horarioSP(2026, 11, 21, 12, 0);

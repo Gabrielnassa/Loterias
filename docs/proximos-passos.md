@@ -156,3 +156,22 @@ GitHub Pages: já ativo (deploy de 22/11/2026 ok). Pacotes: release `pacotes` pu
 Depende do Gabriel (ordem do `docs/producao.md`): contratar o VPS, registro A `radar` → IP, e-mail de envio,
 rodar o instalador, SMTP, Asaas sandbox + webhook, preços dos planos, conta dedicada da CAIXA e a
 sessão (VNC ou exportada), gravar uma abertura, chave da API no WordPress.
+
+### Sessão 7, acréscimos: Docker Manager (sem SSH) e demo na raiz
+
+- [x] Imagens no GHCR pelo workflow `imagens.yml` a cada push no branch: `ghcr.io/gabrielnassa/radar-web`, `radar-worker`
+      (Playwright + Chromium) e `radar-migrate` (novo `packages/db/Dockerfile`), tags `latest`, SHA e `sha-<7>`; o job
+      `teste` sobe o compose com as imagens do commit e confere HTTPS, aviso "dados simulados" e chave VAPID.
+- [x] `deploy/hostinger-vps/docker-compose.yaml` autossuficiente (só imagens; Caddyfile gerado no `command`; backup
+      diário num volume; healthchecks; logs limitados) + `VARIAVEIS.md`. O antigo `docker-compose.yml`/`Caddyfile`
+      saíram; `docker-compose.build.yml` constrói na VPS (`instalar.sh --construir`). Testado aqui com as 3 imagens
+      locais: 7 serviços saudáveis, seed em 59 s, VAPID gerada, backup gravado, limpeza ao trocar para `caixa-navegador`.
+- [x] Migrate (`packages/db/iniciar.ts`): migrações + VAPID no banco (`config_sistema`, migração 0012) + `SEED_DEMO`
+      (true/false/limpar); `FONTE=caixa-*` apaga os fictícios (seed e abertura simulada, origem `simulacao`).
+- [x] Aviso "dados simulados" também com `FONTE=simulada|fixture` (web recebe a FONTE). Worker com healthcheck.
+- [x] Workflow `site-demo.yml`: demo com basePath vazio, `.htaccess` (rotas limpas, 404 próprio, cache) testado num
+      Apache, force push no branch órfão `site-demo` para a Hostinger publicar com auto-deploy. Pages continua igual.
+
+Pendente de conferência fora daqui: o MCP do GitHub não conectou nesta sessão; a confirmação das imagens públicas e
+do branch `site-demo` foi feita pelo registro (ghcr.io) e pelo `git ls-remote`. Se as imagens aparecerem como
+privadas, o dono muda para Public em GitHub › Packages › (cada imagem) › Package settings.

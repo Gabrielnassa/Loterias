@@ -22,6 +22,13 @@ Siga na ordem. O que é clique ou contrato está marcado com ☐.
 
 ## 2. Instalar o sistema no VPS
 
+**Sem SSH (Docker Manager da Hostinger):** hPanel › VPS › Docker Manager › novo projeto pela URL
+`https://raw.githubusercontent.com/gabrielnassa/Loterias/claude/peaceful-noether-hs112s/deploy/hostinger-vps/docker-compose.yaml`
+com as variáveis de [`VARIAVEIS.md`](../deploy/hostinger-vps/VARIAVEIS.md) (mínimo: `DOMINIO` e uma
+`POSTGRES_PASSWORD` forte; comece com `FONTE=simulada`). As imagens vêm prontas do GitHub (workflow "Imagens Docker").
+Depois siga do passo 6 em diante, trocando "`.env` + `docker compose up -d`" por "variáveis do Docker Manager +
+reimplantar". **Com SSH**, o caminho abaixo:
+
 5. ☐ No seu computador: `ssh root@IP-DO-VPS` e rode os 2 comandos do passo 3 de
    [`deploy/hostinger-vps/LEIAME.md`](../deploy/hostinger-vps/LEIAME.md) (o `instalar.sh` com
    `--dominio radar.nassatech.com.br --email SEU-EMAIL`). Leva de 10 a 20 minutos. No fim aparece
@@ -66,6 +73,13 @@ Siga na ordem. O que é clique ou contrato está marcado com ☐.
     no WordPress, `[radar_boloes loja="2894" modo="iframe"]`.
 
 ## 6. Demonstração num subdomínio comum (opcional)
+
+**Pelo Git, com auto-deploy (recomendado):** o workflow "Demonstração (branch site-demo)" publica a demonstração
+pronta, para a raiz do domínio, no branch `site-demo` (só os arquivos estáticos + `.htaccess`). No hPanel ›
+Sites › (o site) › Avançado › **Git**: repositório `https://github.com/gabrielnassa/Loterias.git`, branch
+`site-demo`, pasta de destino vazia (a raiz do site, `public_html`) e ative a **implantação automática** (o hPanel
+mostra a URL do webhook; cadastre em GitHub › Settings › Webhooks). Atenção: se o sistema completo for para
+`radar.nassatech.com.br` no VPS, use outro nome para a demo (ex.: `demo.nassatech.com.br`). **Ou pelo zip:**
 
 20. ☐ Baixe `radar-loterico-demo.zip` da release **pacotes** do GitHub (gerada sozinha a cada mudança).
 21. ☐ hPanel › Subdomínios: crie `demo`; no Gerenciador de Arquivos, envie o zip para a pasta do subdomínio e

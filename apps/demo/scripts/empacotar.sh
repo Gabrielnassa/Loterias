@@ -9,36 +9,7 @@ BASE="${DEMO_BASE_PATH-/Loterias}"
 [ -d out ] || { echo "rode o build antes (pnpm --filter @radar/demo build)" >&2; exit 1; }
 grep -q "\"${BASE}/_next/" out/index.html 2>/dev/null || grep -q "${BASE}/_next/" out/index.html || { echo "o build em out/ não foi feito com DEMO_BASE_PATH='${BASE}'" >&2; exit 1; }
 
-cat > out/.htaccess <<HT
-# Radar Lotérico (demonstração estática): Apache/LiteSpeed (Hostinger e afins)
-Options -Indexes
-DirectoryIndex index.html
-ErrorDocument 404 ${BASE}/404.html
-
-<IfModule mod_mime.c>
-  AddType application/manifest+json .webmanifest
-  AddType application/javascript .js
-  AddType application/json .json
-</IfModule>
-
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml application/manifest+json
-</IfModule>
-
-<IfModule mod_headers.c>
-  # arquivos com hash no nome nunca mudam: cache longo
-  <If "%{REQUEST_URI} =~ m#/_next/static/#">
-    Header set Cache-Control "public, max-age=31536000, immutable"
-  </If>
-  <FilesMatch "\.(html|json|webmanifest)$">
-    Header set Cache-Control "public, max-age=300"
-  </FilesMatch>
-  <Files "sw.js">
-    Header set Cache-Control "no-cache"
-  </Files>
-  Header set X-Content-Type-Options "nosniff"
-</IfModule>
-HT
+bash scripts/htaccess.sh "$BASE"
 
 cat > out/LEIAME.txt <<TXT
 RADAR LOTÉRICO: DEMONSTRAÇÃO ESTÁTICA (dados simulados, lotéricas fictícias)

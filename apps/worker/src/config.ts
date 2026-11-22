@@ -13,6 +13,8 @@ const esquema = z.object({
   REPOSITORIO: z.enum(['postgres', 'memoria']).default('postgres'),
   MIGRAR_NA_PARTIDA: bool.default('true'),
   LOG_LEVEL: z.string().default('info'),
+  /** Arquivo tocado a cada 30 s (healthcheck do container: modificado há menos de 2 min). Vazio desliga. */
+  VIVO_ARQUIVO: z.string().default('/tmp/radar-worker-vivo'),
   NTP_SERVIDOR: z.string().default('a.ntp.br'),
   NTP_INTERVALO_MIN: z.coerce.number().positive().default(10),
   AGENDADOR_TICK_MS: z.coerce.number().int().positive().default(250),

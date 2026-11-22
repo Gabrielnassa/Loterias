@@ -1,0 +1,257 @@
+# Radar Lotérico em produção, AUTOSSUFICIENTE: só imagens prontas (GitHub Container Registry), sem build e
+# sem arquivos ao lado. Feito para o Docker Manager da Hostinger (cole a URL raw deste arquivo e preencha
+# as variáveis; lista completa em VARIAVEIS.md). Também roda em qualquer servidor com Docker:
+#   DOMINIO=radar.seudominio.com.br POSTGRES_PASSWORD=... docker compose up -d
+#
+# Serviços: postgres (16) e redis com volumes; migrate (migrações + chaves VAPID + dados de demonstração;
+# roda e sai); worker (coletor); web (Next.js); caddy (HTTPS automático para DOMINIO); backup (pg_dump
+# diário num volume). Obrigatórias: DOMINIO e POSTGRES_PASSWORD. Todo o resto tem padrão.
+name: radar
+
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+
+x-banco: &banco
+  TZ: UTC
+  DATABASE_URL: postgres://radar:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD (senha forte, só letras e números)}@postgres:5432/radar
+  # FONTE vai também para a web: com fonte de teste o painel mostra o aviso "dados simulados"
+  FONTE: ${FONTE:-simulada}
+  RADAR_SITE_URL: https://${DOMINIO:?defina DOMINIO (ex. radar.nassatech.com.br)}
+  # Web Push: vazias = o migrate gera um par e guarda no banco
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_ASSUNTO: ${VAPID_ASSUNTO:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    <<: *logs
+    environment:
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: radar
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256mb
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U radar -d radar']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    <<: *logs
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    # roda a cada subida e termina (código 0); web e worker só sobem depois dele
+    image: ${RADAR_IMAGENS:-ghcr.io/gabrielnassa}/radar-migrate:${RADAR_VERSAO:-latest}
+    pull_policy: ${RADAR_PULL:-always}
+    restart: 'no'
+    <<: *logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *banco
+      # true = grava o histórico SIMULADO de demonstração (1 vez); limpar = apaga. Com FONTE=caixa-* os
+      # dados fictícios são apagados sozinhos.
+      SEED_DEMO: ${SEED_DEMO:-true}
+
+  worker:
+    image: ${RADAR_IMAGENS:-ghcr.io/gabrielnassa}/radar-worker:${RADAR_VERSAO:-latest}
+    pull_policy: ${RADAR_PULL:-always}
+    restart: unless-stopped
+    <<: *logs
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *banco
+      REDIS_URL: redis://redis:6379
+      FILA: bullmq
+      REPOSITORIO: postgres
+      MIGRAR_NA_PARTIDA: 'false'
+      NTP_SERVIDOR: ${NTP_SERVIDOR:-a.ntp.br}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ALERTAS: ${ALERTAS:-true}
+      RESULTADOS_CAIXA: ${RESULTADOS_CAIXA:-true}
+      # sessão da conta DEDICADA da CAIXA (preparada por uma pessoa), em base64; ver VARIAVEIS.md
+      CAIXA_SESSAO_JSON: ${CAIXA_SESSAO_JSON:-}
+      CAIXA_SESSAO: /sessao/estado.json
+      CAIXA_CONTA_DEDICADA: ${CAIXA_CONTA_DEDICADA:-false}
+      CAIXA_INTERVALO_MS: ${CAIXA_INTERVALO_MS:-3000}
+      CAIXA_MODALIDADES: ${CAIXA_MODALIDADES:-mega-sena,lotofacil,quina}
+      CAIXA_ESCOPOS: ${CAIXA_ESCOPOS:-cidade}
+      CAIXA_LOTERICAS: ${CAIXA_LOTERICAS:-}
+      VITRINE_ORDEM: ${VITRINE_ORDEM:-fila-chegada}
+    volumes:
+      - sessao_caixa:/sessao
+      - observacoes:/app/apps/worker/observacoes
+    shm_size: 512mb
+    healthcheck:
+      # o coletor toca este arquivo a cada 30 s
+      test: ['CMD-SHELL', 'find /tmp/radar-worker-vivo -mmin -2 | grep -q .']
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  web:
+    image: ${RADAR_IMAGENS:-ghcr.io/gabrielnassa}/radar-web:${RADAR_VERSAO:-latest}
+    pull_policy: ${RADAR_PULL:-always}
+    restart: unless-stopped
+    <<: *logs
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      <<: *banco
+      RADAR_FONTE_WEB: postgres
+      RADAR_AUTH: ${RADAR_AUTH:-postgres}
+      RADAR_PLANOS: ${RADAR_PLANOS-livre}
+      RADAR_FRANQUIA_LIMITE: ${RADAR_FRANQUIA_LIMITE:-8000}
+      RADAR_EMAIL: ${RADAR_EMAIL:-console}
+      SMTP_URL: ${SMTP_URL:-}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-}
+      ASAAS_AMBIENTE: sandbox
+      ASAAS_API_KEY: ${ASAAS_API_KEY:-}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN:-}
+      RADAR_EMBED_ORIGENS: ${RADAR_EMBED_ORIGENS:-}
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:3000/manifest.webmanifest').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  caddy:
+    # HTTPS automático (Let's Encrypt) para DOMINIO; o DNS do domínio precisa apontar para este servidor
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    <<: *logs
+    depends_on:
+      - web
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      DOMINIO: ${DOMINIO}
+      EMAIL_ACME: ${EMAIL_ACME:-}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    # Caddyfile gerado aqui mesmo (o Docker Manager não leva arquivos junto); $$ = $ para o shell
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        {
+          if [ -n "$${EMAIL_ACME:-}" ]; then printf '{\n\temail %s\n}\n\n' "$$EMAIL_ACME"; fi
+          cat <<'CADDY'
+        {$$DOMINIO} {
+            encode zstd gzip
+            header {
+                Strict-Transport-Security "max-age=31536000; includeSubDomains"
+                X-Content-Type-Options "nosniff"
+                Referrer-Policy "strict-origin-when-cross-origin"
+                -Server
+            }
+            reverse_proxy web:3000 {
+                header_up X-Forwarded-Proto {scheme}
+                header_up X-Forwarded-Host {host}
+            }
+            log {
+                output stdout
+                format console
+            }
+        }
+        CADDY
+        } > /etc/caddy/Caddyfile
+        caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:2019/config/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  backup:
+    # pg_dump diário no volume "backups" (formato custom, restaura com pg_restore), guarda BACKUP_DIAS dias
+    image: postgres:16-alpine
+    restart: unless-stopped
+    <<: *logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: radar
+      PGDATABASE: radar
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_HORA_UTC: ${BACKUP_HORA_UTC:-06:30}
+      BACKUP_DIAS: ${BACKUP_DIAS:-14}
+    volumes:
+      - backups:/backups
+    entrypoint:
+      - sh
+      - -c
+      - |
+        set -u
+        umask 077
+        fazer() {
+          arq="/backups/radar-$$(date -u +%Y%m%d-%H%M%S).dump"
+          if pg_dump -Fc -f "$$arq.parcial"; then
+            mv "$$arq.parcial" "$$arq"
+            echo "backup gravado: $$arq ($$(du -h "$$arq" | cut -f1))"
+          else
+            rm -f "$$arq.parcial"
+            echo "backup FALHOU" >&2
+          fi
+          find /backups -name 'radar-*.dump' -mtime +"$$((BACKUP_DIAS - 1))" -delete
+          date -u +%F > /backups/.ultimo
+        }
+        echo "backup diário às $$BACKUP_HORA_UTC UTC, guardando $$BACKUP_DIAS dias"
+        # sem backup nas últimas 20 h: faz um já (1 min depois de subir)
+        if [ -z "$$(find /backups -name 'radar-*.dump' -mmin -1200 2>/dev/null)" ]; then sleep 60; fazer; fi
+        while :; do
+          if [ "$$(date -u +%H:%M)" = "$$BACKUP_HORA_UTC" ] && [ "$$(cat /backups/.ultimo 2>/dev/null)" != "$$(date -u +%F)" ]; then fazer; fi
+          sleep 20
+        done
+    healthcheck:
+      # saudável = há um backup das últimas 26 h
+      test: ['CMD-SHELL', 'test -n "$$(find /backups -name ''radar-*.dump'' -mmin -1560)"']
+      interval: 10m
+      timeout: 10s
+      retries: 2
+      start_period: 5m
+
+volumes:
+  pgdata:
+  redisdata:
+  sessao_caixa:
+  observacoes:
+  caddy_data:
+  caddy_config:
+  backups:

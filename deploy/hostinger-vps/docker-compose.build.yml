@@ -1,0 +1,24 @@
+# Complemento do docker-compose.yaml para CONSTRUIR as imagens na própria VPS em vez de baixá-las do
+# GitHub Container Registry (instalar.sh --construir). O instalar.sh grava no .env:
+#   COMPOSE_FILE=docker-compose.yaml:docker-compose.build.yml
+# e aí todo "docker compose ..." nesta pasta usa os dois arquivos. Construir à mão:
+#   docker compose -f docker-compose.yaml -f docker-compose.build.yml build
+services:
+  migrate:
+    image: radar-local/radar-migrate:local
+    pull_policy: never
+    build:
+      context: ../..
+      dockerfile: packages/db/Dockerfile
+  worker:
+    image: radar-local/radar-worker:local
+    pull_policy: never
+    build:
+      context: ../..
+      dockerfile: apps/worker/Dockerfile
+  web:
+    image: radar-local/radar-web:local
+    pull_policy: never
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile

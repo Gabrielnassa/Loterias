@@ -8,13 +8,15 @@
     ".": "./index.ts",
     "./schema": "./schema.ts",
     "./seed": "./seed.ts",
-    "./conferencia": "./conferencia.ts"
+    "./conferencia": "./conferencia.ts",
+    "./config-sistema": "./config-sistema.ts"
   },
   "scripts": {
     "migrar": "tsx migrar.ts",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json",
-    "seed": "tsx seed.ts"
+    "seed": "tsx seed.ts",
+    "iniciar": "tsx iniciar.ts"
   },
   "dependencies": {
     "@radar/core": "workspace:*",

@@ -30,7 +30,6 @@ function emLotes<T>(itens: readonly T[], n: number): T[][] {
   return r;
 }
 
-/** Apaga só o que veio do seed (concursos com origem 'seed' e o que depende deles). */
 /** Lotérica da demonstração ("Minha lotérica"): ganha jogos, cotas de balcão e conferência. */
 export const LOTERICA_DEMONSTRACAO = '980011';
 
@@ -47,17 +46,31 @@ function sortear(r: ReturnType<typeof criarAleatorio>, n: number, k: number): nu
   return [...s].sort((a, b) => a - b);
 }
 
-export async function limparSeed(db: Db): Promise<void> {
+/**
+ * Apaga os concursos FICTÍCIOS de uma origem e tudo que depende deles: 'seed' (histórico de demonstração)
+ * ou 'simulacao' (abertura simulada do coletor com FONTE=simulada). Dados da vitrine real ('fonte',
+ * 'previsao') nunca são tocados. Devolve quantos concursos saíram.
+ */
+export async function limparDadosDeOrigem(db: Db, origem: 'seed' | 'simulacao'): Promise<number> {
+  const deles = sql`(select id from concursos where origem = ${origem})`;
+  const boloesDeles = sql`(select b.id from boloes b join concursos c on c.id = b.concurso_id where c.origem = ${origem})`;
+  await db.execute(sql`delete from aberturas where concurso_id in ${deles}`);
+  await db.execute(sql`delete from eventos_bolao where bolao_id in ${boloesDeles}`);
+  await db.execute(sql`delete from snapshots_bolao where bolao_id in ${boloesDeles}`);
+  await db.execute(sql`delete from bolao_jogos where bolao_id in ${boloesDeles}`);
+  await db.execute(sql`delete from boloes where concurso_id in ${deles}`);
+  await db.execute(sql`delete from mercado_minuto where concurso_id in ${deles}`);
+  await db.execute(sql`delete from resultados where concurso_id in ${deles}`);
   await db.execute(sql`
-    with c as (select id from concursos where origem = 'seed')
-    , a as (delete from aberturas where concurso_id in (select id from c) returning id)
-    select count(*) from a`);
-  await db.execute(sql`delete from eventos_bolao where bolao_id in (select b.id from boloes b join concursos c on c.id = b.concurso_id where c.origem = 'seed')`);
-  await db.execute(sql`delete from bolao_jogos where bolao_id in (select b.id from boloes b join concursos c on c.id = b.concurso_id where c.origem = 'seed')`);
-  await db.execute(sql`delete from boloes where concurso_id in (select id from concursos where origem = 'seed')`);
-  await db.execute(sql`delete from mercado_minuto where concurso_id in (select id from concursos where origem = 'seed')`);
-  await db.execute(sql`delete from resultados where concurso_id in (select id from concursos where origem = 'seed')`);
-  await db.execute(sql`delete from concursos where origem = 'seed'`);
+    delete from coletas k using concursos c join modalidades m on m.id = c.modalidade_id
+    where c.origem = ${origem} and k.modalidade = m.slug and k.concurso = c.numero`);
+  const r = await db.execute<{ n: number }>(sql`with d as (delete from concursos where origem = ${origem} returning 1) select count(*)::int as n from d`);
+  return Number((r as unknown as { n: number }[])[0]?.n ?? 0);
+}
+
+/** Apaga só o que veio do seed (concursos com origem 'seed' e o que depende deles). */
+export async function limparSeed(db: Db): Promise<void> {
+  await limparDadosDeOrigem(db, 'seed');
 }
 
 export async function semearHistoricoSimulado(db: Db, o: OpcoesSeed = {}) {

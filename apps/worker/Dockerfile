@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Coletor (worker) do Radar Lotérico, também usado para as migrações e o seed. Build da RAIZ do monorepo:
+# Coletor (worker) do Radar Lotérico (também roda migrações e seed com o build local). Build da RAIZ do monorepo:
 #   docker build -f apps/worker/Dockerfile -t radar-loterico-worker .
 # Imagem oficial do Playwright na MESMA versão do pacote (1.63.0): traz o Chromium e as bibliotecas do
 # sistema para FONTE=caixa-navegador. Atrás de proxy com certificado próprio: --secret id=ca,src=... .
@@ -28,4 +28,7 @@ RUN mkdir -p apps/worker/observacoes && chown -R pwuser:pwuser apps/worker/obser
 
 ENV NODE_ENV=production
 USER pwuser
+# o coletor toca este arquivo a cada 30 s (VIVO_ARQUIVO); parado há mais de 2 min = doente
+HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
+    CMD find /tmp/radar-worker-vivo -mmin -2 | grep -q . || exit 1
 CMD ["pnpm", "--filter", "@radar/worker", "start"]
