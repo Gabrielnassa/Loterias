@@ -36,7 +36,7 @@ deployment › Source = "GitHub Actions"**. Depois, em **Actions › Demonstraç
 | 3. Minha lotérica | **Pronta**: Bolões MKP (franquia, internet x balcão, break-even, colocação, estorno), Financeiro, Conferência das 10 modalidades com resultado e rateio oficiais, Posição na abertura, várias lojas, CSV/Excel. Precisa do banco com a coleta real |
 | 4. Mercado e previsões | **Pronta**: Monitoramento MKP (ao vivo e "Retrato"), Filas, Estatísticas (panorama, Top 10, ficha de qualquer lotérica), Mega da Virada, previsão de fechamento com faixa e backtest, Sugestões (franquia de amanhã e otimizador de formato com risco), simulador de posição, cronômetro de abertura. A calibração fina depende de dados reais |
 | 5. Site e artes | **Pronta**: site público `/{slug}` (SEO local, filtros, jogos, chance do prêmio, carrinho pelo WhatsApp, link da CAIXA, 3 temas, métricas anônimas) e 4 artes em PNG (resultado, bolões, premiado, "Saiu aqui!"). Falta: vídeos, foto do bilhete (OCR), agendar posts, domínio próprio, QR code |
-| 6. Contas e gestão | **Em andamento**: contas (login por link no e-mail ou senha, várias lotéricas, equipe com responsável, sócio e colaborador, permissão por tela e por loja, convites); monitoradas e alertas (entrou na abertura, resumo semanal na segunda 08:00, vendas, encerramento, previsão de zerar, resultados, prêmios) com Web Push, PWA instalável e central de notificações com preferências por aparelho. planos Grátis, Pro, Pro+ e Gestão com teste grátis de 14 dias, assinatura recorrente (Pix e cartão) pelo Asaas em sandbox, webhook e bloqueio de telas por plano. Falta: gestão da loja física |
+| 6. Contas e gestão | **Pronta**: contas (login por link no e-mail ou senha, várias lotéricas, equipe com responsável, sócio e colaborador, permissão por tela e por loja, convites); monitoradas e alertas (entrou na abertura, resumo semanal na segunda 08:00, vendas, encerramento, previsão de zerar, resultados, prêmios) com Web Push, PWA instalável e central de notificações com preferências por aparelho. planos Grátis, Pro, Pro+ e Gestão com teste grátis de 14 dias, assinatura recorrente (Pix e cartão) pelo Asaas em sandbox, webhook e bloqueio de telas por plano; gestão da loja física (caixas por TFL e extras, fechamento diário com quebra, cofre e carro-forte, fluxo de caixa, despesas fixas, fiados com cobrança do dia pelo WhatsApp e DRE mensal, por loja e consolidado). Falta: Asaas de produção, verificação da titularidade da lotérica |
 | Ferramentas | **Prontas**: Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (chances e melhor marcação) |
 
 Números de terceiros (vendas, sobras, colocação) são **estimativas** a partir de leituras periódicas da vitrine;
@@ -177,6 +177,15 @@ Radar), as cobranças e o cancelamento. Telas fora do plano levam à tela de pla
 
 Sem a chave, a cobrança é simulada (dá para testar tudo pelo botão "Simular pagamento"). `RADAR_PLANOS=livre`
 desliga o bloqueio por plano (instalação própria).
+
+### Gestão da loja física
+
+Em **Gestão** (plano Gestão): **Caixas e cofre** (um fechamento por caixa e dia, TFL ou extra como a Federal; o
+esperado na gaveta = troco + entradas − saídas − sangrias + suprimentos, e a diferença vira quebra; o cofre soma as
+sangrias e desconta os recolhimentos do carro-forte), **Fiados** (anotar, receber em parcelas e a cobrança do dia
+com a mensagem pronta no WhatsApp), **Fluxo e despesas** (o dinheiro da própria lotérica: receitas, despesas e
+despesas fixas do mês) e **DRE** mensal por loja e consolidado (CSV). A arrecadação da CAIXA não é receita da
+lotérica e não entra no fluxo nem no DRE.
 - Site público: `RADAR_SITE_URL` (endereço base, para SEO) e `RADAR_SITES` (JSON com WhatsApp, Instagram, endereço,
   horário e tema de cada loja); com banco, a tela `/minha/site` grava na tabela `sites`.
 

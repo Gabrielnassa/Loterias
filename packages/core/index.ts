@@ -36,6 +36,7 @@ export * from './raio-x/elite';
 export * from './contas/permissoes';
 export * from './notificacoes/alertas';
 export * from './planos/planos';
+export * from './gestao/gestao';
 
 // Adaptador da fonte (contrato, varredura, saúde, cliente HTTP)
 export * from './fonte';

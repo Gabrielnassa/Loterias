@@ -445,6 +445,20 @@ export const webhooksAsaas = pgTable('webhooks_asaas', {
   erro: text('erro'),
 });
 
+// Fase 6: gestão da loja física (0010_gestao.sql)
+export const gestaoRegistros = pgTable('gestao_registros', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contaId: uuid('conta_id').notNull(),
+  lojaCodigo: text('loja_codigo').notNull(),
+  tipo: text('tipo', { enum: ['caixa', 'fechamento', 'carro-forte', 'lancamento', 'despesa-fixa', 'fiado'] }).notNull(),
+  dia: date('dia', { mode: 'string' }),
+  chave: text('chave'),
+  dados: jsonb('dados').notNull(),
+  criadoPor: uuid('criado_por'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  atualizadoEm: tz('atualizado_em').notNull().defaultNow(),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -476,4 +490,5 @@ export const todasAsTabelas = {
   assinaturas,
   cobrancas,
   webhooksAsaas,
+  gestaoRegistros,
 };

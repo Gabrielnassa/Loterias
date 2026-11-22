@@ -18,6 +18,7 @@ const NAV: [string, string][] = [
   ['/calendario', 'Calendário'],
   ['/simulador', 'Simulador'],
   ['/loteca', 'Loteca'],
+  ['/gestao/caixas', 'Gestão'],
   ['/equipe', 'Equipe'],
   ['/planos', 'Plano'],
   ['/loterica-trevo-de-ouro', 'Site de exemplo'],

@@ -4,6 +4,7 @@ import { aoVivo } from '@/lib/servico';
 import { registrarEvento, siteDoSlug } from '@/lib/site';
 import { carregarAvisosDemo } from './avisos-ativo';
 import { carregarContasDemo } from './contas-ativo';
+import { carregarGestaoDemo } from './gestao-ativo';
 import { definirFonteDeDados } from './fonte-dados';
 
 export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -33,6 +34,7 @@ export function prepararDemo(): Promise<InfoDemo> {
     definirFonteDeDados(fonte);
     await carregarContasDemo();
     await carregarAvisosDemo();
+    await carregarGestaoDemo();
     instalarServidorLocal(fonte);
     return { geradoEm: new Date(json.ate), carregadoEm: new Date(carregado) };
   })();
@@ -68,6 +70,9 @@ const API_LOCAIS: Record<string, () => Promise<unknown>> = {
   '/api/monitoradas': () => import('@/app/api/monitoradas/route'),
   '/api/notificacoes': () => import('@/app/api/notificacoes/route'),
   '/api/planos': () => import('@/app/api/planos/route'),
+  '/api/gestao': () => import('@/app/api/gestao/route'),
+  '/api/gestao/caixas': () => import('@/app/api/gestao/caixas/route'),
+  '/api/gestao/fiados': () => import('@/app/api/gestao/fiados/route'),
 };
 
 function instalarServidorLocal(fonte: FonteSimuladaRaioX) {

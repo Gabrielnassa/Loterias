@@ -122,5 +122,19 @@ Retomar do primeiro item sem [x]. Commit e push a cada item; manter a demonstra�
       lojas, pessoas e monitoradas. Na demo: cobrança simulada no navegador.
       Depende do Gabriel: preços dos planos; conta no sandbox do Asaas, ASAAS_API_KEY e ASAAS_WEBHOOK_TOKEN no .env,
       cadastrar o webhook; decidir quando liberar produção.
-- [ ] 7. Gestão da loja física: caixas por TFL, caixas extras (ex.: Federal), fechamento de caixa diário, fluxo de
-      caixa, carro-forte, fiados, cobrança diária, despesas e DRE mensal, consolidando várias lojas do mesmo dono.
+- [x] 7. Gestão da loja física: `core/gestao/gestao.ts` (fechamento e quebra, cofre e carro-forte, fluxo de caixa,
+      despesas fixas do mês, fiados e cobrança do dia com WhatsApp, DRE por loja e consolidado), migração 0010
+      (`gestao_registros`, jsonb por tipo), `lib/gestao/*`, telas `/gestao/caixas`, `/gestao/fiados`, `/gestao`,
+      `/gestao/dre` (CSV em `/api/gestao/dre`). Na demo: 2 lojas com 12 dias de exemplo fictícios no localStorage.
+
+Lote da sessão 6 concluído. Depende do Gabriel:
+- GitHub: Settings › Pages › Source = "GitHub Actions" (e rodar o workflow "Pages" uma vez) para a demo sair em
+  https://gabrielnassa.github.io/Loterias/.
+- Gravar uma abertura real (`pnpm observar-abertura`) e rodar `pnpm analisar-abertura` (ordem dentro da fila).
+- SMTP para os e-mails (link de acesso, convites); chaves VAPID e um teste de push num celular de verdade.
+- Asaas: conta no sandbox, `ASAAS_API_KEY` e `ASAAS_WEBHOOK_TOKEN` no .env, cadastrar o webhook; preços dos planos;
+  quando liberar produção.
+- Verificar a titularidade das lotéricas cadastradas; estorno na franquia; código da Legal Loterias.
+
+Ideias para depois: push diário "fiados a cobrar hoje"; importar o relatório do TFL no fechamento; puxar as tarifas
+de bolão do Financeiro MKP para o DRE automaticamente; conciliação bancária.

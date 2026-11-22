@@ -35,6 +35,7 @@ const NAV: [string, string][] = [
   ['/calendario', 'Calendário'],
   ['/simulador', 'Simulador'],
   ['/loteca', 'Loteca'],
+  ['/gestao', 'Gestão'],
   ['/equipe', 'Equipe'],
   ['/planos', 'Plano'],
 ];
@@ -45,8 +46,9 @@ export default async function LayoutPainel({ children }: { children: ReactNode }
   const naoLidas = ctx && avisos ? await avisos.naoLidas(ctx.usuario.id).catch(() => 0) : 0;
   // com contas ligadas, o menu mostra só as telas liberadas para a pessoa
   const nav = NAV.filter(([href]) => {
-    if (!ctx) return href !== '/equipe' && href !== '/monitoradas' && href !== '/planos';
+    if (!ctx) return href !== '/equipe' && href !== '/monitoradas' && href !== '/planos' && href !== '/gestao';
     if (href === '/minha') return ctx.telas.some((t) => t.startsWith('minha-'));
+    if (href === '/gestao') return ctx.telas.some((t) => t.startsWith('gestao-'));
     const t = telaDaRota(href);
     return !t || ctx.telas.includes(t.id);
   });
@@ -63,7 +65,7 @@ export default async function LayoutPainel({ children }: { children: ReactNode }
             </Link>
             <nav className="flex flex-wrap gap-4 text-sm">
               {nav.map(([href, t]) => (
-                <Link key={href} href={href} className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
+                <Link key={href} href={href === '/gestao' && ctx && !ctx.telas.includes('gestao-financeiro') ? (ctx.telas.includes('gestao-caixa') ? '/gestao/caixas' : '/gestao/fiados') : href} className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">
                   {t}
                 </Link>
               ))}
