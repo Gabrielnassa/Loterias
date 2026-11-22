@@ -31,7 +31,11 @@ export async function monitorar(repo: RepositorioAvisos, fonte: FonteDadosRaioX,
   const l = (bruto ? await fonte.loterica(bruto) : null) ?? (normalizarCodigoLoterica(bruto) ? await fonte.loterica(normalizarCodigoLoterica(bruto)!) : null);
   if (!bruto || (!l && !normalizarCodigoLoterica(bruto))) throw new ErroAvisos('código de lotérica inválido');
   if (!l) throw new ErroAvisos('lotérica não encontrada na vitrine (ainda sem bolões vistos pelo coletor)');
-  if ((await repo.monitoradas(ctx.conta.id)).length >= 50) throw new ErroAvisos('limite de 50 monitoradas por conta');
+  const limite = ctx.plano?.limites.monitoradas ?? 50;
+  const atuais = await repo.monitoradas(ctx.conta.id);
+  if (!atuais.some((m) => m.codigo === l.codigoCaixa) && atuais.length >= limite) {
+    throw new ErroAvisos(`o plano ${ctx.plano?.nome ?? ''} permite ${limite} monitoradas: troque de plano em Plano`.replace('  ', ' '));
+  }
   await repo.monitorar({ contaId: ctx.conta.id, codigo: l.codigoCaixa, apelido: d.apelido?.trim() || null });
   return l;
 }

@@ -115,7 +115,12 @@ Retomar do primeiro item sem [x]. Commit e push a cada item; manter a demonstra�
       ícones); telas `/monitoradas` e `/notificacoes` (preferências por aparelho). Na demo: tudo no localStorage, push desligado.
       Depende do Gabriel: gerar as chaves VAPID (`pnpm --filter @radar/avisos vapid`) e testar o push num celular de verdade
       (aqui o navegador headless não tem serviço de push).
-- [ ] 6. Planos e cobrança via Asaas (SÓ sandbox, sem chave real no repositório): Grátis, Pro, Pro+ e Gestão;
-      assinatura recorrente (Pix e cartão), teste grátis de 14 dias, webhook de pagamento, bloqueio de telas por plano.
+- [x] 6. Planos e cobrança via Asaas (só sandbox; URL de produção não existe no código e chave `$aact_prod_` é recusada):
+      `core/planos/planos.ts` (telas e limites por plano, teste de 14 dias com tudo, tolerância de 5 dias, eventos),
+      migração 0009, `lib/planos/asaas.ts` (sandbox + simulado), `lib/planos/cobranca.ts`, `/planos`, `/api/planos`,
+      `/api/webhooks/asaas` (token `asaas-access-token`, idempotente), bloqueio no middleware (402 na API) e limites de
+      lojas, pessoas e monitoradas. Na demo: cobrança simulada no navegador.
+      Depende do Gabriel: preços dos planos; conta no sandbox do Asaas, ASAAS_API_KEY e ASAAS_WEBHOOK_TOKEN no .env,
+      cadastrar o webhook; decidir quando liberar produção.
 - [ ] 7. Gestão da loja física: caixas por TFL, caixas extras (ex.: Federal), fechamento de caixa diário, fluxo de
       caixa, carro-forte, fiados, cobrança diária, despesas e DRE mensal, consolidando várias lojas do mesmo dono.

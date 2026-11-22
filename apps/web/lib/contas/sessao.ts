@@ -1,4 +1,4 @@
-import { lojasVisiveis, PRAZO_SESSAO_DIAS, telasEfetivas, type Papel } from '@radar/core';
+import { assinaturaInicial, lojasVisiveis, plano as dadosDoPlano, planoEfetivo, PRAZO_SESSAO_DIAS, telasDoPlano, telasEfetivas, type Papel, type PlanoEfetivo, type PlanoId } from '@radar/core';
 import { hashToken } from './token';
 import type { RepositorioContas, Sessao } from './tipos';
 
@@ -16,7 +16,14 @@ export interface ContextoSessao {
   lojas: { codigo: string; nome: string; franquiaLimite: number }[];
   /** Todas as contas de que a pessoa participa (para trocar). */
   contas: { id: string; nome: string; papel: Papel }[];
+  /** Plano que vale agora para a conta ativa (null sem conta). */
+  plano: (Omit<PlanoEfetivo, 'id'> & { id: PlanoId; nome: string; limites: { lojas: number; pessoas: number; monitoradas: number } }) | null;
+  /** Telas que o papel libera mas o plano não (vão para a tela de planos). */
+  bloqueadas: string[];
 }
+
+/** RADAR_PLANOS=livre: sem bloqueio por plano (instalação própria, sem cobrança). */
+const planosLivres = () => (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.RADAR_PLANOS === 'livre';
 
 /** Sessão válida -> contexto. Renova a validade (janela deslizante) se a sessão foi vista há mais de 10 min. */
 export async function contextoDoToken(repo: RepositorioContas, token: string, agora: Date): Promise<ContextoSessao | null> {
@@ -26,22 +33,37 @@ export async function contextoDoToken(repo: RepositorioContas, token: string, ag
   if (agora.getTime() - s.vistoEm.getTime() > 10 * 60_000) {
     await repo.atualizarSessao(s.tokenHash, { vistoEm: agora, expiraEm: new Date(agora.getTime() + PRAZO_SESSAO_DIAS * 86_400_000) });
   }
-  return montarContexto(repo, s);
+  return montarContexto(repo, s, agora);
 }
 
-export async function montarContexto(repo: RepositorioContas, s: Pick<Sessao, 'usuarioId' | 'contaId'>): Promise<ContextoSessao | null> {
+export async function montarContexto(repo: RepositorioContas, s: Pick<Sessao, 'usuarioId' | 'contaId'>, agora: Date = new Date()): Promise<ContextoSessao | null> {
   const u = await repo.usuarioPorId(s.usuarioId);
   if (!u) return null;
   const contas = await repo.contasDoUsuario(u.id);
   const ativa = contas.find((c) => c.conta.id === s.contaId) ?? contas[0] ?? null;
   const lojas = ativa ? await repo.lojas(ativa.conta.id) : [];
+  let telas = ativa ? telasEfetivas(ativa.membro) : [];
+  let bloqueadas: string[] = [];
+  let plano: ContextoSessao['plano'] = null;
+  if (ativa) {
+    // conta sem assinatura (anterior aos planos): teste grátis contado da criação da conta
+    const a = (await repo.assinatura(ativa.conta.id)) ?? assinaturaInicial(ativa.conta.id, ativa.conta.criadoEm);
+    const ef: PlanoEfetivo = planosLivres() ? { id: 'gestao', motivo: 'cortesia', diasRestantesTeste: null, aviso: null } : planoEfetivo(a, agora);
+    const doPlano = new Set(telasDoPlano(ef.id));
+    bloqueadas = telas.filter((t) => !doPlano.has(t));
+    telas = telas.filter((t) => doPlano.has(t));
+    const d = dadosDoPlano(ef.id);
+    plano = { ...ef, nome: d.nome, limites: d.limites };
+  }
   return {
     usuario: { id: u.id, nome: u.nome, email: u.email, temSenha: !!u.senhaHash },
     conta: ativa ? { id: ativa.conta.id, nome: ativa.conta.nome } : null,
     papel: ativa?.membro.papel ?? null,
-    telas: ativa ? telasEfetivas(ativa.membro) : [],
+    telas,
     lojas: ativa ? lojasVisiveis(ativa.membro, lojas).map((l) => ({ codigo: l.codigo, nome: l.nome, franquiaLimite: l.franquiaLimite })) : [],
     contas: contas.map((c) => ({ id: c.conta.id, nome: c.conta.nome, papel: c.membro.papel })),
+    plano,
+    bloqueadas,
   };
 }
 

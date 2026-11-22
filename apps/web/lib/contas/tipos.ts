@@ -1,4 +1,6 @@
-import type { Papel } from '@radar/core';
+import type { Assinatura, Papel } from '@radar/core';
+
+export type { Assinatura };
 
 /** Fase 6: tipos e repositório de contas (Postgres em produção; memória em dev sem banco e na demonstração). */
 export interface Usuario {
@@ -67,6 +69,20 @@ export interface Sessao {
   aparelho: string | null;
 }
 
+/** Cobrança (pagamento) do Asaas, espelhada no banco. */
+export interface Cobranca {
+  id: string;
+  contaId: string;
+  asaasAssinaturaId: string | null;
+  valor: number;
+  /** AAAA-MM-DD */
+  vencimento: string;
+  status: string;
+  forma: string | null;
+  link: string | null;
+  pagoEm: Date | null;
+}
+
 export interface RepositorioContas {
   readonly tipo: 'memoria' | 'postgres';
   usuarioPorEmail(email: string): Promise<Usuario | null>;
@@ -106,4 +122,16 @@ export interface RepositorioContas {
   atualizarSessao(tokenHash: string, d: Partial<Pick<Sessao, 'contaId' | 'vistoEm' | 'expiraEm'>>): Promise<void>;
   encerrarSessao(tokenHash: string): Promise<void>;
   encerrarSessoesDoUsuario(usuarioId: string, exceto?: string): Promise<void>;
+
+  // planos e cobrança (Fase 6.3)
+  assinatura(contaId: string): Promise<Assinatura | null>;
+  salvarAssinatura(a: Assinatura): Promise<void>;
+  contaPorAssinaturaAsaas(asaasAssinaturaId: string): Promise<string | null>;
+  cobrancas(contaId: string): Promise<Cobranca[]>;
+  salvarCobranca(c: Cobranca): Promise<void>;
+  /** false se o evento já tinha chegado (o Asaas reenvia). */
+  registrarWebhook(chave: string, evento: string, corpo: unknown): Promise<boolean>;
+  marcarWebhook(chave: string, erro: string | null): Promise<void>;
+  /** Quantas pessoas e convites pendentes a conta tem (limite do plano). */
+  contarPessoas(contaId: string, agora: Date): Promise<number>;
 }

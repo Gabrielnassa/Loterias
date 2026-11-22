@@ -67,6 +67,7 @@ const API_LOCAIS: Record<string, () => Promise<unknown>> = {
   '/api/conta': () => import('@/app/api/conta/route'),
   '/api/monitoradas': () => import('@/app/api/monitoradas/route'),
   '/api/notificacoes': () => import('@/app/api/notificacoes/route'),
+  '/api/planos': () => import('@/app/api/planos/route'),
 };
 
 function instalarServidorLocal(fonte: FonteSimuladaRaioX) {

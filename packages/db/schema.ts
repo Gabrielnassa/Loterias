@@ -406,6 +406,45 @@ export const notificacoes = pgTable('notificacoes', {
   enviadas: integer('enviadas').notNull().default(0),
 });
 
+// Fase 6: planos e cobrança (0009_planos.sql)
+export const assinaturas = pgTable('assinaturas', {
+  contaId: uuid('conta_id').primaryKey(),
+  plano: text('plano', { enum: ['gratis', 'pro', 'pro-mais', 'gestao'] }).notNull(),
+  status: text('status', { enum: ['teste', 'ativa', 'atrasada', 'cancelada', 'cortesia'] }).notNull(),
+  testeAte: tz('teste_ate'),
+  pagoAte: tz('pago_ate'),
+  forma: text('forma', { enum: ['PIX', 'CREDIT_CARD'] }),
+  valor: numeric('valor', { precision: 10, scale: 2, mode: 'number' }),
+  asaasClienteId: text('asaas_cliente_id'),
+  asaasAssinaturaId: text('asaas_assinatura_id').unique(),
+  canceladaEm: tz('cancelada_em'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  atualizadoEm: tz('atualizado_em').notNull().defaultNow(),
+});
+
+export const cobrancas = pgTable('cobrancas', {
+  id: text('id').primaryKey(),
+  contaId: uuid('conta_id').notNull(),
+  asaasAssinaturaId: text('asaas_assinatura_id'),
+  valor: numeric('valor', { precision: 10, scale: 2, mode: 'number' }).notNull(),
+  vencimento: date('vencimento', { mode: 'string' }).notNull(),
+  status: text('status').notNull(),
+  forma: text('forma'),
+  link: text('link'),
+  pagoEm: tz('pago_em'),
+  atualizadoEm: tz('atualizado_em').notNull().defaultNow(),
+});
+
+export const webhooksAsaas = pgTable('webhooks_asaas', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  chave: text('chave').notNull().unique(),
+  evento: text('evento').notNull(),
+  recebidoEm: tz('recebido_em').notNull().defaultNow(),
+  corpo: jsonb('corpo').notNull(),
+  processadoEm: tz('processado_em'),
+  erro: text('erro'),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -434,4 +473,7 @@ export const todasAsTabelas = {
   monitoradas,
   aparelhos,
   notificacoes,
+  assinaturas,
+  cobrancas,
+  webhooksAsaas,
 };

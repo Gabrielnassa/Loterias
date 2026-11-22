@@ -23,7 +23,11 @@ export default async function SemPermissao({ searchParams }: Props) {
         ) : (
           'Esta tela não está liberada para você.'
         )}{' '}
-        {tela?.soGestores === 'plano' ? 'Só o responsável cuida do plano.' : 'Peça ao responsável (ou a um sócio) em Equipe.'}
+        {sp.motivo === 'plano'
+          ? 'Ela não faz parte do plano atual da conta: peça ao responsável para trocar de plano.'
+          : tela?.soGestores === 'plano'
+            ? 'Só o responsável cuida do plano.'
+            : 'Peça ao responsável (ou a um sócio) em Equipe.'}
       </p>
       {ctx && !ctx.conta ? (
         <p className="text-sm">

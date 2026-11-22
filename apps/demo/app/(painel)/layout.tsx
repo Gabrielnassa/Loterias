@@ -19,6 +19,7 @@ const NAV: [string, string][] = [
   ['/simulador', 'Simulador'],
   ['/loteca', 'Loteca'],
   ['/equipe', 'Equipe'],
+  ['/planos', 'Plano'],
   ['/loterica-trevo-de-ouro', 'Site de exemplo'],
 ];
 

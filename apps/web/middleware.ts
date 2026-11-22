@@ -38,6 +38,14 @@ export async function middleware(req: NextRequest) {
     u.searchParams.set('voltar', caminho + req.nextUrl.search);
     return NextResponse.redirect(u);
   }
+  if (acesso === 'tela' && tela && ctx.bloqueadas.includes(tela.id)) {
+    // o papel libera, mas o plano da conta não: quem cuida do plano vai para Planos; os outros, um aviso
+    if (api) return NextResponse.json({ erro: `${tela.nome} não faz parte do plano ${ctx.plano?.nome ?? ''}` }, { status: 402 });
+    const u = new URL(ctx.telas.includes('plano') ? '/planos' : '/sem-permissao', req.url);
+    u.searchParams.set('tela', tela.id);
+    if (!ctx.telas.includes('plano')) u.searchParams.set('motivo', 'plano');
+    return NextResponse.redirect(u);
+  }
   if (acesso === 'tela' && tela && !ctx.telas.includes(tela.id)) {
     if (api) return NextResponse.json({ erro: `sem permissão para ${tela.nome}` }, { status: 403 });
     // a página inicial manda para a 1ª tela liberada

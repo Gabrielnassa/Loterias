@@ -36,6 +36,7 @@ const NAV: [string, string][] = [
   ['/simulador', 'Simulador'],
   ['/loteca', 'Loteca'],
   ['/equipe', 'Equipe'],
+  ['/planos', 'Plano'],
 ];
 
 export default async function LayoutPainel({ children }: { children: ReactNode }) {
@@ -44,7 +45,7 @@ export default async function LayoutPainel({ children }: { children: ReactNode }
   const naoLidas = ctx && avisos ? await avisos.naoLidas(ctx.usuario.id).catch(() => 0) : 0;
   // com contas ligadas, o menu mostra só as telas liberadas para a pessoa
   const nav = NAV.filter(([href]) => {
-    if (!ctx) return href !== '/equipe' && href !== '/monitoradas';
+    if (!ctx) return href !== '/equipe' && href !== '/monitoradas' && href !== '/planos';
     if (href === '/minha') return ctx.telas.some((t) => t.startsWith('minha-'));
     const t = telaDaRota(href);
     return !t || ctx.telas.includes(t.id);
@@ -99,6 +100,14 @@ export default async function LayoutPainel({ children }: { children: ReactNode }
             </div>
           </div>
         </header>
+        {ctx?.plano && (ctx.plano.aviso || ctx.plano.motivo === 'teste') && ctx.telas.includes('plano') ? (
+          <div className={`px-4 py-1.5 text-center text-xs ${ctx.plano.aviso ? 'bg-amber-100 text-amber-900 dark:bg-amber-500/15 dark:text-amber-200' : 'bg-sky-50 text-sky-900 dark:bg-sky-500/10 dark:text-sky-200'}`}>
+            {ctx.plano.aviso ?? `Teste grátis com tudo liberado: faltam ${ctx.plano.diasRestantesTeste} ${ctx.plano.diasRestantesTeste === 1 ? 'dia' : 'dias'}.`}{' '}
+            <Link className="underline" href="/planos">
+              Ver planos
+            </Link>
+          </div>
+        ) : null}
         <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
         <RegistrarSW />
     </>

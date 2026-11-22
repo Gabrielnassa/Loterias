@@ -1,6 +1,6 @@
-import type { Papel } from '@radar/core';
+import type { Papel, PlanoId, StatusAssinatura } from '@radar/core';
 import type { Sql } from '@radar/db';
-import type { Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
+import type { Assinatura, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
 
 type Linha = Record<string, unknown>;
 const data = (v: unknown) => (v === null || v === undefined ? null : new Date(v as string | Date));
@@ -61,6 +61,29 @@ const sessao = (r: Linha): Sessao => ({
   aparelho: (r.aparelho as string | null) ?? null,
 });
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
+const assinatura = (r: Linha): Assinatura => ({
+  contaId: r.conta_id as string,
+  plano: r.plano as PlanoId,
+  status: r.status as StatusAssinatura,
+  testeAte: data(r.teste_ate),
+  pagoAte: data(r.pago_ate),
+  forma: (r.forma as Assinatura['forma']) ?? null,
+  valor: r.valor === null || r.valor === undefined ? null : Number(r.valor),
+  asaasClienteId: (r.asaas_cliente_id as string | null) ?? null,
+  asaasAssinaturaId: (r.asaas_assinatura_id as string | null) ?? null,
+  canceladaEm: data(r.cancelada_em),
+});
+const cobranca = (r: Linha): Cobranca => ({
+  id: r.id as string,
+  contaId: r.conta_id as string,
+  asaasAssinaturaId: (r.asaas_assinatura_id as string | null) ?? null,
+  valor: Number(r.valor),
+  vencimento: typeof r.vencimento === 'string' ? r.vencimento.slice(0, 10) : (r.vencimento as Date).toISOString().slice(0, 10),
+  status: r.status as string,
+  forma: (r.forma as string | null) ?? null,
+  link: (r.link as string | null) ?? null,
+  pagoEm: data(r.pago_em),
+});
 
 /** Contas no PostgreSQL (migração 0007). */
 export class RepositorioContasPostgres implements RepositorioContas {
@@ -208,5 +231,48 @@ export class RepositorioContasPostgres implements RepositorioContas {
   }
   async encerrarSessoesDoUsuario(usuarioId: string, exceto?: string) {
     await this.sql`delete from sessoes where usuario_id = ${usuarioId} and token_hash <> ${exceto ?? ''}`;
+  }
+
+  async assinatura(contaId: string) {
+    const [r] = await this.sql`select * from assinaturas where conta_id = ${contaId}`;
+    return r ? assinatura(r) : null;
+  }
+  async salvarAssinatura(a: Assinatura) {
+    await this.sql`
+      insert into assinaturas (conta_id, plano, status, teste_ate, pago_ate, forma, valor, asaas_cliente_id, asaas_assinatura_id, cancelada_em, atualizado_em)
+      values (${a.contaId}, ${a.plano}, ${a.status}, ${iso(a.testeAte)}::timestamptz, ${iso(a.pagoAte)}::timestamptz, ${a.forma}, ${a.valor},
+              ${a.asaasClienteId}, ${a.asaasAssinaturaId}, ${iso(a.canceladaEm)}::timestamptz, now())
+      on conflict (conta_id) do update set plano = excluded.plano, status = excluded.status, teste_ate = excluded.teste_ate,
+        pago_ate = excluded.pago_ate, forma = excluded.forma, valor = excluded.valor, asaas_cliente_id = excluded.asaas_cliente_id,
+        asaas_assinatura_id = excluded.asaas_assinatura_id, cancelada_em = excluded.cancelada_em, atualizado_em = now()`;
+  }
+  async contaPorAssinaturaAsaas(asaasAssinaturaId: string) {
+    const [r] = await this.sql`select conta_id from assinaturas where asaas_assinatura_id = ${asaasAssinaturaId}`;
+    return r ? (r.conta_id as string) : null;
+  }
+  async cobrancas(contaId: string) {
+    return (await this.sql`select * from cobrancas where conta_id = ${contaId} order by vencimento desc, atualizado_em desc limit 50`).map(cobranca);
+  }
+  async salvarCobranca(c: Cobranca) {
+    await this.sql`
+      insert into cobrancas (id, conta_id, asaas_assinatura_id, valor, vencimento, status, forma, link, pago_em, atualizado_em)
+      values (${c.id}, ${c.contaId}, ${c.asaasAssinaturaId}, ${c.valor}, ${c.vencimento}::date, ${c.status}, ${c.forma}, ${c.link}, ${iso(c.pagoEm)}::timestamptz, now())
+      on conflict (id) do update set valor = excluded.valor, vencimento = excluded.vencimento, status = excluded.status, forma = excluded.forma,
+        link = coalesce(excluded.link, cobrancas.link), pago_em = coalesce(excluded.pago_em, cobrancas.pago_em), atualizado_em = now()`;
+  }
+  async registrarWebhook(chave: string, evento: string, corpo: unknown) {
+    const r = await this.sql`
+      insert into webhooks_asaas (chave, evento, corpo) values (${chave}, ${evento}, ${this.sql.json(corpo as Parameters<Sql['json']>[0])})
+      on conflict (chave) do nothing returning 1`;
+    return r.length > 0;
+  }
+  async marcarWebhook(chave: string, erro: string | null) {
+    await this.sql`update webhooks_asaas set processado_em = now(), erro = ${erro} where chave = ${chave}`;
+  }
+  async contarPessoas(contaId: string, agora: Date) {
+    const [r] = await this.sql<{ n: number }[]>`
+      select (select count(*) from membros where conta_id = ${contaId})
+           + (select count(*) from convites where conta_id = ${contaId} and aceito_em is null and cancelado_em is null and expira_em > ${iso(agora)}::timestamptz) as n`;
+    return Number(r!.n);
   }
 }

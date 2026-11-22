@@ -1,4 +1,5 @@
 import {
+  assinaturaInicial,
   emailValido,
   estadoConvite,
   normalizarCodigoLoterica,
@@ -57,6 +58,9 @@ export async function convidar(repo: RepositorioContas, ctx: ContextoSessao | nu
   const existente = await repo.usuarioPorEmail(email);
   if (existente && (await repo.membro(ctx.conta.id, existente.id))) throw new ErroEquipe('esta pessoa já faz parte da conta');
   const pendente = (await repo.convites(ctx.conta.id)).find((c) => c.email === email && estadoDoConvite(c, agora) === 'pendente');
+  if (!pendente && ctx.plano && (await repo.contarPessoas(ctx.conta.id, agora)) >= ctx.plano.limites.pessoas) {
+    throw new ErroEquipe(`o plano ${ctx.plano.nome} permite ${ctx.plano.limites.pessoas} pessoas na conta (contando convites pendentes): troque de plano em Plano`);
+  }
   if (pendente) await repo.marcarConvite(pendente.id, { canceladoEm: agora });
   const token = novoToken();
   const convite = await repo.criarConvite({
@@ -141,7 +145,11 @@ export async function salvarLoja(repo: RepositorioContas, ctx: ContextoSessao | 
   if (!codigo) throw new ErroEquipe('código de lotérica inválido (ex.: 2894 ou 21.002894-7)');
   const franquia = Number(String(d.franquiaLimite ?? '8000').replace(/\./g, '').replace(',', '.'));
   if (!Number.isFinite(franquia) || franquia <= 0 || franquia > 1_000_000) throw new ErroEquipe('franquia diária inválida');
-  const atual = (await repo.lojas(ctx.conta.id)).find((l) => l.codigo === codigo);
+  const todas = await repo.lojas(ctx.conta.id);
+  const atual = todas.find((l) => l.codigo === codigo);
+  if (!atual && ctx.plano && todas.length >= ctx.plano.limites.lojas) {
+    throw new ErroEquipe(`o plano ${ctx.plano.nome} permite ${ctx.plano.limites.lojas} ${ctx.plano.limites.lojas === 1 ? 'lotérica' : 'lotéricas'}: troque de plano em Plano`);
+  }
   await repo.salvarLoja({ contaId: ctx.conta.id, codigo, nome: d.nome?.trim() || atual?.nome || `Lotérica ${codigo}`, franquiaLimite: Math.round(franquia * 100) / 100 });
   return codigo;
 }
@@ -170,6 +178,7 @@ export async function criarOutraConta(repo: RepositorioContas, ctx: ContextoSess
   const conta = await repo.criarConta(d.nome.trim());
   await repo.salvarLoja({ contaId: conta.id, codigo, nome: d.nomeLoja?.trim() || `Lotérica ${codigo}`, franquiaLimite: 8000 });
   await repo.salvarMembro({ contaId: conta.id, usuarioId: ctx.usuario.id, papel: 'responsavel', telas: null, lojas: null });
+  await repo.salvarAssinatura(assinaturaInicial(conta.id, new Date()));
   return conta.id;
 }
 

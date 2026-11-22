@@ -1,4 +1,5 @@
 import {
+  assinaturaInicial,
   emailValido,
   normalizarCodigoLoterica,
   normalizarEmail,
@@ -133,6 +134,7 @@ export async function cadastrar(repo: RepositorioContas, d: DadosCadastro, base:
   const conta = await repo.criarConta(empresa);
   for (const l of lojas) await repo.salvarLoja({ contaId: conta.id, codigo: l.codigo, nome: l.nome, franquiaLimite: 8000 });
   await repo.salvarMembro({ contaId: conta.id, usuarioId: u.id, papel: 'responsavel', telas: null, lojas: null });
+  await repo.salvarAssinatura(assinaturaInicial(conta.id, agora));
   return mandarLink(repo, email, '/', base, agora, 'Confirme seu e-mail no Radar Lotérico', `Olá, ${nome}! Para confirmar o e-mail e entrar na conta "${empresa}", abra o link:`);
 }
 

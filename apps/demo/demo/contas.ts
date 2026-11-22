@@ -1,4 +1,5 @@
 import type { FonteSimuladaRaioX } from '@/lib/dados';
+import { assinaturaInicial } from '@radar/core';
 import { estadoVazio, lerEstadoContas, RepositorioContasMemoria, type EstadoContas } from '@/lib/contas/memoria';
 import { fonteDeDados } from './fonte-dados';
 
@@ -28,6 +29,7 @@ async function semear(r: RepositorioContasMemoria): Promise<{ usuarioId: string;
   const socia = await r.criarUsuario({ email: 'socia@demonstracao.radar', nome: 'Sócia Exemplo', emailVerificadoEm: agora });
   const caixa = await r.criarUsuario({ email: 'caixa@demonstracao.radar', nome: 'Caixa Exemplo', emailVerificadoEm: agora });
   await r.salvarMembro({ contaId: conta.id, usuarioId: voce.id, papel: 'responsavel', telas: null, lojas: null });
+  await r.salvarAssinatura(assinaturaInicial(conta.id, agora));
   await r.salvarMembro({ contaId: conta.id, usuarioId: socia.id, papel: 'socio', telas: null, lojas: null });
   await r.salvarMembro({ contaId: conta.id, usuarioId: caixa.id, papel: 'colaborador', telas: ['minha-boloes', 'minha-cronometro', 'gestao-caixa'], lojas: [lotericas[0]!.codigoCaixa] });
   await r.criarConvite({ contaId: conta.id, email: 'novo.colaborador@demonstracao.radar', papel: 'colaborador', telas: null, lojas: null, tokenHash: 'demo', criadoPor: voce.id, expiraEm: new Date(agora.getTime() + 7 * 86_400_000) });

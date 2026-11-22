@@ -33,6 +33,20 @@ export default async function MinhaConta({ searchParams }: Props) {
       </div>
       <MensagemDaConsulta ok={sp.ok} erro={sp.erro} />
 
+      {ctx.plano ? (
+        <section className="cartao flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span>
+            Plano da conta: <strong>{ctx.plano.nome}</strong>
+            {ctx.plano.diasRestantesTeste ? ` (teste grátis, faltam ${ctx.plano.diasRestantesTeste} dias)` : ''}
+          </span>
+          {ctx.telas.includes('plano') ? (
+            <Link className="botao" href="/planos">
+              Ver planos
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
+
       <section className="cartao space-y-3">
         <h2 className="font-semibold">Perfil</h2>
         <FormAcao acao="/api/conta" className="flex flex-wrap items-end gap-3">

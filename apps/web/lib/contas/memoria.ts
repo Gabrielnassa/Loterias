@@ -1,4 +1,4 @@
-import type { Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
+import type { Assinatura, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
 
 /** Estado serializável (a demonstração guarda no localStorage do navegador). */
 export interface EstadoContas {
@@ -9,11 +9,14 @@ export interface EstadoContas {
   convites: Convite[];
   tokens: TokenLogin[];
   sessoes: Sessao[];
+  assinaturas?: Assinatura[];
+  cobrancas?: Cobranca[];
+  webhooks?: { chave: string; evento: string; recebidoEm: Date; erro: string | null }[];
 }
 
 export const estadoVazio = (): EstadoContas => ({ usuarios: [], contas: [], lojas: [], membros: [], convites: [], tokens: [], sessoes: [] });
 
-const DATAS = new Set(['criadoEm', 'emailVerificadoEm', 'verificadaEm', 'expiraEm', 'aceitoEm', 'canceladoEm', 'usadoEm', 'vistoEm']);
+const DATAS = new Set(['criadoEm', 'emailVerificadoEm', 'verificadaEm', 'expiraEm', 'aceitoEm', 'canceladoEm', 'usadoEm', 'vistoEm', 'testeAte', 'pagoAte', 'canceladaEm', 'pagoEm', 'recebidoEm']);
 
 /** JSON -> estado (datas voltam a ser Date). */
 export function lerEstadoContas(json: string): EstadoContas {
@@ -180,5 +183,41 @@ export class RepositorioContasMemoria implements RepositorioContas {
   async encerrarSessoesDoUsuario(usuarioId: string, exceto?: string) {
     this.estado.sessoes = this.estado.sessoes.filter((x) => x.usuarioId !== usuarioId || x.tokenHash === exceto);
     this.mudou();
+  }
+
+  async assinatura(contaId: string) {
+    const a = (this.estado.assinaturas ?? []).find((x) => x.contaId === contaId);
+    return a ? copia(a) : null;
+  }
+  async salvarAssinatura(a: Assinatura) {
+    this.estado.assinaturas = [...(this.estado.assinaturas ?? []).filter((x) => x.contaId !== a.contaId), copia(a)];
+    this.mudou();
+  }
+  async contaPorAssinaturaAsaas(asaasAssinaturaId: string) {
+    return (this.estado.assinaturas ?? []).find((x) => x.asaasAssinaturaId === asaasAssinaturaId)?.contaId ?? null;
+  }
+  async cobrancas(contaId: string) {
+    return (this.estado.cobrancas ?? []).filter((c) => c.contaId === contaId).sort((a, b) => (a.vencimento < b.vencimento ? 1 : -1)).map(copia);
+  }
+  async salvarCobranca(c: Cobranca) {
+    this.estado.cobrancas = [...(this.estado.cobrancas ?? []).filter((x) => x.id !== c.id), copia(c)];
+    this.mudou();
+  }
+  async registrarWebhook(chave: string, evento: string) {
+    const lista = (this.estado.webhooks ??= []);
+    if (lista.some((w) => w.chave === chave)) return false;
+    lista.push({ chave, evento, recebidoEm: new Date(), erro: null });
+    this.mudou();
+    return true;
+  }
+  async marcarWebhook(chave: string, erro: string | null) {
+    const w = (this.estado.webhooks ?? []).find((x) => x.chave === chave);
+    if (w) w.erro = erro;
+    this.mudou();
+  }
+  async contarPessoas(contaId: string, agora: Date) {
+    const membros = this.estado.membros.filter((m) => m.contaId === contaId).length;
+    const convites = this.estado.convites.filter((c) => c.contaId === contaId && !c.aceitoEm && !c.canceladoEm && c.expiraEm.getTime() > agora.getTime()).length;
+    return membros + convites;
   }
 }

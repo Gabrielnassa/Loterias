@@ -38,6 +38,7 @@ export const ROTAS = {
   equipe: { pagina: () => import('@/app/(painel)/equipe/page') },
   monitoradas: { pagina: () => import('@/app/(painel)/monitoradas/page') },
   notificacoes: { pagina: () => import('@/app/(painel)/notificacoes/page') },
+  planos: { pagina: () => import('@/app/(painel)/planos/page') },
   conta: { pagina: () => import('@/app/(painel)/conta/page') },
   'sem-permissao': { pagina: () => import('@/app/(painel)/sem-permissao/page') },
 } satisfies Record<string, { pagina: () => Promise<unknown>; layout?: Carregar<Layout> }>;
