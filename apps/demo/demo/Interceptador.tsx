@@ -35,6 +35,8 @@ export function Interceptador() {
     };
     const onSubmit = (e: SubmitEvent) => {
       const f = e.target as HTMLFormElement;
+      // formulários FormAcao gravam por fetch (atendido no navegador por demo/preparar.ts)
+      if (f.hasAttribute('data-acao')) return;
       const acao = f.getAttribute('action') ?? '';
       if (acao.startsWith('/api/') || (f.method ?? 'get').toLowerCase() === 'post') {
         e.preventDefault();

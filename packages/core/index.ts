@@ -33,6 +33,7 @@ export * from './abertura/participacao';
 export * from './raio-x/semanal';
 export * from './raio-x/ranking';
 export * from './raio-x/elite';
+export * from './contas/permissoes';
 
 // Adaptador da fonte (contrato, varredura, saúde, cliente HTTP)
 export * from './fonte';

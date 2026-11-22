@@ -36,7 +36,7 @@ deployment › Source = "GitHub Actions"**. Depois, em **Actions › Demonstraç
 | 3. Minha lotérica | **Pronta**: Bolões MKP (franquia, internet x balcão, break-even, colocação, estorno), Financeiro, Conferência das 10 modalidades com resultado e rateio oficiais, Posição na abertura, várias lojas, CSV/Excel. Precisa do banco com a coleta real |
 | 4. Mercado e previsões | **Pronta**: Monitoramento MKP (ao vivo e "Retrato"), Filas, Estatísticas (panorama, Top 10, ficha de qualquer lotérica), Mega da Virada, previsão de fechamento com faixa e backtest, Sugestões (franquia de amanhã e otimizador de formato com risco), simulador de posição, cronômetro de abertura. A calibração fina depende de dados reais |
 | 5. Site e artes | **Pronta**: site público `/{slug}` (SEO local, filtros, jogos, chance do prêmio, carrinho pelo WhatsApp, link da CAIXA, 3 temas, métricas anônimas) e 4 artes em PNG (resultado, bolões, premiado, "Saiu aqui!"). Falta: vídeos, foto do bilhete (OCR), agendar posts, domínio próprio, QR code |
-| 6. Contas e gestão | **Não começada**: login, equipe e permissões, PWA com Web Push, planos (Asaas), gestão da loja física |
+| 6. Contas e gestão | **Em andamento**: contas prontas (login por link no e-mail ou senha, várias lotéricas por conta, equipe com responsável, sócio e colaborador, permissão por tela e por loja, convites). Falta: monitoradas e alertas com Web Push (PWA), planos (Asaas, sandbox), gestão da loja física |
 | Ferramentas | **Prontas**: Calendário de sorteios, Simulador de bolões (limites oficiais do bolão), Loteca (chances e melhor marcação) |
 
 Números de terceiros (vendas, sobras, colocação) são **estimativas** a partir de leituras periódicas da vitrine;
@@ -132,7 +132,25 @@ Resultado oficial de um concurso (o coletor também busca sozinho): `pnpm result
 - `RADAR_MINHA_LOTERICA`: as lotéricas do dono, separadas por vírgula, cada uma `código` ou `código=Nome`, com o
   código em qualquer forma (`21.002894-7`, `210028947`, `002894` ou `2894`). Com mais de uma, as telas mostram um
   seletor de loja.
-- `RADAR_FRANQUIA_LIMITE` (padrão 8000): teto diário da franquia.
+- `RADAR_FRANQUIA_LIMITE` (padrão 8000): teto diário da franquia (com contas, cada loja tem a sua em Equipe).
+
+## Contas, login e equipe
+
+Com banco (`DATABASE_URL`), o painel exige login; sem banco ele abre direto, como antes (`RADAR_AUTH=memoria` liga o
+login sem banco, para testar). O primeiro acesso é em `/cadastro`: a pessoa vira **responsável** de uma conta com as
+lotéricas dela e confirma o e-mail pelo link. Depois, em **Equipe**, convida **sócios** (veem tudo, menos o plano) e
+**colaboradores** (só as telas e lojas marcadas). Entrar: link no e-mail (vale 15 min, uma vez) ou senha.
+
+Para os e-mails saírem de verdade, configure SMTP no `.env` (nunca no repositório):
+
+```bash
+RADAR_EMAIL=smtp
+SMTP_URL=smtps://usuario:senha@smtp.exemplo.com:465
+EMAIL_REMETENTE="Radar Lotérico <nao-responda@exemplo.com>"
+```
+
+Sem SMTP, os links aparecem no log do servidor. A titularidade da lotérica ainda não é verificada (a tela marca
+"não verificada").
 - Site público: `RADAR_SITE_URL` (endereço base, para SEO) e `RADAR_SITES` (JSON com WhatsApp, Instagram, endereço,
   horário e tema de cada loja); com banco, a tela `/minha/site` grava na tabela `sites`.
 

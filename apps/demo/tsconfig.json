@@ -10,6 +10,9 @@
     "baseUrl": ".",
     "paths": {
       "@/lib/fonte-dados": ["./demo/fonte-dados.ts"],
+      "@/lib/contexto": ["./demo/contexto.ts"],
+      "@/lib/contas/ativo": ["./demo/contas-ativo.ts"],
+      "@/lib/email": ["./demo/email.ts"],
       "@/components/AtualizarSozinho": ["./demo/AtualizarSozinho.tsx"],
       "@/components/Indisponivel": ["./demo/Indisponivel.tsx"],
       "@/*": ["../web/*"],

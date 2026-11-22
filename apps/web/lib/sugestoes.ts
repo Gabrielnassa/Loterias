@@ -18,7 +18,7 @@ export async function sugestoesParaLoja(
   const dia = o.dia && /^\d{4}-\d{2}-\d{2}$/.test(o.dia) ? o.dia : somarDias(hoje, 1);
   const dias = o.dias ?? 21;
   const desde = somarDias(hoje, -dias);
-  const limite = o.limite ?? Number(process.env.RADAR_FRANQUIA_LIMITE ?? 8000);
+  const limite = o.limite ?? loterica.franquiaLimite ?? Number(process.env.RADAR_FRANQUIA_LIMITE ?? 8000);
   const historico = await m.historico(new Date(agora.getTime() - (dias + 1) * 86_400_000), agora);
   const uf = loterica.uf || 'SP';
   const franquia = dividirFranquia(historico, { dia, uf, limite, desde });

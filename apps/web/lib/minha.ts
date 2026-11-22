@@ -156,7 +156,7 @@ export async function boloesMkp(fonte: FonteDadosRaioX, o: { dias?: number; loja
   const atuais = new Map<string, ColocacaoPorEscopo>();
   for (const c of ativosPorConcurso) for (const [id, p] of await colocacoesAtuais(sql, [c])) atuais.set(id, p);
   const hoje = diaSP(agora);
-  const limite = Number(process.env.RADAR_FRANQUIA_LIMITE ?? 8000);
+  const limite = loterica.franquiaLimite ?? Number(process.env.RADAR_FRANQUIA_LIMITE ?? 8000);
   const usado = franquiaUsada(
     minhas.map((b) => ({ inseridoEm: b.inseridoEm, cotasTotal: b.cotasTotal, valorCotaBase: b.valorCotaBase, estornado: b.estornado })),
     hoje,

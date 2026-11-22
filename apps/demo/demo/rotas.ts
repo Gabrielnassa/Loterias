@@ -35,6 +35,9 @@ export const ROTAS = {
   'minha-site': { pagina: () => import('@/app/(painel)/minha/site/page'), layout: minha },
   'minha-midias': { pagina: () => import('./Midias'), layout: minha },
   site: { pagina: () => import('@/app/(site)/[slug]/page') },
+  equipe: { pagina: () => import('@/app/(painel)/equipe/page') },
+  conta: { pagina: () => import('@/app/(painel)/conta/page') },
+  'sem-permissao': { pagina: () => import('@/app/(painel)/sem-permissao/page') },
 } satisfies Record<string, { pagina: () => Promise<unknown>; layout?: Carregar<Layout> }>;
 
 export type ChaveRota = keyof typeof ROTAS;

@@ -21,6 +21,7 @@ import {
   text,
   time,
   timestamp,
+  uuid,
 } from 'drizzle-orm/pg-core';
 import type { PartidaLoteca } from '@radar/core';
 
@@ -289,6 +290,82 @@ export const siteEventos = pgTable('site_eventos', {
   bolaoId: text('bolao_id'),
 });
 
+// Fase 6: contas, equipe e login (0007_contas.sql)
+export const usuarios = pgTable('usuarios', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  nome: text('nome').notNull(),
+  senhaHash: text('senha_hash'),
+  emailVerificadoEm: tz('email_verificado_em'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+});
+
+export const contas = pgTable('contas', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nome: text('nome').notNull(),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+});
+
+export const contaLojas = pgTable(
+  'conta_lojas',
+  {
+    contaId: uuid('conta_id').notNull(),
+    lotericaCodigo: text('loterica_codigo').notNull(),
+    nome: text('nome').notNull(),
+    franquiaLimite: numeric('franquia_limite', { precision: 12, scale: 2, mode: 'number' }).notNull().default(8000),
+    verificadaEm: tz('verificada_em'),
+    criadoEm: tz('criado_em').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.contaId, t.lotericaCodigo] })],
+);
+
+export const membros = pgTable(
+  'membros',
+  {
+    contaId: uuid('conta_id').notNull(),
+    usuarioId: uuid('usuario_id').notNull(),
+    papel: text('papel', { enum: ['responsavel', 'socio', 'colaborador'] }).notNull(),
+    telas: text('telas').array(),
+    lojas: text('lojas').array(),
+    criadoEm: tz('criado_em').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.contaId, t.usuarioId] })],
+);
+
+export const convites = pgTable('convites', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contaId: uuid('conta_id').notNull(),
+  email: text('email').notNull(),
+  papel: text('papel', { enum: ['socio', 'colaborador'] }).notNull(),
+  telas: text('telas').array(),
+  lojas: text('lojas').array(),
+  tokenHash: text('token_hash').notNull().unique(),
+  criadoPor: uuid('criado_por'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  expiraEm: tz('expira_em').notNull(),
+  aceitoEm: tz('aceito_em'),
+  canceladoEm: tz('cancelado_em'),
+});
+
+export const tokensLogin = pgTable('tokens_login', {
+  tokenHash: text('token_hash').primaryKey(),
+  email: text('email').notNull(),
+  voltar: text('voltar'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  expiraEm: tz('expira_em').notNull(),
+  usadoEm: tz('usado_em'),
+});
+
+export const sessoes = pgTable('sessoes', {
+  tokenHash: text('token_hash').primaryKey(),
+  usuarioId: uuid('usuario_id').notNull(),
+  contaId: uuid('conta_id'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  expiraEm: tz('expira_em').notNull(),
+  vistoEm: tz('visto_em').notNull().defaultNow(),
+  aparelho: text('aparelho'),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -307,4 +384,11 @@ export const todasAsTabelas = {
   rateios,
   sites,
   siteEventos,
+  usuarios,
+  contas,
+  contaLojas,
+  membros,
+  convites,
+  tokensLogin,
+  sessoes,
 };

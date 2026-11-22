@@ -2,6 +2,7 @@ import { reconstruirHistorico, type HistoricoSerializado } from '@radar/core/sim
 import { FonteSimuladaRaioX } from '@/lib/dados';
 import { aoVivo } from '@/lib/servico';
 import { registrarEvento, siteDoSlug } from '@/lib/site';
+import { carregarContasDemo } from './contas-ativo';
 import { definirFonteDeDados } from './fonte-dados';
 
 export const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
@@ -13,10 +14,7 @@ export interface InfoDemo {
 
 let pronto: Promise<InfoDemo> | null = null;
 
-/** Avisa a interface (faixa/toast) que algo precisa do servidor. */
-export function avisar(mensagem: string) {
-  window.dispatchEvent(new CustomEvent('demo:aviso', { detail: mensagem }));
-}
+export { avisar } from './aviso';
 
 /**
  * Carrega o histórico simulado do build e instala os "servidores de mentira" no navegador:
@@ -32,6 +30,7 @@ export function prepararDemo(): Promise<InfoDemo> {
     const carregado = Date.now();
     const fonte = new FonteSimuladaRaioX(() => new Date(json.ate + (Date.now() - carregado)), Number.POSITIVE_INFINITY, { historicoPronto: historico });
     definirFonteDeDados(fonte);
+    await carregarContasDemo();
     instalarServidorLocal(fonte);
     return { geradoEm: new Date(json.ate), carregadoEm: new Date(carregado) };
   })();
@@ -57,6 +56,15 @@ async function evento(fonte: FonteSimuladaRaioX, u: URL, corpo: string | null) {
   if (site) await registrarEvento(fonte, site, { tipo: d.tipo, visitante: d.visitante });
 }
 
+/**
+ * APIs do apps/web que também rodam no navegador (Fase 6: contas, equipe...): o mesmo código, com o
+ * repositório em memória guardado no localStorage (demo/contas.ts).
+ */
+const API_LOCAIS: Record<string, () => Promise<unknown>> = {
+  '/api/equipe': () => import('@/app/api/equipe/route'),
+  '/api/conta': () => import('@/app/api/conta/route'),
+};
+
 function instalarServidorLocal(fonte: FonteSimuladaRaioX) {
   const fetchOriginal = window.fetch.bind(window);
   window.fetch = async (entrada: RequestInfo | URL, init?: RequestInit) => {
@@ -66,6 +74,14 @@ function instalarServidorLocal(fonte: FonteSimuladaRaioX) {
     if (u.pathname === '/api/lotericas') {
       const lotericas = await fonte.buscar(u.searchParams.get('q') ?? '', Number(u.searchParams.get('limite')) || 20);
       return Response.json({ q: u.searchParams.get('q'), lotericas });
+    }
+    const api = API_LOCAIS[u.pathname];
+    if (api) {
+      const mod = (await api()) as Record<string, ((req: Request) => Promise<Response>) | undefined>;
+      const metodo = (init?.method ?? 'GET').toUpperCase();
+      const f = mod[metodo];
+      if (!f) return Response.json({ erro: 'método não suportado' }, { status: 405 });
+      return f(new Request(u, init));
     }
     if (u.pathname.startsWith('/api/site/')) {
       await evento(fonte, u, typeof init?.body === 'string' ? init.body : null);

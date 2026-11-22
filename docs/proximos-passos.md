@@ -104,8 +104,11 @@ Retomar do primeiro item sem [x]. Commit e push a cada item; manter a demonstra�
       `pnpm analisar-abertura`), simulação e Sugestões calibradas (`mercado/referencias.ts`, coluna "Real SP*"),
       listas Elite e Top (`raio-x/elite.ts`, `/elite`).
       Depende do Gabriel: gravar a abertura de hoje 21:45 (ou domingo 11:45) e rodar `pnpm analisar-abertura`.
-- [ ] 4. Fase 6, Contas: login (e-mail + link mágico ou senha), contas com várias lotéricas, equipe com papéis
-      (responsável, sócio, colaborador), permissão por tela, convites de colaborador.
+- [x] 4. Fase 6, Contas: login (link mágico ou senha, scrypt), contas com várias lotéricas (franquia por loja), equipe
+      com papéis (responsável, sócio, colaborador), permissão por tela e por loja, convites (e-mail ou link para copiar).
+      `core/contas/permissoes.ts`, migração 0007, `apps/web/lib/contas/`, `middleware.ts` (Node), telas `/entrar`,
+      `/cadastro`, `/convite/[token]`, `/conta`, `/equipe`, `/sem-permissao`. Na demo: Equipe e Conta gravam no localStorage.
+      Depende do Gabriel: SMTP (RADAR_EMAIL=smtp, SMTP_URL) e como verificar a titularidade da lotérica.
 - [ ] 5. Watchlist (monitoradas) + alertas do Raio-X (push quando uma monitorada entra na abertura; resumo semanal
       segunda 08:00). Web Push (VAPID), PWA instalável, central de notificações com preferências por aparelho
       (vendas de hoje, todas, só no encerramento, resultados, previsão de zerar mantida por 45 min, prêmios na lotérica).

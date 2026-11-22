@@ -8,6 +8,7 @@ import {
   type ParticipacaoInfo,
 } from '@radar/core';
 import { aberturaAoVivoSimulada, gerarHistoricoSimulado, type HistoricoSimulado } from '@radar/core/simulacao';
+import { contexto } from '@/lib/contexto';
 
 /**
  * Fonte de dados da web. Hoje: SIMULADA (histórico gerado pelas mesmas regras do coletor).
@@ -46,7 +47,7 @@ export interface AoVivo {
 }
 
 /** Lotérica do dono (multi-loja). `semDados`: configurada, mas o coletor ainda não viu bolões dela. */
-export type MinhaLotericaRef = LotericaRef & { semDados?: boolean };
+export type MinhaLotericaRef = LotericaRef & { semDados?: boolean; franquiaLimite?: number };
 
 export interface FonteDadosRaioX {
   readonly tipo: 'simulada' | 'postgres';
@@ -65,6 +66,19 @@ export interface FonteDadosRaioX {
   minhasLotericas(): Promise<MinhaLotericaRef[]>;
   /** A 1ª das lotéricas do dono (atalho para destaque em rankings e ao vivo). */
   minhaLoterica(): Promise<MinhaLotericaRef | null>;
+}
+
+/**
+ * Com as contas ligadas (Fase 6), "minhas lotéricas" = as lojas da conta que a pessoa logada vê.
+ * null = sem sessão (contas desligadas): vale RADAR_MINHA_LOTERICA ou a demonstração.
+ */
+export async function lojasDaSessao(conhecidas: readonly LotericaRef[]): Promise<MinhaLotericaRef[] | null> {
+  const ctx = await contexto();
+  if (!ctx) return null;
+  return ctx.lojas.map((l) => {
+    const x = conhecidas.find((k) => k.codigoCaixa === l.codigo);
+    return x ? { ...x, nome: l.nome || x.nome, franquiaLimite: l.franquiaLimite } : { codigoCaixa: l.codigo, nome: l.nome, cidade: '', uf: '', semDados: true, franquiaLimite: l.franquiaLimite };
+  });
 }
 
 export class FonteSimuladaRaioX implements FonteDadosRaioX {
@@ -148,8 +162,11 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
   async aoVivo(agora: Date): Promise<AoVivo> {
     return { emAndamento: true, ...aberturaAoVivoSimulada(this.historico(), agora) };
   }
-  async minhasLotericas() {
-    const demo = this.historico().lotericas[0];
+  async minhasLotericas(): Promise<MinhaLotericaRef[]> {
+    const ls = this.historico().lotericas;
+    const sessao = await lojasDaSessao(ls);
+    if (sessao) return sessao;
+    const demo = ls[0];
     return demo ? [demo] : [];
   }
   async minhaLoterica() {

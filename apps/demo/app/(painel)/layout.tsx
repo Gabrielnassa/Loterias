@@ -16,6 +16,7 @@ const NAV: [string, string][] = [
   ['/calendario', 'Calendário'],
   ['/simulador', 'Simulador'],
   ['/loteca', 'Loteca'],
+  ['/equipe', 'Equipe'],
   ['/loterica-trevo-de-ouro', 'Site de exemplo'],
 ];
 
@@ -37,8 +38,11 @@ export default function LayoutPainel({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </nav>
-          <div className="ml-auto w-full sm:w-auto">
+          <div className="ml-auto flex w-full flex-wrap items-center gap-3 sm:w-auto">
             <BuscaLoterica />
+            <Link href="/conta" className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white" title="Na demonstração você é o responsável de uma conta de exemplo">
+              Você <span className="text-zinc-400">· responsável</span>
+            </Link>
           </div>
         </div>
       </header>

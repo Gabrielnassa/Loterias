@@ -1,6 +1,6 @@
 import { buscarLotericas, calcularParticipacoes, lerLotericasConfiguradas, pagina, type LotericaRef, type ModalidadeSlug, type ParticipacaoInfo } from '@radar/core';
 import { criarSql, type Sql } from '@radar/db';
-import { FonteSimuladaRaioX, type AberturaDetalhada, type AoVivo, type BolaoDaJanela, type FonteDadosRaioX, type MinhaLotericaRef } from './dados';
+import { FonteSimuladaRaioX, lojasDaSessao, type AberturaDetalhada, type AoVivo, type BolaoDaJanela, type FonteDadosRaioX, type MinhaLotericaRef } from './dados';
 
 /**
  * Fonte de dados da web lendo do PostgreSQL: `aberturas` e `abertura_participacoes` (gravadas pelo
@@ -247,8 +247,10 @@ export class FontePostgresRaioX implements FonteDadosRaioX {
    * Sem configuração e com o seed: a lotérica fictícia de demonstração (980011).
    */
   async minhasLotericas(): Promise<MinhaLotericaRef[]> {
-    const config = lerLotericasConfiguradas(this.opcoes.minhaLoterica ?? process.env.RADAR_MINHA_LOTERICA);
     const ls = await this.lotericas();
+    const sessao = await lojasDaSessao(ls);
+    if (sessao) return sessao;
+    const config = lerLotericasConfiguradas(this.opcoes.minhaLoterica ?? process.env.RADAR_MINHA_LOTERICA);
     if (!config.length) {
       const demo = (await this.simulado()) ? ls.find((l) => l.codigoCaixa === '980011') : undefined;
       return demo ? [demo] : [];
