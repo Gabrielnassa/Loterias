@@ -134,7 +134,7 @@ export function arteSaiuAqui(d: DadosPremio, marca: Marca): No {
 // Inter (SIL Open Font License, ver assets/fontes/LICENSE-Inter-OFL.txt), lida do disco: o webpack
 // transformaria `new URL(..., import.meta.url)` em URL pública, que o fs não abre.
 function arquivoFonte(nome: string): string {
-  const candidatos = [join(process.cwd(), 'assets', 'fontes', nome), join(process.cwd(), 'apps', 'web', 'assets', 'fontes', nome)];
+  const candidatos = [join(process.cwd(), 'assets', 'fontes', nome), join(process.cwd(), 'apps', 'web', 'assets', 'fontes', nome), join(process.cwd(), '..', 'web', 'assets', 'fontes', nome)];
   const achado = candidatos.find((c) => existsSync(c));
   if (!achado) throw new Error(`fonte das artes não encontrada (${nome}); rode a web a partir de apps/web`);
   return achado;

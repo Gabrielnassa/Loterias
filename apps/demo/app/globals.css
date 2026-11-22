@@ -1,0 +1,6 @@
+@import "../../web/app/globals.css";
+/* as classes vêm dos componentes e páginas do apps/web */
+@source "../../web/app";
+@source "../../web/components";
+@source "../../web/lib";
+@source "../demo";

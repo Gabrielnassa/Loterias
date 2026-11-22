@@ -1,0 +1,29 @@
+{
+  "name": "@radar/demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Demonstração estática do Radar Lotérico (GitHub Pages): as telas da web com dados simulados, calculadas no navegador",
+  "scripts": {
+    "dados": "tsx scripts/gerar-dados.ts",
+    "build": "pnpm run dados && next build",
+    "dev": "pnpm run dados && next dev -p 3200",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@radar/core": "workspace:*",
+    "@radar/web": "workspace:*",
+    "next": "15.5.29",
+    "react": "19.2.9",
+    "react-dom": "19.2.9"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.18",
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "tailwindcss": "4.1.18",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3"
+  }
+}

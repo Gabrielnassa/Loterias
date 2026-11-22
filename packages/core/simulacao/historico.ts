@@ -156,14 +156,7 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
     }
   }
 
-  const gerar = (plano: PlanoAbertura) =>
-    gerarAberturaSimulada({
-      semente: plano.semente,
-      t0: plano.t0,
-      modalidade: plano.modalidade,
-      concurso: plano.concurso,
-      participantes: plano.participantes,
-    });
+  const gerar = (plano: PlanoAbertura) => gerarDoPlano(plano);
   const executar = (plano: PlanoAbertura) => coletarSimulacao(gerar(plano), { leituras: cronogramaAbertura(plano.t0), ate: o.ate });
 
   for (const plano of aberturas) {
@@ -187,31 +180,126 @@ export function gerarHistoricoSimulado(o: { ate: Date; semente?: number; semanas
       });
     }
   }
+  return montarHistorico({ perfis, planos, aberturas, participacoes, ate: o.ate });
+}
 
-  const porId = new Map(planos.map((a) => [a.id, a]));
+function gerarDoPlano(plano: PlanoAbertura): AberturaSimulada {
+  return gerarAberturaSimulada({
+    semente: plano.semente,
+    t0: plano.t0,
+    modalidade: plano.modalidade,
+    concurso: plano.concurso,
+    participantes: plano.participantes,
+  });
+}
+
+/** Monta o histórico (com os detalhes sob demanda) a partir das partes já calculadas. */
+export function montarHistorico(d: {
+  perfis: PerfilLoterica[];
+  planos: PlanoAbertura[];
+  aberturas: PlanoAbertura[];
+  participacoes: HistoricoSimulado['participacoes'];
+  ate: Date;
+}): HistoricoSimulado {
+  const porId = new Map(d.planos.map((a) => [a.id, a]));
   const verdades = new Map<string, AberturaSimulada>();
   return {
-    lotericas: perfis.map((p) => p.loterica),
-    perfis,
-    aberturas,
-    planos,
+    lotericas: d.perfis.map((p) => p.loterica),
+    perfis: d.perfis,
+    aberturas: d.aberturas,
+    planos: d.planos,
     verdade: (id) => {
       const plano = porId.get(id);
       if (!plano) return null;
       let v = verdades.get(id);
-      if (!v) verdades.set(id, (v = gerar(plano)));
+      if (!v) verdades.set(id, (v = gerarDoPlano(plano)));
       return v;
     },
-    participacoes,
+    participacoes: d.participacoes,
     fechaEm: (id) => {
       const plano = porId.get(id);
       return plano ? new Date(plano.t0.getTime() + 22 * 3_600_000) : null;
     },
     detalhar: (id) => {
       const plano = porId.get(id);
-      return plano ? executar(plano) : null;
+      return plano ? coletarSimulacao(gerarDoPlano(plano), { leituras: cronogramaAbertura(plano.t0), ate: d.ate }) : null;
     },
   };
+}
+
+/**
+ * Histórico em JSON compacto (para a demonstração estática: gerado no build, remontado no
+ * navegador). Os bolões não vão no arquivo: saem de novo do plano de cada concurso (determinístico).
+ */
+export interface HistoricoSerializado {
+  versao: 1;
+  ate: number;
+  perfis: PerfilLoterica[];
+  /** [id, modalidade, concurso, t0 (ms), semente, participantes [índice do perfil, atraso (s), bolões]] */
+  planos: [string, ModalidadeSlug, number, number, number, [number, number, number][]][];
+  /** Índices em `planos` das aberturas com a janela encerrada. */
+  aberturas: number[];
+  /** [plano, perfil, atraso (s), posCidade, posUf, posBrasil, bolões 1h, valor 1h, % vendido, sobra, empate (0/1), id do 1º bolão] */
+  participacoes: [number, number, number, number, number, number, number, number, number | null, number | null, number, string][];
+}
+
+export function serializarHistorico(h: HistoricoSimulado, ate: Date): HistoricoSerializado {
+  const iPerfil = new Map(h.perfis.map((p, i) => [p.loterica.codigoCaixa, i]));
+  const iPlano = new Map(h.planos.map((p, i) => [p.id, i]));
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  return {
+    versao: 1,
+    ate: ate.getTime(),
+    perfis: h.perfis,
+    planos: h.planos.map((p) => [p.id, p.modalidade, p.concurso, p.t0.getTime(), p.semente, p.participantes.map((x) => [iPerfil.get(x.loterica.codigoCaixa)!, r3(x.atrasoPrimeiroS), x.nBoloes])]),
+    aberturas: h.aberturas.map((a) => iPlano.get(a.id)!),
+    participacoes: h.participacoes.map((p) => [
+      iPlano.get(p.aberturaId)!,
+      iPerfil.get(p.lotericaCodigo)!,
+      r3(p.atrasoS),
+      p.posCidade,
+      p.posUf,
+      p.posBrasil,
+      p.nBoloes1h,
+      p.valor1h,
+      p.pctVendido === null || p.pctVendido === undefined ? null : r3(p.pctVendido),
+      p.sobra ?? null,
+      p.empate ? 1 : 0,
+      p.primeiroBolaoId,
+    ]),
+  };
+}
+
+export function reconstruirHistorico(d: HistoricoSerializado): HistoricoSimulado {
+  const planos: PlanoAbertura[] = d.planos.map(([id, modalidade, concurso, t0, semente, ps]) => ({
+    id,
+    modalidade,
+    concurso,
+    t0: new Date(t0),
+    semente,
+    participantes: ps.map(([i, atrasoPrimeiroS, nBoloes]) => ({ loterica: d.perfis[i]!.loterica, atrasoPrimeiroS, nBoloes })),
+  }));
+  const participacoes: HistoricoSimulado['participacoes'] = d.participacoes.map(([ip, il, atrasoS, posCidade, posUf, posBrasil, nBoloes1h, valor1h, pct, sobra, empate, primeiroBolaoId]) => {
+    const plano = planos[ip]!;
+    const loterica = d.perfis[il]!.loterica;
+    return {
+      aberturaId: plano.id,
+      lotericaCodigo: loterica.codigoCaixa,
+      loterica,
+      primeiroBolaoId,
+      primeiroEm: new Date(plano.t0.getTime() + Math.round(atrasoS * 1000)),
+      atrasoS,
+      posCidade,
+      posUf,
+      posBrasil,
+      nBoloes1h,
+      valor1h,
+      pctVendido: pct,
+      sobra,
+      empate: empate === 1,
+    };
+  });
+  return montarHistorico({ perfis: d.perfis, planos, aberturas: d.aberturas.map((i) => planos[i]!), participacoes, ate: new Date(d.ate) });
 }
 
 /**

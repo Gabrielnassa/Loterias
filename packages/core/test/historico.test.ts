@@ -99,3 +99,23 @@ describe('busca de lotérica', () => {
     expect(buscarLotericas(ls, '   ')).toEqual([]);
   });
 });
+
+describe('histórico serializado (demonstração estática)', () => {
+  it('remonta o mesmo histórico a partir do JSON compacto', async () => {
+    const { gerarHistoricoSimulado, serializarHistorico, reconstruirHistorico } = await import('../simulacao/historico');
+    const { horarioSP: hsp } = await import('../tempo/fuso');
+    const ate = hsp(2026, 11, 21, 12, 0);
+    const h = gerarHistoricoSimulado({ ate, semanas: 2, nLotericas: 60 });
+    const json = JSON.parse(JSON.stringify(serializarHistorico(h, ate)));
+    const r = reconstruirHistorico(json);
+    expect(r.planos.map((p) => p.id)).toEqual(h.planos.map((p) => p.id));
+    expect(r.aberturas.map((p) => p.id)).toEqual(h.aberturas.map((p) => p.id));
+    expect(r.participacoes).toHaveLength(h.participacoes.length);
+    const a = h.participacoes[5]!;
+    const b = r.participacoes[5]!;
+    expect({ ...b, primeiroEm: b.primeiroEm.getTime() }).toEqual({ ...a, primeiroEm: a.primeiroEm.getTime(), atrasoS: Math.round(a.atrasoS * 1000) / 1000, pctVendido: a.pctVendido === null ? null : Math.round(a.pctVendido! * 1000) / 1000, empate: a.empate ?? false });
+    const id = h.aberturas.at(-1)!.id;
+    expect(r.detalhar(id)!.length).toBe(h.detalhar(id)!.length);
+    expect(r.verdade(id)!.boloes.length).toBe(h.verdade(id)!.boloes.length);
+  });
+});

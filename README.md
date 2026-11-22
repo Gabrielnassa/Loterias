@@ -8,6 +8,15 @@ concorrente abriu bolão na semana, em que dias, a que horas e em que colocaçã
 - Regras, glossário e decisões: [`CLAUDE.md`](CLAUDE.md)
 - Fonte de dados (Fase 0, pendente): [`docs/fonte-caixa.md`](docs/fonte-caixa.md)
 
+## Demonstração navegável
+
+**https://gabrielnassa.github.io/Loterias/**: as telas do sistema com dados simulados (lotéricas fictícias),
+calculadas no navegador. O build (`apps/demo`, `pnpm demo:build`) gera o histórico simulado em JSON e exporta
+HTML/JS estáticos; o workflow `.github/workflows/pages.yml` publica a cada push no branch padrão e todo dia de manhã.
+
+Passo que só o dono do repositório pode fazer (uma vez): **Settings › Pages › Build and deployment › Source =
+"GitHub Actions"**. Depois disso, rode o workflow "Demonstração (GitHub Pages)" em Actions (ou faça um push).
+
 ## Estado
 
 | Fase | Situação |

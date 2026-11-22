@@ -1,0 +1,52 @@
+# Demonstração estática do Radar Lotérico no GitHub Pages (https://gabrielnassa.github.io/Loterias/).
+# Pré-requisito (uma vez, no GitHub): Settings › Pages › Build and deployment › Source = "GitHub Actions".
+name: Demonstração (GitHub Pages)
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    # todo dia às 09:17 UTC (06:17 em São Paulo): refaz os dados simulados da demonstração
+    - cron: '17 9 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - id: pages
+        uses: actions/configure-pages@v5
+      - name: Build da demonstração (dados simulados gerados aqui; HTML/JS estáticos)
+        run: pnpm --filter @radar/demo build
+        env:
+          DEMO_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/demo/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # o ambiente github-pages só publica a partir do branch padrão do repositório (ou dos liberados nele)
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

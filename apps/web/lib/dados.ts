@@ -76,7 +76,7 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
   constructor(
     private readonly relogio: () => Date = () => new Date(),
     private readonly validadeMs = 60 * 60_000,
-    private readonly opcoes: { semanas?: number; nLotericas?: number } = {},
+    private readonly opcoes: { semanas?: number; nLotericas?: number; historicoPronto?: HistoricoSimulado } = {},
   ) {}
 
   agora(): Date {
@@ -90,6 +90,14 @@ export class FonteSimuladaRaioX implements FonteDadosRaioX {
   /** Histórico simulado (também a base do Mercado simulado). */
   historico(): HistoricoSimulado {
     const agora = this.relogio();
+    // demonstração estática: o histórico veio pronto do build (não é regerado no navegador)
+    if (this.opcoes.historicoPronto) {
+      if (!this.h) {
+        this.h = this.opcoes.historicoPronto;
+        this.porCodigo = new Map(this.h.lotericas.map((l) => [l.codigoCaixa, l]));
+      }
+      return this.h;
+    }
     if (!this.h || agora.getTime() - this.geradoEm > this.validadeMs) {
       this.h = gerarHistoricoSimulado({ ate: agora, semanas: this.opcoes.semanas ?? 13, ...(this.opcoes.nLotericas ? { nLotericas: this.opcoes.nLotericas } : {}) });
       this.geradoEm = agora.getTime();

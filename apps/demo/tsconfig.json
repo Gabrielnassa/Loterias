@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "react", "react-dom"],
+    "jsx": "preserve",
+    "allowJs": false,
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": {
+      "@/lib/fonte-dados": ["./demo/fonte-dados.ts"],
+      "@/components/AtualizarSozinho": ["./demo/AtualizarSozinho.tsx"],
+      "@/components/Indisponivel": ["./demo/Indisponivel.tsx"],
+      "@/*": ["../web/*"],
+      "@demo/*": ["./demo/*"]
+    },
+    "esModuleInterop": true
+  },
+  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", "demo/**/*.ts", "demo/**/*.tsx", "scripts/**/*.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "out"]
+}
