@@ -459,6 +459,19 @@ export const gestaoRegistros = pgTable('gestao_registros', {
   atualizadoEm: tz('atualizado_em').notNull().defaultNow(),
 });
 
+// Chaves da API pública (0011_chaves_api.sql)
+export const chavesApi = pgTable('chaves_api', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contaId: uuid('conta_id').notNull(),
+  nome: text('nome').notNull(),
+  prefixo: text('prefixo').notNull(),
+  hash: text('hash').notNull().unique(),
+  criadoPor: uuid('criado_por'),
+  criadoEm: tz('criado_em').notNull().defaultNow(),
+  ultimoUsoEm: tz('ultimo_uso_em'),
+  revogadaEm: tz('revogada_em'),
+});
+
 export const todasAsTabelas = {
   modalidades,
   lotericas,
@@ -491,4 +504,5 @@ export const todasAsTabelas = {
   cobrancas,
   webhooksAsaas,
   gestaoRegistros,
+  chavesApi,
 };

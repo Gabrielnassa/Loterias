@@ -83,6 +83,19 @@ export interface Cobranca {
   pagoEm: Date | null;
 }
 
+/** Chave da API pública (só o hash fica guardado). */
+export interface ChaveApi {
+  id: string;
+  contaId: string;
+  nome: string;
+  prefixo: string;
+  hash: string;
+  criadoPor: string | null;
+  criadoEm: Date;
+  ultimoUsoEm: Date | null;
+  revogadaEm: Date | null;
+}
+
 export interface RepositorioContas {
   readonly tipo: 'memoria' | 'postgres';
   usuarioPorEmail(email: string): Promise<Usuario | null>;
@@ -134,4 +147,11 @@ export interface RepositorioContas {
   marcarWebhook(chave: string, erro: string | null): Promise<void>;
   /** Quantas pessoas e convites pendentes a conta tem (limite do plano). */
   contarPessoas(contaId: string, agora: Date): Promise<number>;
+
+  // chaves da API pública (plugin WordPress)
+  criarChaveApi(c: Omit<ChaveApi, 'id' | 'criadoEm' | 'ultimoUsoEm' | 'revogadaEm'>): Promise<ChaveApi>;
+  chavesApi(contaId: string): Promise<ChaveApi[]>;
+  chaveApiPorHash(hash: string): Promise<ChaveApi | null>;
+  usarChaveApi(id: string, em: Date): Promise<void>;
+  revogarChaveApi(contaId: string, id: string, em: Date): Promise<void>;
 }

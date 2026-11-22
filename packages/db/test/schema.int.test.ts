@@ -24,7 +24,7 @@ suite('schema no PostgreSQL', () => {
   });
 
   it('aplica as migrações uma vez só', async () => {
-    expect(await migrar(sql, () => {})).toEqual(['0001_inicial.sql', '0002_fila_observada.sql', '0003_t0_por_concurso.sql', '0004_resultados.sql', '0005_conferencia_modalidades.sql', '0006_site_publico.sql', '0007_contas.sql', '0008_avisos.sql', '0009_planos.sql', '0010_gestao.sql']);
+    expect(await migrar(sql, () => {})).toEqual(['0001_inicial.sql', '0002_fila_observada.sql', '0003_t0_por_concurso.sql', '0004_resultados.sql', '0005_conferencia_modalidades.sql', '0006_site_publico.sql', '0007_contas.sql', '0008_avisos.sql', '0009_planos.sql', '0010_gestao.sql', '0011_chaves_api.sql']);
     expect(await migrar(sql, () => {})).toEqual([]);
   });
 

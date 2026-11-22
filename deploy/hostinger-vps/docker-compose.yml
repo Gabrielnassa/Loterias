@@ -1,0 +1,134 @@
+# Radar Lotérico em produção (VPS Ubuntu + Docker). Rodar DESTA pasta:
+#   docker compose --env-file .env up -d --build
+# Serviços: Caddy (HTTPS automático) -> web (Next.js) | worker (coletor + alertas) | Postgres 16 | Redis.
+# "migrar" roda as migrações e termina; web e worker só sobem depois dele.
+name: radar
+
+x-env-comum: &env-comum
+  TZ: UTC
+  DATABASE_URL: postgres://radar:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/radar
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+  VAPID_ASSUNTO: ${VAPID_ASSUNTO:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: radar
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      TZ: UTC
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radar -d radar"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    shm_size: 256mb
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  migrar:
+    image: radar-loterico-worker:${VERSAO:-local}
+    build:
+      context: ../..
+      dockerfile: apps/worker/Dockerfile
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *env-comum
+    command: ["pnpm", "--filter", "@radar/db", "migrar"]
+
+  worker:
+    image: radar-loterico-worker:${VERSAO:-local}
+    restart: unless-stopped
+    depends_on:
+      migrar:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *env-comum
+      REDIS_URL: redis://redis:6379
+      FILA: bullmq
+      REPOSITORIO: postgres
+      FONTE: ${FONTE:-simulada}
+      NTP_SERVIDOR: ${NTP_SERVIDOR:-a.ntp.br}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ALERTAS: ${ALERTAS:-true}
+      RESULTADOS_CAIXA: ${RESULTADOS_CAIXA:-true}
+      CAIXA_SESSAO: /sessao/estado.json
+      CAIXA_CONTA_DEDICADA: ${CAIXA_CONTA_DEDICADA:-false}
+      CAIXA_INTERVALO_MS: ${CAIXA_INTERVALO_MS:-3000}
+      CAIXA_MODALIDADES: ${CAIXA_MODALIDADES:-mega-sena,lotofacil,quina}
+      CAIXA_ESCOPOS: ${CAIXA_ESCOPOS:-cidade}
+      CAIXA_LOTERICAS: ${CAIXA_LOTERICAS:-}
+      CAIXA_SESSAO_JSON: ${CAIXA_SESSAO_JSON:-}
+      VITRINE_ORDEM: ${VITRINE_ORDEM:-fila-chegada}
+    volumes:
+      # sessão do navegador da conta DEDICADA (preparada por uma pessoa; ver LEIAME.md, passo 8)
+      - ./sessao-caixa:/sessao:ro
+      - ./observacoes:/app/apps/worker/observacoes
+
+  web:
+    image: radar-loterico-web:${VERSAO:-local}
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      migrar:
+        condition: service_completed_successfully
+    environment:
+      <<: *env-comum
+      RADAR_FONTE_WEB: postgres
+      RADAR_AUTH: ${RADAR_AUTH:-postgres}
+      RADAR_SITE_URL: https://${DOMINIO:?defina DOMINIO no .env}
+      RADAR_PLANOS: ${RADAR_PLANOS:-}
+      RADAR_FRANQUIA_LIMITE: ${RADAR_FRANQUIA_LIMITE:-8000}
+      RADAR_EMAIL: ${RADAR_EMAIL:-console}
+      SMTP_URL: ${SMTP_URL:-}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-}
+      ASAAS_AMBIENTE: sandbox
+      ASAAS_API_KEY: ${ASAAS_API_KEY:-}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN:-}
+      RADAR_EMBED_ORIGENS: ${RADAR_EMBED_ORIGENS:-}
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+      EMAIL_ACME: ${EMAIL_ACME:?defina EMAIL_ACME no .env (e-mail para o certificado HTTPS)}
+      EMBED_ORIGENS: ${RADAR_EMBED_ORIGENS:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:

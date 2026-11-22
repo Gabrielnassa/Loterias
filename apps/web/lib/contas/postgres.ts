@@ -1,6 +1,6 @@
 import type { Papel, PlanoId, StatusAssinatura } from '@radar/core';
 import type { Sql } from '@radar/db';
-import type { Assinatura, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
+import type { Assinatura, ChaveApi, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
 
 type Linha = Record<string, unknown>;
 const data = (v: unknown) => (v === null || v === undefined ? null : new Date(v as string | Date));
@@ -72,6 +72,17 @@ const assinatura = (r: Linha): Assinatura => ({
   asaasClienteId: (r.asaas_cliente_id as string | null) ?? null,
   asaasAssinaturaId: (r.asaas_assinatura_id as string | null) ?? null,
   canceladaEm: data(r.cancelada_em),
+});
+const chaveApi = (r: Linha): ChaveApi => ({
+  id: r.id as string,
+  contaId: r.conta_id as string,
+  nome: r.nome as string,
+  prefixo: r.prefixo as string,
+  hash: r.hash as string,
+  criadoPor: (r.criado_por as string | null) ?? null,
+  criadoEm: data(r.criado_em)!,
+  ultimoUsoEm: data(r.ultimo_uso_em),
+  revogadaEm: data(r.revogada_em),
 });
 const cobranca = (r: Linha): Cobranca => ({
   id: r.id as string,
@@ -274,5 +285,24 @@ export class RepositorioContasPostgres implements RepositorioContas {
       select (select count(*) from membros where conta_id = ${contaId})
            + (select count(*) from convites where conta_id = ${contaId} and aceito_em is null and cancelado_em is null and expira_em > ${iso(agora)}::timestamptz) as n`;
     return Number(r!.n);
+  }
+
+  async criarChaveApi(c: Omit<ChaveApi, 'id' | 'criadoEm' | 'ultimoUsoEm' | 'revogadaEm'>) {
+    const [r] = await this.sql`
+      insert into chaves_api (conta_id, nome, prefixo, hash, criado_por) values (${c.contaId}, ${c.nome}, ${c.prefixo}, ${c.hash}, ${c.criadoPor}) returning *`;
+    return chaveApi(r!);
+  }
+  async chavesApi(contaId: string) {
+    return (await this.sql`select * from chaves_api where conta_id = ${contaId} order by criado_em desc`).map(chaveApi);
+  }
+  async chaveApiPorHash(hash: string) {
+    const [r] = await this.sql`select * from chaves_api where hash = ${hash}`;
+    return r ? chaveApi(r) : null;
+  }
+  async usarChaveApi(id: string, em: Date) {
+    await this.sql`update chaves_api set ultimo_uso_em = ${iso(em)}::timestamptz where id = ${id}`;
+  }
+  async revogarChaveApi(contaId: string, id: string, em: Date) {
+    await this.sql`update chaves_api set revogada_em = ${iso(em)}::timestamptz where id = ${id} and conta_id = ${contaId} and revogada_em is null`;
   }
 }

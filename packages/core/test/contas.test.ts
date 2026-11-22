@@ -31,6 +31,7 @@ describe('contas: telas e rotas', () => {
     expect(classificarRota('/api/auth/link').acesso).toBe('publica');
     expect(classificarRota('/api/webhooks/asaas').acesso).toBe('publica');
     expect(classificarRota('/api/site/trevo/evento').acesso).toBe('publica');
+    expect(classificarRota('/api/publica/v1/ranking').acesso).toBe('publica');
     expect(classificarRota('/conta').acesso).toBe('livre');
     expect(classificarRota('/minha').acesso).toBe('livre');
     expect(classificarRota('/equipe')).toMatchObject({ acesso: 'tela', tela: { id: 'equipe' } });

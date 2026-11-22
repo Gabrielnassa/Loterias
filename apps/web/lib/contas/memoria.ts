@@ -1,4 +1,4 @@
-import type { Assinatura, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
+import type { Assinatura, ChaveApi, Cobranca, Conta, Convite, LojaDaConta, Membro, RepositorioContas, Sessao, TokenLogin, Usuario } from './tipos';
 
 /** Estado serializável (a demonstração guarda no localStorage do navegador). */
 export interface EstadoContas {
@@ -12,11 +12,12 @@ export interface EstadoContas {
   assinaturas?: Assinatura[];
   cobrancas?: Cobranca[];
   webhooks?: { chave: string; evento: string; recebidoEm: Date; erro: string | null }[];
+  chavesApi?: ChaveApi[];
 }
 
 export const estadoVazio = (): EstadoContas => ({ usuarios: [], contas: [], lojas: [], membros: [], convites: [], tokens: [], sessoes: [] });
 
-const DATAS = new Set(['criadoEm', 'emailVerificadoEm', 'verificadaEm', 'expiraEm', 'aceitoEm', 'canceladoEm', 'usadoEm', 'vistoEm', 'testeAte', 'pagoAte', 'canceladaEm', 'pagoEm', 'recebidoEm']);
+const DATAS = new Set(['criadoEm', 'emailVerificadoEm', 'verificadaEm', 'expiraEm', 'aceitoEm', 'canceladoEm', 'usadoEm', 'vistoEm', 'testeAte', 'pagoAte', 'canceladaEm', 'pagoEm', 'recebidoEm', 'ultimoUsoEm', 'revogadaEm']);
 
 /** JSON -> estado (datas voltam a ser Date). */
 export function lerEstadoContas(json: string): EstadoContas {
@@ -219,5 +220,29 @@ export class RepositorioContasMemoria implements RepositorioContas {
     const membros = this.estado.membros.filter((m) => m.contaId === contaId).length;
     const convites = this.estado.convites.filter((c) => c.contaId === contaId && !c.aceitoEm && !c.canceladoEm && c.expiraEm.getTime() > agora.getTime()).length;
     return membros + convites;
+  }
+
+  async criarChaveApi(c: Omit<ChaveApi, 'id' | 'criadoEm' | 'ultimoUsoEm' | 'revogadaEm'>) {
+    const nova: ChaveApi = { ...c, id: novoId(), criadoEm: new Date(), ultimoUsoEm: null, revogadaEm: null };
+    (this.estado.chavesApi ??= []).push(nova);
+    this.mudou();
+    return copia(nova);
+  }
+  async chavesApi(contaId: string) {
+    return (this.estado.chavesApi ?? []).filter((c) => c.contaId === contaId).sort((a, b) => b.criadoEm.getTime() - a.criadoEm.getTime()).map(copia);
+  }
+  async chaveApiPorHash(hash: string) {
+    const c = (this.estado.chavesApi ?? []).find((x) => x.hash === hash);
+    return c ? copia(c) : null;
+  }
+  async usarChaveApi(id: string, em: Date) {
+    const c = (this.estado.chavesApi ?? []).find((x) => x.id === id);
+    if (c) c.ultimoUsoEm = em;
+    this.mudou();
+  }
+  async revogarChaveApi(contaId: string, id: string, em: Date) {
+    const c = (this.estado.chavesApi ?? []).find((x) => x.id === id && x.contaId === contaId);
+    if (c && !c.revogadaEm) c.revogadaEm = em;
+    this.mudou();
   }
 }

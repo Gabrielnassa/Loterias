@@ -1,7 +1,16 @@
 **/node_modules
 **/.turbo
+**/.next
+**/out
+**/*.tsbuildinfo
 .git
 *.har
 docs/har
 .env
+**/.env
 .sessao-caixa
+apps/worker/observacoes
+apps/demo
+deploy/**/.env
+deploy/**/backups
+integracoes

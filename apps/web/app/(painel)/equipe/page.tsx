@@ -26,6 +26,7 @@ export default async function Equipe({ searchParams }: Props) {
     );
   }
   const p = await painelEquipe(repo, ctx, new Date());
+  const chaves = p.papel !== 'colaborador' ? await repo.chavesApi(ctx.conta.id) : [];
   const gestor = p.papel !== 'colaborador';
   const papeisConvite: Papel[] = p.papel === 'responsavel' ? ['colaborador', 'socio'] : ['colaborador'];
   const nomeTela = (id: string) => TELAS.find((t) => t.id === id)?.nome.split(' (')[0] ?? id;
@@ -221,6 +222,47 @@ export default async function Equipe({ searchParams }: Props) {
               </table>
             </div>
           ) : null}
+        </section>
+      ) : null}
+
+      {gestor ? (
+        <section className="cartao space-y-3">
+          <h2 className="font-semibold">Integração com o seu site (WordPress)</h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            O plugin "Radar Lotérico" mostra no seu site o Raio-X, o ranking da abertura e os bolões da sua lotérica. Crie uma chave e cole nas configurações do plugin
+            junto com o endereço deste sistema.
+          </p>
+          {chaves.length ? (
+            <ul className="divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+              {chaves.map((k) => (
+                <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span>
+                    {k.nome} <span className="font-mono text-xs text-zinc-500">{k.prefixo}…</span>
+                    <span className="text-xs text-zinc-500"> · {k.revogadaEm ? 'revogada' : k.ultimoUsoEm ? `usada em ${fmtDataCurta(k.ultimoUsoEm)}` : 'ainda não usada'}</span>
+                  </span>
+                  {!k.revogadaEm ? (
+                    <FormAcao acao="/api/equipe" confirmar={`Revogar a chave ${k.nome}? O site que usa esta chave para de mostrar os dados.`}>
+                      <input type="hidden" name="acao" value="revogar-chave" />
+                      <input type="hidden" name="id" value={k.id} />
+                      <button type="submit" className="text-xs text-zinc-500 underline-offset-2 hover:underline">
+                        revogar
+                      </button>
+                    </FormAcao>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <FormAcao acao="/api/equipe" limpar className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="acao" value="criar-chave" />
+            <label className="flex flex-col gap-1">
+              <span className="rotulo">Nome da chave</span>
+              <input name="nome" placeholder="Site WordPress" className="campo w-56" />
+            </label>
+            <button type="submit" className="botao">
+              Criar chave
+            </button>
+          </FormAcao>
         </section>
       ) : null}
 

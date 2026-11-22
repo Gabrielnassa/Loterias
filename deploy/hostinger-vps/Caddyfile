@@ -1,0 +1,28 @@
+# HTTPS automático (Let's Encrypt) para o domínio do .env. O DNS do domínio precisa apontar para o VPS
+# ANTES de subir (registro A). Com DOMINIO=localhost, o Caddy usa um certificado local (teste).
+{
+	email {$EMAIL_ACME}
+}
+
+{$DOMINIO} {
+	encode zstd gzip
+
+	# cabeçalhos de segurança (o iframe é controlado pelo próprio sistema: o painel nunca abre dentro de
+	# outro site; o site público da lotérica pode, só nas origens de RADAR_EMBED_ORIGENS)
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	reverse_proxy web:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

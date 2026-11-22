@@ -48,8 +48,8 @@ export const TELAS: readonly Tela[] = [
 /** Rotas que qualquer pessoa logada abre (o próprio perfil e as próprias notificações). */
 export const ROTAS_LIVRES = ['/conta', '/notificacoes', '/sem-permissao', '/minha', '/api/conta', '/api/notificacoes', '/api/push'];
 
-/** Rotas públicas (sem login): entrar, cadastro, convite, webhooks e o site público da lotérica. */
-export const ROTAS_PUBLICAS = ['/entrar', '/cadastro', '/convite', '/api/auth', '/api/webhooks', '/api/site'];
+/** Rotas públicas (sem login): entrar, cadastro, convite, webhooks, site público e a API pública (com chave). */
+export const ROTAS_PUBLICAS = ['/entrar', '/cadastro', '/convite', '/api/auth', '/api/webhooks', '/api/site', '/api/publica'];
 
 export const TELAS_PADRAO_COLABORADOR = ['raio-x', 'minha-boloes', 'minha-conferencia', 'minha-cronometro', 'ferramentas', 'gestao-caixa', 'gestao-fiados'] as const;
 

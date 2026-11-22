@@ -1,4 +1,5 @@
 import { repositorioContas } from '@/lib/contas/ativo';
+import { criarChave, ErroChave, revogarChave } from '@/lib/contas/chaves-api';
 import { alterarMembro, cancelarConvite, convidar, ErroEquipe, painelEquipe, removerLoja, removerMembro, renomearConta, salvarLoja } from '@/lib/contas/equipe';
 import { lerCorpo, responder, urlBase } from '@/lib/contas/http';
 import { contexto } from '@/lib/contexto';
@@ -53,6 +54,13 @@ export async function POST(req: Request) {
       case 'remover-loja':
         await removerLoja(repo, ctx, c.um('codigo'));
         return responder(req, '/equipe', { ok: 'lotérica removida da conta' });
+      case 'criar-chave': {
+        const r = await criarChave(repo, ctx, c.um('nome'));
+        return responder(req, '/equipe', { ok: `chave "${r.registro.nome}" criada: copie agora (ela não aparece de novo)`, link: r.chave });
+      }
+      case 'revogar-chave':
+        await revogarChave(repo, ctx, c.um('id'));
+        return responder(req, '/equipe', { ok: 'chave revogada' });
       case 'renomear':
         await renomearConta(repo, ctx, c.um('nome'));
         return responder(req, '/equipe', { ok: 'nome da conta salvo' });
@@ -60,7 +68,7 @@ export async function POST(req: Request) {
         return responder(req, '/equipe', { erro: 'ação desconhecida' });
     }
   } catch (e) {
-    if (e instanceof ErroEquipe) return responder(req, '/equipe', { erro: e.message });
+    if (e instanceof ErroEquipe || e instanceof ErroChave) return responder(req, '/equipe', { erro: e.message });
     throw e;
   }
 }
